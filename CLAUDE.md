@@ -128,7 +128,7 @@ Applies to everything: CI, tooling config, dependencies, build setup and code.
   (paths, SHA pins, extra system packages, bun as the app's package manager), with a
   comment naming the guide and why each adaptation is needed.
 - Rely on documented defaults and presets; don't restate defaults or reimplement a feature
-  the tool already has (e.g. release-please's GitHub release, tauri-action's upload,
+  the tool already has (e.g. semantic-release's GitHub release, tauri-action's upload,
   Dependabot's grouping and cooldown).
 - No custom scripts where a standard solution exists. If none fits, say so in the PR and why.
 - New dependencies and GitHub Actions: prefer the official one (vendor org, e.g. `actions/`,
@@ -161,12 +161,12 @@ are the record.
   @pcavadas.
 - Iterate in draft (CodeRabbit skips drafts). Fix or answer CodeRabbit findings; never post
   `@coderabbitai approve`, `resolve` or `full review`, and never resolve its threads by hand.
-- `release.yml`: release-please (`release-please-config.json`, `.release-please-manifest.json`)
-  keeps a release PR open (opened by the auto-merge App, never auto-merged); @pcavadas merges it
-  to release. That tags `v<version>` and creates the GitHub release; tauri-action uploads signed
-  + notarized aarch64/x86_64 DMGs and the Linux `.deb`/`.AppImage`. Apple secrets live in the
-  `release` environment. Versions live in `package.json` and `apps/desktop/package.json`
-  (which `tauri.conf.json` reads); only release PRs change them.
+- `release.yml`: every merge to `main` runs semantic-release (default plugins); a `feat:`/`fix:`
+  since the last tag releases automatically: it tags `v<version>` and creates the GitHub release,
+  then tauri-action builds and uploads signed + notarized aarch64/x86_64 DMGs and the Linux
+  `.deb`/`.AppImage`. Versions are never bumped by hand: the job stamps the release version into
+  `apps/desktop/package.json` (read by `tauri.conf.json`) at build time only. Apple secrets live
+  in the `release` environment.
 
 ## Conventions
 

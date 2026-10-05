@@ -38,10 +38,9 @@ and the end of the log (never the Tone3000 key or tokens).
 ### Releases (signed + notarized macOS, Linux packages)
 
 Releases are cut by CI (`.github/workflows/release.yml`): on every merge to `main`,
-release-please keeps a release PR open whose version follows the Conventional Commits since the
-last tag. Merging that PR tags `v<version>` and creates the GitHub release;
-`tauri-apps/tauri-action` then adds signed and notarized macOS DMGs (Apple Silicon and Intel)
-and Linux `.deb`/`.AppImage`. Windows is not
+semantic-release reads the Conventional Commits since the last tag and, when a `feat:`/`fix:`
+is due, tags `v<version>` and creates the GitHub release; `tauri-apps/tauri-action` then adds
+signed and notarized macOS DMGs (Apple Silicon and Intel) and Linux `.deb`/`.AppImage`. Windows is not
 supported (the unit's console transport is Unix-only, and card building needs e2fsprogs/mtools).
 
 To reproduce a signed build locally, on a Mac with your Developer ID certificate in the login
@@ -56,8 +55,9 @@ export APPLE_TEAM_ID="<TEAMID>"
 cd apps/desktop && bun run tauri build             # signs, notarizes and staples the .app/.dmg
 ```
 
-`tauri.conf.json` reads its version from `apps/desktop/package.json`; release-please bumps
-it (and the root `package.json`) in the release PR. Keep the bundle `identifier`
+`tauri.conf.json` reads its version from `apps/desktop/package.json`. The committed version
+stays `0.1.0`; the release job runs `npm version <release> --no-git-tag-version` before
+building and never commits it back (the git tag is the record). Keep the bundle `identifier`
 (`dev.tmpnam.app`) stable: notarization, the log directory and the settings location are
 tied to it. Tauri enables the hardened runtime by default; no extra entitlements are needed
 (the app uses no sandbox, and the card writer re-runs the app's own binary through the

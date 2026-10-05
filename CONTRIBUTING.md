@@ -39,7 +39,7 @@ external contributions.
 
 - Open as **draft** while iterating (CodeRabbit skips drafts), mark ready when settled.
 - Every commit and the PR title follow [Conventional Commits](https://www.conventionalcommits.org)
-  (`feat:`, `fix:`, `docs:`, `chore:`, …). The squashed title drives the next release version (release-please).
+  (`feat:`, `fix:`, `docs:`, `chore:`, …). The squashed title drives the release version (semantic-release).
 - Address CodeRabbit findings with a fix or a reasoned reply; don't resolve its threads by hand.
 - Keep formatting changes to touched files.
 

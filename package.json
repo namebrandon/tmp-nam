@@ -1,11 +1,11 @@
 {
-  "name": "tmp-nam",
-  "version": "0.1.0",
+  "name": "tmp-nam-tooling",
   "private": true,
   "type": "module",
-  "description": "Repository tooling (commitlint, release-please version). The app lives in apps/desktop.",
+  "description": "Repository tooling only (commitlint, semantic-release). The app lives in apps/desktop.",
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
-    "@commitlint/config-conventional": "^21.2.3"
+    "@commitlint/config-conventional": "^21.2.3",
+    "semantic-release": "^25.0.9"
   }
 }
