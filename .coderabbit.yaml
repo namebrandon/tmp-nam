@@ -71,7 +71,7 @@ reviews:
       instructions: |
         Writes raw block devices. Flag any path that could select the system disk, skip the
         removable/size checks, or write before unmounting.
-    - path: "{.github/**,.coderabbit.yaml,package.json,commitlint.config.js,rust-toolchain.toml,**/Cargo.toml,apps/desktop/package.json,apps/desktop/src-tauri/tauri.conf.json}"
+    - path: "{.github/**,.coderabbit.yaml,release-please-config.json,.release-please-manifest.json,package.json,commitlint.config.js,rust-toolchain.toml,**/Cargo.toml,apps/desktop/package.json,apps/desktop/src-tauri/tauri.conf.json}"
       instructions: |
         Setups must follow each tool's official documentation (see CLAUDE.md "Official documentation
         first"). Flag custom scripts or glue where the tool documents a standard way, restated

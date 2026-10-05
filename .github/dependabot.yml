@@ -30,7 +30,7 @@ updates:
         applies-to: version-updates
         update-types: ["minor", "patch"]
 
-  # Repository tooling (root package.json + package-lock.json: commitlint, semantic-release)
+  # Repository tooling (root package.json + package-lock.json: commitlint)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
