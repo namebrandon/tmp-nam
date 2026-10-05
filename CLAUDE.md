@@ -153,7 +153,9 @@ are the record.
   Renaming a job means updating the ruleset.
 - Every commit is a Conventional Commit (commitlint); the squashed title drives the version.
 - Dependabot (`.github/dependabot.yml`) opens weekly grouped updates with a 7-day cooldown;
-  `dependabot-auto-approve.yml` approves them.
+  `dependabot-auto-approve.yml` approves them. It cannot parse Bun 1.4's `bun.lock` v2 yet
+  (dependabot/dependabot-core#16026), so frontend deps get no Dependabot PRs or alerts; CI
+  runs `bun audit` instead.
 - The owner's and Dependabot's ready PRs get auto-merge armed by `auto-merge.yml` (GitHub
   App token, so the merge push triggers `release.yml`). External PRs are merged by hand by
   @pcavadas.

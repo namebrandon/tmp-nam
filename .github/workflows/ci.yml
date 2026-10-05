@@ -99,6 +99,9 @@ jobs:
       - run: bun run typecheck
       - run: bun run lint
       - run: bun run test
+      # Frontend vulnerability check: Dependabot cannot parse bun.lock v2 yet
+      # (dependabot/dependabot-core#16026), so it raises no alerts for these packages.
+      - run: bun audit
 
   bundle:
     name: bundle (${{ matrix.os }})
