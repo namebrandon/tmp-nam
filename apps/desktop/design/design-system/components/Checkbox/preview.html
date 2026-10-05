@@ -1,0 +1,15 @@
+<!-- @dsCard group="Inputs" height=110 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Checkbox</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:16px;display:flex;flex-direction:column;gap:8px}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.Checkbox, { label: 'Feather', defaultChecked: true }), h(T.Checkbox, { label: 'Full' }), h(T.Checkbox, { label: 'TS808 into JC-120 (no allowed model)', disabled: true })));
+</script>
+</body>
+</html>

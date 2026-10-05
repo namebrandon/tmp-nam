@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sidebar</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav class="sidebar {{theme}}" aria-label="Sections" style="height: 700px; font-family: var(--font); color: var(--text)">
+  <div class="lights"><span></span><span></span><span></span></div>
+  <div class="navgroup">
+    <button class="nav-item {{capOn}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h2l2-5 3 10 2-7 1.2 2h2.8"/></svg>Captures<span class="count">{{count}}</span></button>
+    <button class="nav-item {{t3kOn}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5a3 3 0 0 1-.3-6 4 4 0 0 1 7.7 1 2.5 2.5 0 0 1 .3 5"/><path d="M8 8v6m-2-2 2 2 2-2"/></svg>Tone3000</button>
+    <button class="nav-item {{sdOn}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h6v13h-8V3.5z"/><path d="M7 4v2m2-2v2"/></svg>SD Card</button>
+  </div>
+  <div class="sb-fill"></div>
+  <sc-if value="{{hasActivity}}" hint-placeholder-val="{{ false }}">
+    <div class="sb-activity">
+      <span style="font-weight: 600">{{activity}}</span>
+      <span class="muted">{{detail}}</span>
+      <sc-if value="{{indet}}" hint-placeholder-val="{{ false }}"><div class="progress indet"><i></i></div></sc-if>
+      <sc-if value="{{det}}" hint-placeholder-val="{{ false }}"><div class="progress"><i style="{{barStyle}}"></i></div></sc-if>
+    </div>
+  </sc-if>
+  <div class="navgroup" style="padding-bottom: 8px">
+    <button class="nav-item {{setOn}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h7m3 0h2M2 11.5h2m3 0h7"/><circle cx="10.5" cy="4.5" r="1.5"/><circle cx="5.5" cy="11.5" r="1.5"/></svg>Settings</button>
+  </div>
+  <div class="unitbox">
+    <span class="name">Tone Master Pro</span>
+    <sc-if value="{{connOk}}" hint-placeholder-val="{{ true }}"><span class="state"><span class="dot ok"></span>Connected · NAM card</span></sc-if>
+    <sc-if value="{{connLooking}}" hint-placeholder-val="{{ false }}"><span class="state"><span class="spinner"></span>Looking for the unit…</span></sc-if>
+    <sc-if value="{{connMissing}}" hint-placeholder-val="{{ false }}"><span class="state"><span class="dot off"></span>Not connected</span></sc-if>
+    <sc-if value="{{connBusy}}" hint-placeholder-val="{{ false }}"><span class="state"><span class="dot warn"></span>Engine restarting</span></sc-if>
+  </div>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["captures","tone3000","sdcard","settings"],"default":"captures"},"conn":{"editor":"enum","options":["connected","looking","missing","busy"],"default":"connected"},"count":{"editor":"text","default":"9"},"activity":{"editor":"text","default":""},"detail":{"editor":"text","default":""},"pct":{"editor":"text","default":"-1"},"$preview":{"width":200,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const a = p.active || 'captures';
+    const c = p.conn || 'connected';
+    const pct = p.pct == null ? '-1' : String(p.pct);
+    return {
+      theme: 'dark',
+      capOn: a === 'captures' ? 'on' : '',
+      t3kOn: a === 'tone3000' ? 'on' : '',
+      sdOn: a === 'sdcard' ? 'on' : '',
+      setOn: a === 'settings' ? 'on' : '',
+      count: p.count == null ? '' : p.count,
+      connOk: c === 'connected',
+      connLooking: c === 'looking',
+      connMissing: c === 'missing',
+      connBusy: c === 'busy',
+      hasActivity: !!p.activity,
+      activity: p.activity || '',
+      detail: p.detail || '',
+      indet: pct === '-1',
+      det: pct !== '-1',
+      barStyle: 'width: ' + pct + '%'
+    };
+  }
+}
+</script>
+</body>
+</html>

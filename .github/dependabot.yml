@@ -1,0 +1,76 @@
+# Version updates (https://docs.github.com/code-security/dependabot/working-with-dependabot/dependabot-options-reference),
+# weekly with a 7-day cooldown so a freshly published (possibly compromised) release
+# has aged before a PR opens. Security updates are the separate "Dependabot security
+# updates" repo setting and are not delayed. dependabot-auto-approve.yml approves and
+# auto-merge.yml arms auto-merge, so a bump lands once CI is green.
+version: 2
+
+updates:
+  # Desktop app (apps/desktop/package.json + bun.lock)
+  - package-ecosystem: "bun"
+    directory: "/apps/desktop"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    cooldown:
+      default-days: 7
+    ignore:
+      # eslint-plugin-react (peer eslint <= 9.7) still calls context.getFilename(),
+      # removed in eslint 10. Bump both together once the plugin supports eslint 10.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint 8 does not support TypeScript 7 (eslint crashes on start).
+      # Bump both together once it does.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    groups:
+      frontend-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+
+  # Repository tooling (root package.json + package-lock.json: commitlint, semantic-release)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    cooldown:
+      default-days: 7
+    groups:
+      tooling-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+
+  # Rust workspace (Cargo.toml + Cargo.lock)
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    cooldown:
+      default-days: 7
+    groups:
+      rust-minor-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+
+  # GitHub Actions (bumps the SHA pins and their `# vN` comments together)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    cooldown:
+      default-days: 7
+    groups:
+      actions-all:
+        applies-to: version-updates
+        patterns: ["*"]

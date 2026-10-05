@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TMP NAM components</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="dsroot {{theme}}" style="width: 1440px; min-height: 2120px">
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <span class="t-label">TMP NAM · Design system v1</span>
+    <h1 class="ds-h">Components and states</h1>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px">
+    <section class="ds-sec">
+      <h2>Buttons</h2>
+      <div class="demo">
+        <div class="demo-row"><span class="demo-lbl"></span><span class="spec" style="width: 120px">default</span><span class="spec" style="width: 120px">hover</span><span class="spec" style="width: 120px">pressed</span><span class="spec" style="width: 120px">focus</span><span class="spec">disabled</span></div>
+        <div class="demo-row"><span class="demo-lbl">Primary</span>
+          <div style="width: 120px"><button class="btn btn-primary">Send 3 Captures</button></div>
+          <div style="width: 120px"><button class="btn btn-primary is-hover">Send 3 Captures</button></div>
+          <div style="width: 120px"><button class="btn btn-primary is-pressed">Send 3 Captures</button></div>
+          <div style="width: 120px"><button class="btn btn-primary is-focus">Send 3 Captures</button></div>
+          <button class="btn btn-primary" disabled>Send 3 Captures</button>
+        </div>
+        <div class="demo-row"><span class="demo-lbl">Secondary</span>
+          <div style="width: 120px"><button class="btn">Choose File…</button></div>
+          <div style="width: 120px"><button class="btn is-hover">Choose File…</button></div>
+          <div style="width: 120px"><button class="btn is-pressed">Choose File…</button></div>
+          <div style="width: 120px"><button class="btn is-focus">Choose File…</button></div>
+          <button class="btn" disabled>Choose File…</button>
+        </div>
+        <div class="demo-row"><span class="demo-lbl">Destructive</span>
+          <div style="width: 120px"><button class="btn btn-danger">Erase and Create</button></div>
+          <div style="width: 120px"><button class="btn btn-danger is-hover">Erase and Create</button></div>
+          <div style="width: 120px"><button class="btn btn-danger is-pressed">Erase and Create</button></div>
+          <div style="width: 120px"><button class="btn btn-danger is-focus">Erase and Create</button></div>
+          <button class="btn btn-danger" disabled>Erase and Create</button>
+        </div>
+        <div class="demo-row"><span class="demo-lbl">Plain</span>
+          <div style="width: 120px"><button class="btn btn-plain">Show Log</button></div>
+          <div style="width: 120px"><button class="btn btn-plain is-hover">Show Log</button></div>
+          <div style="width: 120px"><button class="btn btn-plain is-pressed">Show Log</button></div>
+          <div style="width: 120px"><button class="btn btn-plain is-focus">Show Log</button></div>
+          <button class="btn btn-plain" disabled>Show Log</button>
+        </div>
+        <div class="divider"></div>
+        <div class="demo-row"><span class="demo-lbl">Sizes</span><button class="btn btn-primary btn-lg">Create SD Card</button><button class="btn">Add Captures…</button><button class="btn btn-sm">1× as captured</button><button class="btn btn-icon" aria-label="Remove capture"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8h10"/></svg></button></div>
+        <div class="demo-row"><span class="demo-lbl">Busy-locked</span>
+          <span style="display: inline-flex; flex-direction: column; gap: 4px"><button class="btn" disabled>Add Captures…</button><span class="help">Available when the transfer finishes</span></span>
+        </div>
+        <p class="help">One primary per view, bottom-right in sheets. Destructive red only on the button that actually erases or removes. A button disabled by a running operation says why underneath or in its tooltip.</p>
+      </div>
+    </section>
+
+    <section class="ds-sec">
+      <h2>Inputs</h2>
+      <div class="demo" style="gap: 16px">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+          <div class="field"><label for="c1">API key</label><input id="c1" class="input mono" value="" placeholder="Paste your Tone3000 API key"><span class="help">default</span></div>
+          <div class="field"><label for="c2">API key</label><input id="c2" class="input mono is-focus" value="t3k_live_8f2c"><span class="help">focus</span></div>
+          <div class="field"><label for="c3">API key</label><input id="c3" class="input mono is-error" value="t3k_8f2c91"><span class="err">Tone3000 rejected this key. Check it on tone3000.com › Settings › API.</span></div>
+          <div class="field"><label for="c4">API key</label><input id="c4" class="input mono" value="••••••••••••••••a91e" disabled><span class="help">saved (masked, disabled while editing is off)</span></div>
+        </div>
+        <div class="divider"></div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+          <div class="vcol">
+            <span class="lbl">Checkbox</span>
+            <label class="checkrow"><input type="checkbox" checked> <span>Feather</span></label>
+            <label class="checkrow"><input type="checkbox"> <span>Full</span></label>
+            <label class="checkrow" style="color: var(--text-disabled)"><input type="checkbox" disabled> <span>Disabled</span></label>
+          </div>
+          <div class="vcol">
+            <span class="lbl">Radio (SD card list)</span>
+            <label class="checkrow"><input type="radio" name="r" checked> <span>Generic STORAGE DEVICE</span></label>
+            <label class="checkrow"><input type="radio" name="r"> <span>SanDisk SDDR-B531</span></label>
+            <label class="checkrow" style="color: var(--text-disabled)"><input type="radio" name="r" disabled> <span>Built-in SD reader</span></label>
+          </div>
+          <div class="vcol">
+            <span class="lbl">Pop-up button</span>
+            <button class="popup">A2 · Feather</button>
+            <button class="popup">A1 · Standard</button>
+            <button class="popup warn">No allowed model</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="demo-row"><span class="demo-lbl">Segmented</span><div class="seg"><button class="on">All</button><button>Bookmarked</button><button>Mine</button></div></div>
+      </div>
+    </section>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
+    <section class="ds-sec">
+      <h2>Unit status</h2>
+      <div class="demo" style="padding: 0; gap: 0; background: var(--bg-sidebar)">
+        <div class="unitbox" style="border-top: 0"><span class="name">Tone Master Pro</span><span class="state"><span class="dot ok"></span>Connected · NAM card</span></div>
+        <div class="unitbox"><span class="name">Tone Master Pro</span><span class="state"><span class="spinner"></span>Looking for the unit…</span></div>
+        <div class="unitbox"><span class="name">Tone Master Pro</span><span class="state"><span class="dot off"></span>Not connected</span></div>
+        <div class="unitbox"><span class="name">Tone Master Pro</span><span class="state"><span class="dot warn"></span>Busy · engine restarting</span></div>
+      </div>
+      <p class="help">Lives at the bottom of the sidebar on every page. Detection is automatic: there is no Connect button anywhere.</p>
+    </section>
+
+    <section class="ds-sec">
+      <h2>Tags</h2>
+      <div class="demo">
+        <div class="demo-row"><span class="demo-lbl">Architecture</span><span class="tag arch">A1 · Feather</span><span class="tag arch">A1</span><span class="tag arch">A2 · 2 sizes</span><span class="tag arch">A2 · 3 sizes</span></div>
+        <div class="demo-row"><span class="demo-lbl">Rate</span><span class="tag">48 kHz</span><span class="tag">44.1 kHz</span></div>
+        <div class="demo-row"><span class="demo-lbl">File state</span><span class="tag danger">File missing</span><span class="tag warn">Not registered</span></div>
+        <div class="demo-row"><span class="demo-lbl">Tone3000</span><span class="tag ok">On unit</span><span class="tag">Bookmark</span><span class="tag accent">Yours</span></div>
+        <div class="demo-row"><span class="demo-lbl">Pending</span><span class="tag accent">Changed · applies on reselect</span></div>
+      </div>
+      <p class="help">Tags label facts. Warning and danger tags appear only when something needs action.</p>
+    </section>
+
+    <section class="ds-sec">
+      <h2>Progress</h2>
+      <div class="demo">
+        <div class="vcol"><div style="display: flex; justify-content: space-between" class="t-sm"><span>Sending Marshall JCM800 2203</span><span class="muted num">48%</span></div><div class="progress"><i style="width: 48%"></i></div></div>
+        <div class="vcol"><div class="t-sm">Restarting audio engine…</div><div class="progress indet"><i></i></div></div>
+        <div class="vcol"><div class="t-sm" style="color: var(--ok)">Verified</div><div class="progress ok"><i style="width: 100%"></i></div></div>
+        <div class="vcol"><div class="t-sm" style="color: var(--danger)">Stopped at 62%</div><div class="progress danger"><i style="width: 62%"></i></div></div>
+        <div class="divider"></div>
+        <span class="lbl">Sidebar activity (persists across pages)</span>
+        <div class="sb-activity" style="margin: 0; background: var(--bg-subtle)"><span><b>Sending captures</b></span><span class="muted">2 of 3 · Mesa Mark IIC+</span><div class="progress"><i style="width: 55%"></i></div></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="ds-sec">
+    <h2>Banners</h2>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <div class="banner info"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 5v.1"/></svg><div><div class="bt">Size and gain apply on reselect</div>Select the capture again on the unit to hear the change.</div></div>
+      <div class="banner warn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 14.5 13.5h-13z"/><path d="M8 6.5v3M8 11.6v.1"/></svg><div><div class="bt">Command-line tools missing</div>Install them with Homebrew, then reopen this page.</div></div>
+      <div class="banner error"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4M8 11v.1"/></svg><div><div class="bt">Unit disconnected</div>1 of 3 captures was sent. Reconnect to send the rest.</div></div>
+      <div class="banner ok"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><div><div class="bt">3 captures added</div>They appear under User IRs on the unit.</div></div>
+    </div>
+  </section>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 32px">
+    <section class="ds-sec">
+      <h2>Capture table rows</h2>
+      <div class="demo" style="padding: 0; overflow: hidden">
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Type</th><th>Rate</th><th class="r">Size</th><th class="r">Gain</th><th>State</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cname">Vox AC30 Top Boost</span><span class="csub">Vox · AC30 · Amp</span></td><td><span class="tag arch">A1 · Feather</span></td><td>48 kHz</td><td class="r num">296 KB</td><td class="r num">1×</td><td><span class="spec">default</span></td></tr>
+            <tr class="hover"><td><span class="cname">Marshall JCM800 2203</span><span class="csub">Marshall · JCM800 2203 · Amp + cab</span></td><td><span class="tag arch">A2 · 2</span></td><td>48 kHz</td><td class="r num">1.1 MB</td><td class="r num">4×</td><td><span class="spec">hover</span></td></tr>
+            <tr class="sel"><td><span class="cname">Mesa Mark IIC+ Lead</span><span class="csub">Mesa/Boogie · Mark IIC+ · Amp</span></td><td><span class="tag arch">A2 · 3</span></td><td>44.1 kHz</td><td class="r num">1.6 MB</td><td class="r num">3.5×</td><td><span class="spec">selected</span></td></tr>
+            <tr class="dim"><td><span class="cname">Dumble ODS Clean</span><span class="csub">— · — · Amp</span></td><td><span class="tag arch">A1</span></td><td>—</td><td class="r num">—</td><td class="r num">1×</td><td><span class="tag danger">File missing</span></td></tr>
+            <tr><td><span class="cname">bluesbreaker_v2.nam</span><span class="csub">No metadata</span></td><td><span class="tag arch">A1</span></td><td>48 kHz</td><td class="r num">301 KB</td><td class="r num">—</td><td><span class="tag warn">Not registered</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="help">Missing gear fields show an em dash. Gain shows the multiplier; dB lives in the inspector.</p>
+    </section>
+
+    <section class="ds-sec">
+      <h2>Inspector controls</h2>
+      <div class="demo">
+        <div class="field">
+          <span class="lbl">Size the player loads</span>
+          <div class="sizepick"><button>Feather<small>smallest</small></button><button class="on">Standard<small>middle</small></button><button>Full<small>largest</small></button></div>
+          <span class="help">Labels come from the container. Order is always smallest → largest.</span>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <div style="display: flex; justify-content: space-between; align-items: center"><span class="lbl">Output gain</span><div class="stepper"><button aria-label="Decrease gain">−</button><span class="v">4×</span><button aria-label="Increase gain">+</button></div></div>
+          <input class="range" type="range" min="0" max="8" step="0.5" value="4" aria-label="Output gain">
+          <div class="ticks"><span>0×</span><span>2×</span><span>4×</span><span>6×</span><span>8×</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: center"><span class="t-sm muted num">+12.0 dB over the capture</span><span style="display: flex; gap: 6px"><button class="btn btn-sm">1×</button><button class="btn btn-sm">4×</button></span></div>
+        </div>
+        <div class="pending"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 5v.1"/></svg><span>Saved to the unit. Applies the next time you select this capture.</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
+    <section class="ds-sec">
+      <h2>Stage list</h2>
+      <div class="demo">
+        <ul class="stages">
+          <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span>Building the filesystem</span><span class="t">0:42</span></li>
+          <li class="now"><span class="ic"><span class="spinner"></span></span><span>Writing to card</span><span class="t">about 4 min left</span></li>
+          <li class="todo"><span class="ic"></span><span>Reading back to verify</span><span class="t">a few min</span></li>
+          <li class="fail"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l4 4M7 3 3 7"/></svg></span><span>Reading back to verify</span><span class="t">failed</span></li>
+        </ul>
+        <span class="help">done · current · pending · failed</span>
+      </div>
+    </section>
+    <section class="ds-sec">
+      <h2>Menu / popover</h2>
+      <div class="demo" style="position: relative; height: 252px; background: var(--bg-subtle)">
+        <div class="popover" style="left: 18px; top: 18px; width: 230px">
+          <div class="menuhead">Allowed</div>
+          <div class="menuitem on"><span class="chk">✓</span>A2 · Feather <span style="margin-left: auto; font-size: 11px; opacity: .8">auto</span></div>
+          <div class="menuitem"><span class="chk"></span>A2 · Nano</div>
+          <div class="menusep"></div>
+          <div class="menuhead">Not allowed by your settings</div>
+          <div class="menuitem"><span class="chk"></span>A2 · Full</div>
+          <div class="menuitem"><span class="chk"></span>A1 · Standard</div>
+        </div>
+      </div>
+    </section>
+    <section class="ds-sec">
+      <h2>Sheet anatomy</h2>
+      <div class="demo" style="padding: 0; overflow: hidden; background: var(--bg-subtle)">
+        <div class="sheet" style="margin: 0 auto; width: 100%; border-radius: 0; box-shadow: none">
+          <div class="sh-body" style="padding: 16px 18px">
+            <span class="t-title" style="font-size: 15px">Title says what will happen</span>
+            <span class="t-sm muted">One or two sentences: what is affected and what can't be undone.</span>
+          </div>
+          <div class="sh-foot"><span class="help" style="margin-right: auto">Esc cancels</span><button class="btn">Cancel</button><button class="btn btn-primary">Verb + object</button></div>
+        </div>
+      </div>
+      <p class="help">Sheets drop from the toolbar edge and block only this window. Long operations never run inside a sheet: they move to the page and the sidebar so you can look around.</p>
+    </section>
+  </div>
+
+  <section class="ds-sec">
+    <h2>Empty and disconnected pattern</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px">
+      <div class="demo" style="padding: 28px">
+        <div class="empty">
+          <span class="t-title">Connect the Tone Master Pro</span>
+          <ol class="steps">
+            <li>Insert the NAM SD card and power the unit on.</li>
+            <li>Wait for the preset screen.</li>
+            <li>Plug the unit's USB-C cable into this Mac.</li>
+          </ol>
+          <span class="t-sm muted3" style="display: flex; gap: 8px; align-items: center"><span class="spinner"></span>Looking for the unit. It's detected automatically.</span>
+        </div>
+      </div>
+      <div class="demo" style="padding: 28px">
+        <div class="empty">
+          <span class="t-title">No captures on the unit</span>
+          <span class="muted">Add .nam files from this Mac, or install tones from your Tone3000 account.</span>
+          <div style="display: flex; gap: 8px"><button class="btn btn-primary">Add Captures…</button><button class="btn">Browse Tone3000</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: 'dark' };
+  }
+}
+</script>
+</body>
+</html>

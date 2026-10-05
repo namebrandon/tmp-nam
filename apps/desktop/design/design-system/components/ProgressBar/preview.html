@@ -1,0 +1,18 @@
+<!-- @dsCard group="Status" height=190 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>ProgressBar</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:16px;display:flex;flex-direction:column;gap:14px;max-width:420px}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.ProgressBar, { value: 48, label: 'Sending JC-120 Clean', detail: '143 of 298 KB' }),
+  h(T.ProgressBar, { indeterminate: true, label: 'Restarting audio engine…' }),
+  h(T.ProgressBar, { value: 100, tone: 'ok', label: 'Verified' }),
+  h(T.ProgressBar, { value: 62, tone: 'danger', label: 'Stopped at 62%' })));
+</script>
+</body>
+</html>

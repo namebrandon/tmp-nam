@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add captures, engine restarting</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="busy" count="9" activity="Restarting audio engine" detail="A few seconds" pct="-1" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1><span class="sub">9 on unit · 6.1 MB</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" disabled title="Available when the unit is ready">Add Captures…</button>
+    </header>
+    <section style="padding: 16px 20px 18px; border-bottom: 1px solid var(--sep); background: var(--bg-subtle); display: flex; flex-direction: column; gap: 12px" aria-live="polite">
+      <div style="display: flex; flex-direction: column; gap: 2px"><span class="t-head" style="font-size: 15px">Restarting the unit's audio engine</span><span class="t-sm muted">All 3 captures were sent. The unit is silent for a few seconds while it loads them.</span></div>
+      <div class="progress indet"><i></i></div>
+      <div style="display: grid; grid-template-columns: 18px 1fr 120px; gap: 6px 10px; align-items: center; font-size: 12px">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="var(--ok-dot)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><span>Plexi 1968 Super Lead</span><span class="muted3" style="text-align: right">Sent</span>
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="var(--ok-dot)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><span>JC-120 Clean</span><span class="muted3" style="text-align: right">Sent</span>
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="var(--ok-dot)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><span>Rectifier Modern Red</span><span class="muted3" style="text-align: right">Sent</span>
+      </div>
+    </section>
+    <table class="tbl">
+      <thead><tr><th>Name</th><th>Type</th><th class="r">Size</th><th class="r" style="padding-right: 16px">Gain</th></tr></thead>
+      <tbody>
+        <tr class="dim"><td><span class="cname">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">Fender · Deluxe Reverb · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr class="dim"><td><span class="cname">Marshall JCM800 2203 Crunch</span><span class="csub">Marshall · JCM800 2203 · Amp + cab</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr class="dim"><td><span class="cname">Mesa Mark IIC+ Lead</span><span class="csub">Mesa/Boogie · Mark IIC+ · Amp</span></td><td><span class="tag arch">A2 · 3</span></td><td class="r num">1.6 MB</td><td class="r num" style="padding-right: 16px">3.5×</td></tr>
+        <tr class="dim"><td><span class="cname">Vox AC30 Top Boost</span><span class="csub">Vox · AC30 · Amp</span></td><td><span class="tag arch">A1 · Feather</span></td><td class="r num">296 KB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr class="dim"><td><span class="cname">Friedman BE-100 BE Channel</span><span class="csub">Friedman · BE-100 · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+      </tbody>
+    </table>
+    <div style="flex: 1"></div>
+    <div class="footer">Checking that each new capture loaded…</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

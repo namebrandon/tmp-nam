@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tone3000, installing</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="tone3000" conn="connected" count="9" activity="Installing 3 tones" detail="Sending 1 of 3 to the unit" pct="58" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Tone3000</h1><span class="sub">Signed in as riffwright</span>
+      <span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Show"><button class="on">All</button><button>Bookmarked</button><button>Mine</button></div>
+    </header>
+    <section style="padding: 16px 20px 18px; border-bottom: 1px solid var(--sep); background: var(--bg-subtle); display: flex; flex-direction: column; gap: 12px" aria-live="polite">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <div style="display: flex; flex-direction: column; gap: 2px"><span class="t-head" style="font-size: 15px">Installing 3 tones</span><span class="t-sm muted">Downloaded 3 of 3 · sending to the unit. Then the audio engine restarts for a few seconds.</span></div>
+        <button class="btn btn-sm">Stop After This One</button>
+      </div>
+      <div style="display: grid; grid-template-columns: 90px 1fr 90px 1fr 120px 1fr; gap: 8px; align-items: center; font-size: 11px" class="muted3">
+        <span>1 Download</span><div class="progress ok"><i style="width: 100%"></i></div>
+        <span style="text-align: right; color: var(--text); font-weight: 600">2 Send</span><div class="progress"><i style="width: 38%"></i></div>
+        <span style="text-align: right">3 Restart engine</span><div class="progress"><i style="width: 0%"></i></div>
+      </div>
+    </section>
+    <table class="tbl">
+      <thead><tr><th style="width: 36px; padding-right: 0"></th><th>Tone</th><th>Model</th><th style="padding-right: 20px">Status</th></tr></thead>
+      <tbody>
+        <tr><td style="padding-right: 0"><input type="checkbox" checked disabled aria-label="Plexi Super Lead 1968, installing"></td><td><span class="cname">Plexi Super Lead 1968</span><span class="csub">by tonehunter</span></td><td class="t-sm">A2 · Feather</td><td style="padding-right: 20px; width: 200px"><div style="display: flex; flex-direction: column; gap: 4px"><span class="t-sm" style="font-weight: 600">Sending · 72%</span><div class="progress"><i style="width: 72%"></i></div></div></td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" checked disabled aria-label="Dual Rectifier Modern, waiting"></td><td><span class="cname">Dual Rectifier Modern</span><span class="csub">by mbtones</span></td><td class="t-sm">A1 · Feather</td><td class="t-sm muted3" style="padding-right: 20px">Downloaded · waiting to send</td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" checked disabled aria-label="Bogner Shiva, waiting"></td><td><span class="cname">Bogner Shiva 20th Lead</span><span class="csub">by tonehunter</span></td><td class="t-sm">A2 · Nano</td><td class="t-sm muted3" style="padding-right: 20px">Downloaded · waiting to send</td></tr>
+        <tr class="dim"><td style="padding-right: 0"><input type="checkbox" disabled aria-label="Fender Deluxe Reverb"></td><td><span class="cname">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">by riffwright</span></td><td class="t-sm">A2 · Feather</td><td style="padding-right: 20px"><span class="tag ok">On unit</span></td></tr>
+        <tr class="dim"><td style="padding-right: 0"><input type="checkbox" disabled aria-label="Marshall JCM800"></td><td><span class="cname">Marshall JCM800 2203 Crunch</span><span class="csub">by riffwright</span></td><td class="t-sm">A2 · Feather</td><td style="padding-right: 20px"><span class="tag ok">On unit</span></td></tr>
+        <tr class="dim"><td style="padding-right: 0"><input type="checkbox" disabled aria-label="Orange Rockerverb"></td><td><span class="cname">Orange Rockerverb 50 Dirty</span><span class="csub">by halfstack</span></td><td class="t-sm">A2 · Feather</td><td class="muted3" style="padding-right: 20px">—</td></tr>
+      </tbody>
+    </table>
+    <div style="flex: 1"></div>
+    <div class="footer" style="height: 56px; background: var(--bg-content)">
+      <span>Keep the USB cable connected. Selection and model changes are paused until this finishes.</span>
+      <span style="flex: 1"></span>
+      <button class="btn btn-primary" disabled>Installing…</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

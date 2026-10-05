@@ -1,0 +1,16 @@
+<!-- @dsCard group="Actions" height=64 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>SegmentedControl</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:16px;display:flex;gap:16px}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.SegmentedControl, { options: ['All', 'Bookmarked', 'Mine'], 'aria-label': 'Show' }),
+  h(T.SegmentedControl, { options: ['Tone3000', 'Allowed Variants', 'Unit'], value: 'Unit', 'aria-label': 'Settings sections' })));
+</script>
+</body>
+</html>

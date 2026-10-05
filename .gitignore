@@ -1,0 +1,38 @@
+# Build outputs
+build/
+target/
+*.img
+
+# Player vendor dependencies (downloaded by player/bootstrap_nam_deps.sh)
+player/stubs/vendor/NeuralAmpModelerCore/
+player/stubs/vendor/SpeexDSP/
+player/stubs/vendor/build/
+
+# Desktop app
+apps/desktop/node_modules/
+apps/desktop/dist/
+apps/desktop/.vite/
+apps/desktop/src-tauri/gen/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Local tool config
+.claude/launch.json
+
+# Repository tooling (root package.json)
+node_modules/
+
+# NAM captures are never committed (third-party models); tests use the pinned
+# NeuralAmpModelerCore example_models/ fetched by player/bootstrap_nam_deps.sh.
+*.nam

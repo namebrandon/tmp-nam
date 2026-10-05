@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings, Tone3000</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="settings" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">Settings</h1><span class="spacer"></span><div class="seg" role="tablist" aria-label="Settings sections"><button class="on" role="tab" aria-selected="true">Tone3000</button><button role="tab">Allowed Variants</button><button role="tab">Unit</button></div><span class="spacer"></span></header>
+    <div style="padding: 12px 40px; max-width: 680px">
+      <div class="form-row">
+        <span class="lbl">API key</span>
+        <div class="field">
+          <div style="display: flex; gap: 8px"><input class="input mono" value="••••••••••••••••••••a91e" disabled aria-label="API key"><button class="btn">Replace…</button><button class="btn" style="color: var(--danger)">Remove</button></div>
+          <span class="help">Your own key from tone3000.com › Settings › API. Stored in the Keychain. Removing it also signs you out.</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <span class="lbl">Account</span>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span class="dot ok"></span><span>Signed in as <b>riffwright</b></span>
+          <button class="btn" style="margin-left: auto">Sign Out</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <span class="lbl">Tones shown</span>
+        <span class="t-sm muted" style="padding-top: 5px">Your bookmarks and the tones you've published. Change them on tone3000.com, then Refresh on the Tone3000 page.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

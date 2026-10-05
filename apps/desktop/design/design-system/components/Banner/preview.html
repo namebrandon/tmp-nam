@@ -1,0 +1,19 @@
+<!-- @dsCard group="Status" height=330 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Banner</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:16px;display:flex;flex-direction:column;gap:10px;max-width:560px}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.Banner, { tone: 'note', title: 'Saved to the unit' }, "You'll hear 4× the next time you select this capture on the unit."),
+  h(T.Banner, { tone: 'warn', title: '2 of 3 captures added', actions: [{ label: 'Send Again' }, { label: 'Remove It' }], onDismiss: function () {} }, "Rectifier Modern Red was sent, but the unit didn't load it after the engine restart."),
+  h(T.Banner, { tone: 'error', title: 'The unit disconnected while sending' }, '1 of 3 captures reached the unit.'),
+  h(T.Banner, { tone: 'ok', title: '3 captures added' }, 'They appear under User IRs on the unit.'),
+  h(T.Banner, { tone: 'info' }, 'Keep the card in and the Mac awake.')));
+</script>
+</body>
+</html>

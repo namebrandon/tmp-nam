@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SD card, admin access denied</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="sdcard" conn="missing" count="" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">SD Card</h1><span class="sub">Make a card that boots the unit with NAM support</span></header>
+    <div style="flex: 1; display: flex; gap: 24px; padding: 20px 24px; overflow: hidden">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="banner error" role="alert">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4M8 11v.1"/></svg>
+          <div style="flex: 1"><div class="bt">Administrator access wasn't given</div>Nothing was written to the card. Writing to an SD card needs the password of an administrator account on this Mac.</div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="stepnum ok">✓</span><span class="t-head">Fender firmware file</span></div>
+          <div class="card-b"><div style="display: flex; align-items: center; gap: 10px"><div class="mono" style="flex: 1; font-weight: 600">ToneMasterPro_v1_8_58.img</div><span class="tag ok">Verified</span><button class="btn btn-sm">Change…</button></div></div>
+        </div>
+        <div class="card" style="overflow: hidden">
+          <div class="card-h"><span class="stepnum ok">✓</span><span class="t-head">SD card</span><span class="t-sm muted3" style="margin-left: auto">Detected automatically</span></div>
+          <label class="disk sel"><input type="radio" name="d" checked><div><div style="font-weight: 500">Generic STORAGE DEVICE</div><div class="t-cap muted3">31.9 GB · USB</div></div><span></span></label>
+          <label class="disk"><input type="radio" name="d"><div><div style="font-weight: 500">SanDisk SDDR-B531</div><div class="t-cap muted3">63.9 GB · USB</div></div><span></span></label>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; margin-top: 4px">
+          <button class="btn btn-primary btn-lg">Try Again…</button>
+          <span class="t-sm muted">Erases Generic STORAGE DEVICE. Takes several minutes.</span>
+        </div>
+      </div>
+      <aside style="width: 220px; flex: none; display: flex; flex-direction: column; gap: 12px">
+        <span class="t-label">About the card</span>
+        <div class="t-sm" style="display: flex; flex-direction: column; gap: 10px">
+          <p><b>The unit itself isn't changed.</b> <span class="muted">Its internal firmware is never modified.</span></p>
+          <p><b>Remove the card to go back.</b> <span class="muted">Without it, the unit boots its stock firmware.</span></p>
+          <p><b>Keep your current card.</b> <span class="muted">If you already have a working NAM card, keep it as a spare and use a new card here.</span></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

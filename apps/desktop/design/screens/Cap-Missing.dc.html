@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Captures, file missing</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1><span class="sub">9 on unit · 6.1 MB</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Add Captures…</button>
+    </header>
+    <div class="body">
+      <div class="scroll" style="display: flex; flex-direction: column">
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Type</th><th class="r">Size</th><th class="r" style="padding-right: 16px">Gain</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cname" style="max-width: 250px">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">Fender · Deluxe Reverb · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Marshall JCM800 2203 Crunch</span><span class="csub">Marshall · JCM800 2203 · Amp + cab</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Mesa Mark IIC+ Lead</span><span class="csub">Mesa/Boogie · Mark IIC+ · Amp</span></td><td><span class="tag arch">A2 · 3</span></td><td class="r num">1.6 MB</td><td class="r num" style="padding-right: 16px">3.5×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Vox AC30 Top Boost</span><span class="csub">Vox · AC30 · Amp</span></td><td><span class="tag arch">A1 · Feather</span></td><td class="r num">296 KB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Friedman BE-100 BE Channel</span><span class="csub">Friedman · BE-100 · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Klon Centaur into Twin</span><span class="csub">Klon · Centaur · Pedal</span></td><td><span class="tag arch">A1</span></td><td class="r num">301 KB</td><td class="r num" style="padding-right: 16px">2×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Bogner Ecstasy Blue</span><span class="csub">Bogner · Ecstasy 101B · Amp</span></td><td><span class="tag arch">A1</span></td><td class="r num">298 KB</td><td class="r num" style="padding-right: 16px">4.5×</td></tr>
+            <tr class="sel"><td><span class="cname" style="max-width: 250px">Dumble ODS Clean</span><span class="csub" style="margin-top: 2px"><span class="tag danger">File missing</span></span></td><td><span class="tag arch">A1</span></td><td class="r num">—</td><td class="r num" style="padding-right: 16px">1×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">bluesbreaker_v2.nam</span><span class="csub" style="margin-top: 2px"><span class="tag warn">Not registered</span></span></td><td><span class="tag arch">A1</span></td><td class="r num">301 KB</td><td class="r num" style="padding-right: 16px">—</td></tr>
+          </tbody>
+        </table>
+        <div style="flex: 1"></div>
+        <div class="footer"><span class="dot warn"></span>2 captures need attention · select one to fix it</div>
+      </div>
+
+      <aside class="inspector" aria-label="Capture details">
+        <div class="insp-sec" style="gap: 6px">
+          <h2 class="t-head" style="font-size: 15px; line-height: 20px">Dumble ODS Clean</h2>
+          <span class="t-sm muted">Gear details unavailable</span>
+          <div style="display: flex; gap: 6px; margin-top: 4px"><span class="tag danger">File missing</span></div>
+        </div>
+        <div class="insp-sec">
+          <div class="banner error"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4M8 11v.1"/></svg><div><div class="bt">The unit lists this capture, but its file is gone</div>Presets that use it won't load it. Add the .nam file again, or remove the entry.</div></div>
+          <dl class="kv"><dt>Expected file</dt><dd class="mono" style="font-size: 11px">dumble_ods_clean.nam</dd></dl>
+          <div style="display: flex; gap: 8px"><button class="btn btn-primary">Choose File…</button><button class="btn" style="color: var(--danger)">Remove Entry…</button></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

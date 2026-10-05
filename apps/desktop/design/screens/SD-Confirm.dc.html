@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SD card, confirm erase</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="sdcard" conn="missing" count="" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">SD Card</h1><span class="sub">Make a card that boots the unit with NAM support</span></header>
+    <div style="flex: 1; display: flex; gap: 24px; padding: 20px 24px; overflow: hidden">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="card"><div class="card-h"><span class="stepnum ok">✓</span><span class="t-head">Fender firmware file</span></div><div class="card-b"><div class="mono" style="font-weight: 600">ToneMasterPro_v1_8_58.img</div></div></div>
+        <div class="card"><div class="card-h"><span class="stepnum ok">✓</span><span class="t-head">SD card</span></div><div class="card-b"><div>Generic STORAGE DEVICE · 31.9 GB</div></div></div>
+      </div>
+      <aside style="width: 220px; flex: none"></aside>
+    </div>
+  </div>
+  <div class="scrim">
+    <div class="sheet" style="width: 460px" role="alertdialog" aria-labelledby="er1">
+      <div class="sh-body">
+        <h2 id="er1" class="t-title">Erase this card and create the NAM card?</h2>
+        <div class="card" style="background: var(--bg-subtle)">
+          <div class="card-b" style="gap: 4px">
+            <span style="font-weight: 600">Generic STORAGE DEVICE</span>
+            <span class="t-sm muted">31.9 GB · USB · <span class="mono" style="font-size: 11px">/dev/disk4</span></span>
+          </div>
+        </div>
+        <p class="muted">Everything on this card will be deleted. Check it's the card you meant: other disks are never touched.</p>
+        <p class="t-sm muted3">Next, macOS asks for your administrator password. Writing then takes several minutes. Keep the card in and the Mac awake.</p>
+      </div>
+      <div class="sh-foot"><button class="btn is-focus">Cancel</button><button class="btn btn-danger">Erase and Create</button></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

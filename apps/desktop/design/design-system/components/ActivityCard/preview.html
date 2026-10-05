@@ -1,0 +1,17 @@
+<!-- @dsCard group="Status" height=210 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>ActivityCard</title>
+<style>body{margin:0;background:var(--bg-sidebar)} #root{width:200px;padding-top:12px}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.ActivityCard, { title: 'Sending captures', detail: '2 of 3 · JC-120 Clean', value: 55 }),
+  h(T.ActivityCard, { title: 'Restarting audio engine', detail: 'A few seconds' }),
+  h(T.ActivityCard, { title: 'Creating SD card', detail: 'Writing · about 4 min left', value: 64 })));
+</script>
+</body>
+</html>

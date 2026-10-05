@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SD card, writing</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="sdcard" conn="missing" count="" activity="Creating SD card" detail="Writing · about 4 min left" pct="64" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">SD Card</h1><span class="sub">Generic STORAGE DEVICE · 31.9 GB</span><span class="spacer"></span><button class="btn btn-plain">Show Log</button></header>
+    <div style="flex: 1; display: flex; justify-content: center; padding: 28px 24px; overflow: hidden">
+      <div style="width: 520px; display: flex; flex-direction: column; gap: 18px" aria-live="polite">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h2 class="t-title">Creating the NAM card</h2>
+          <span class="t-sm muted">Step 7 of 8 · about 4 minutes left, then a few more to verify</span>
+        </div>
+        <div class="progress" style="height: 8px; border-radius: 4px"><i style="width: 64%"></i></div>
+        <div class="card" style="padding: 4px 16px">
+          <ul class="stages">
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span>Checking the firmware file</span><span class="t">done</span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span>Extracting</span><span class="t">done</span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span>Verifying the extracted files</span><span class="t">done</span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span>Adding NAM support</span><span class="t">done</span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span>Building the filesystem</span><span class="t">done</span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span>Preparing partitions</span><span class="t">done</span></li>
+            <li class="now"><span class="ic"><span class="spinner"></span></span><span>Writing to the card</span><span class="t">1.2 of 1.9 GB</span></li>
+            <li class="todo"><span class="ic"></span><span>Reading back to verify</span><span class="t">next · a few min</span></li>
+          </ul>
+        </div>
+        <div class="banner info"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 5v.1"/></svg><div>Keep the card in and the Mac awake. You can use other pages meanwhile; closing the window asks first.</div></div>
+        <button class="btn" style="align-self: flex-start">Stop…</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

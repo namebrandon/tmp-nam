@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SD card, prerequisites missing</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="sdcard" conn="missing" count="" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">SD Card</h1><span class="sub">Make a card that boots the unit with NAM support</span></header>
+    <div style="flex: 1; display: flex; gap: 24px; padding: 20px 24px; overflow: hidden">
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <div class="banner warn" role="alert">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 14.5 13.5h-13z"/><path d="M8 6.5v3M8 11.6v.1"/></svg>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+            <div><div class="bt">2 command-line tools are missing</div>This Mac needs <span class="mono">mke2fs</span> and <span class="mono">debugfs</span> to build the card. Install them with Homebrew in Terminal:</div>
+            <div class="code" style="background: var(--bg-content)"><span>brew install e2fsprogs</span><button class="btn btn-sm">Copy</button></div>
+            <button class="btn btn-sm" style="align-self: flex-start">Check Again</button>
+          </div>
+        </div>
+        <div class="banner error" role="alert">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4M8 11v.1"/></svg>
+          <div><div class="bt">Some of this app's files are damaged</div>The NAM files the app adds to the card failed their check. Download TMP NAM again and replace this copy.</div>
+        </div>
+        <div class="card" style="opacity: .55">
+          <div class="card-h"><span class="stepnum">1</span><span class="t-head">Fender firmware file</span></div>
+          <div class="card-b"><button class="btn" style="align-self: flex-start" disabled>Choose File…</button></div>
+        </div>
+        <div class="card" style="opacity: .55">
+          <div class="card-h"><span class="stepnum">2</span><span class="t-head">SD card</span></div>
+          <div class="card-b"><p class="t-sm muted">Available once the problems above are fixed.</p></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px">
+          <button class="btn btn-primary btn-lg" disabled>Create SD Card…</button>
+        </div>
+      </div>
+      <aside style="width: 220px; flex: none; display: flex; flex-direction: column; gap: 12px">
+        <span class="t-label">About the card</span>
+        <div class="t-sm" style="display: flex; flex-direction: column; gap: 10px">
+          <p><b>The unit itself isn't changed.</b> <span class="muted">Its internal firmware is never modified.</span></p>
+          <p><b>Remove the card to go back.</b> <span class="muted">Without it, the unit boots its stock firmware.</span></p>
+          <p><b>Keep your current card.</b> <span class="muted">If you already have a working NAM card, keep it as a spare and use a new card here.</span></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

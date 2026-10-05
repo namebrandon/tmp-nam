@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tone3000, no tones</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="tone3000" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Tone3000</h1><span class="sub">Signed in as riffwright</span>
+      <span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Show"><button class="on">All</button><button>Bookmarked</button><button>Mine</button></div>
+      <button class="btn btn-icon" aria-label="Refresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v3h-3"/></svg></button>
+    </header>
+    <div class="center">
+      <div class="empty">
+        <h2 class="t-title">No tones yet</h2>
+        <p class="muted">Bookmark tones on tone3000.com, or publish your own, and they'll show up here. Then press Refresh.</p>
+        <div style="display: flex; gap: 8px"><a class="btn" href="https://www.tone3000.com">Open tone3000.com</a><button class="btn">Refresh</button></div>      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

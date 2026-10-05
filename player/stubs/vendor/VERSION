@@ -1,0 +1,10 @@
+# Pinned vendor sources for the NAM player.  These values are immutable
+# commits; bootstrap_nam_deps.sh verifies every checkout before returning.
+# NeuralAmpModelerCore v0.5.2 resolves to the SHA below; upstream's
+# NAM/version.h still reports 0.5.1 in this tag and is intentionally unchanged.
+NeuralAmpModelerCore_URL=https://github.com/sdatkinson/NeuralAmpModelerCore.git
+NeuralAmpModelerCore=ab72c078cd141be60d963d357bd501d56cc9606b
+eigen_URL=https://gitlab.com/libeigen/eigen.git
+eigen=87300c93cae6a8afd9a4f8aa8d9d5c5324cf02e1
+SpeexDSP_URL=https://github.com/xiph/speexdsp.git
+SpeexDSP=1b28a0f61bc31162979e1f26f3981fc3637095c8

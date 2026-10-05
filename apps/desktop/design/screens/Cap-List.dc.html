@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Captures list</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1><span class="sub">9 on unit · 6.1 MB</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Add Captures…</button>
+    </header>
+    <div class="body">
+      <div class="scroll" style="display: flex; flex-direction: column">
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>Type</th><th class="r">Size</th><th class="r" style="padding-right: 16px">Gain</th></tr></thead>
+          <tbody>
+            <tr><td><span class="cname" style="max-width: 250px">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">Fender · Deluxe Reverb · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Marshall JCM800 2203 Crunch</span><span class="csub">Marshall · JCM800 2203 · Amp + cab</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+            <tr class="sel"><td><span class="cname" style="max-width: 250px">Mesa Mark IIC+ Lead</span><span class="csub">Mesa/Boogie · Mark IIC+ · Amp</span></td><td><span class="tag arch">A2 · 3</span></td><td class="r num">1.6 MB</td><td class="r num" style="padding-right: 16px">3.5×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Vox AC30 Top Boost</span><span class="csub">Vox · AC30 · Amp</span></td><td><span class="tag arch">A1 · Feather</span></td><td class="r num">296 KB</td><td class="r num" style="padding-right: 16px">1×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Friedman BE-100 BE Channel</span><span class="csub">Friedman · BE-100 · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Klon Centaur into Twin</span><span class="csub">Klon · Centaur · Pedal</span></td><td><span class="tag arch">A1</span></td><td class="r num">301 KB</td><td class="r num" style="padding-right: 16px">2×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">Bogner Ecstasy Blue</span><span class="csub">Bogner · Ecstasy 101B · Amp</span></td><td><span class="tag arch">A1</span></td><td class="r num">298 KB</td><td class="r num" style="padding-right: 16px">4.5×</td></tr>
+            <tr class="dim"><td><span class="cname" style="max-width: 250px">Dumble ODS Clean</span><span class="csub" style="margin-top: 2px"><span class="tag danger">File missing</span></span></td><td><span class="tag arch">A1</span></td><td class="r num">—</td><td class="r num" style="padding-right: 16px">1×</td></tr>
+            <tr><td><span class="cname" style="max-width: 250px">bluesbreaker_v2.nam</span><span class="csub" style="margin-top: 2px"><span class="tag warn">Not registered</span></span></td><td><span class="tag arch">A1</span></td><td class="r num">301 KB</td><td class="r num" style="padding-right: 16px">—</td></tr>
+          </tbody>
+        </table>
+        <div style="flex: 1"></div>
+        <div class="footer"><span class="dot warn"></span>2 captures need attention · select one to fix it</div>
+      </div>
+
+      <aside class="inspector" aria-label="Capture details">
+        <div class="insp-sec" style="gap: 6px">
+          <h2 class="t-head" style="font-size: 15px; line-height: 20px">Mesa Mark IIC+ Lead</h2>
+          <span class="t-sm muted">Mesa/Boogie · Mark IIC+ · Amp</span>
+          <div style="display: flex; gap: 6px; margin-top: 4px"><span class="tag arch">A2 · 3 sizes</span><span class="tag">44.1 kHz</span><span class="tag">1.6 MB</span></div>
+        </div>
+        <div class="insp-sec">
+          <span class="lbl">Size the player loads</span>
+          <div class="sizepick"><button>Feather<small>smallest</small></button><button class="on">Standard<small>middle</small></button><button>Full<small>largest</small></button></div>
+          <span class="help">Larger sizes sound closer to the amp but use more of the unit's processing. If it crackles, go smaller.</span>
+        </div>
+        <div class="insp-sec">
+          <div style="display: flex; justify-content: space-between; align-items: center"><span class="lbl">Output gain</span><div class="stepper"><button aria-label="Decrease gain">−</button><span class="v">3.5×</span><button aria-label="Increase gain">+</button></div></div>
+          <input class="range" type="range" min="0" max="8" step="0.5" value="3.5" aria-label="Output gain">
+          <div class="ticks"><span>0×</span><span>2×</span><span>4×</span><span>6×</span><span>8×</span></div>
+          <div style="display: flex; justify-content: space-between; align-items: center"><span class="t-sm muted num">+10.9 dB</span><span style="display: flex; gap: 6px"><button class="btn btn-sm">1× as captured</button><button class="btn btn-sm">4×</button></span></div>
+          <span class="help">NAM captures play about 12 dB quieter than the stock amp blocks. 4× makes up for it.</span>
+        </div>
+        <div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; flex: 1">
+          <div class="pending"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 5v.1"/></svg><span>Size and gain apply the next time you select this capture on the unit.</span></div>
+          <div style="flex: 1"></div>
+          <button class="btn" style="align-self: flex-start; color: var(--danger)">Remove from Unit…</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

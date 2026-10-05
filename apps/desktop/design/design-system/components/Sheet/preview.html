@@ -1,0 +1,17 @@
+<!-- @dsCard group="Layout" height=300 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Sheet</title>
+<style>body{margin:0;background:var(--bg-content)} #root{position:relative;height:300px;overflow:hidden}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(T.Sheet, {
+  title: 'Remove “Marshall JCM800 2203 Crunch” from the unit?', width: 440, alert: true,
+  actions: [{ label: 'Cancel', autoFocus: true }, { label: 'Remove', variant: 'danger' }]
+}, h('p', { style: { margin: 0, color: 'var(--text-2)' } }, "Presets that use this capture will lose it. On the unit, you'll need to pick another IR in those presets.")));
+</script>
+</body>
+</html>

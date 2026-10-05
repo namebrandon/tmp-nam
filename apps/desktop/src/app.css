@@ -1,0 +1,458 @@
+/* src/app.css — page layout around the design-system components (design/prototype/Main.dc.html). */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-content);
+  overflow: hidden;
+}
+
+.win {
+  position: relative;
+  height: 100%;
+  display: flex;
+  background: var(--bg-content);
+}
+/* The native window buttons only overlay the sidebar on macOS. */
+.win:not(.is-mac) .tn-lights {
+  height: 8px;
+}
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-content);
+}
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.list {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.thead,
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px 72px;
+  align-items: center;
+  padding: 0 16px 0 20px;
+  border-bottom: 1px solid var(--sep);
+}
+.thead {
+  height: 28px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  flex: none;
+  position: sticky;
+  top: 0;
+  background: var(--bg-content);
+  z-index: 1;
+}
+.row {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px 72px;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 16px 4px 20px;
+  border-bottom: 1px solid var(--sep);
+  cursor: default;
+  font-size: 13px;
+  color: var(--text);
+}
+.row:hover {
+  background: var(--bg-hover);
+}
+.row:focus-visible {
+  box-shadow: inset var(--focus);
+}
+.row.sel {
+  background: var(--select);
+}
+.row.dim {
+  color: var(--text-3);
+}
+.r {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.nm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.nm-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sub {
+  display: block;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--text-3);
+  margin-top: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.chg {
+  color: var(--accent-text);
+}
+.footer {
+  min-height: 40px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 0 20px;
+  border-top: 1px solid var(--sep);
+  font-size: 12px;
+  color: var(--text-3);
+  background: var(--bg-subtle);
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+}
+.inspector {
+  width: var(--inspector-w);
+  flex: none;
+  border-left: 1px solid var(--sep);
+  background: var(--bg-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.sec {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--sep);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sec:last-child {
+  border-bottom: 0;
+}
+.h15 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.lbl {
+  font-size: 12px;
+  font-weight: 600;
+}
+.muted {
+  color: var(--text-2);
+}
+.muted3 {
+  color: var(--text-3);
+}
+.small {
+  font-size: 12px;
+  line-height: 16px;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.panel {
+  padding: 16px 20px 18px;
+  border-bottom: 1px solid var(--sep);
+  background: var(--bg-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: none;
+}
+.panel-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.items {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 150px;
+  gap: 6px 10px;
+  align-items: center;
+  font-size: 12px;
+}
+.items .tr {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.bwrap {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--sep);
+  flex: none;
+}
+.center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  overflow-y: auto;
+}
+.empty {
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+}
+p {
+  margin: 0;
+}
+h2.t-title,
+h2.t-display {
+  margin: 0;
+}
+.hrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 20px;
+  border-bottom: 1px solid var(--sep);
+  background: var(--bg-subtle);
+  font-size: 12px;
+  flex: none;
+}
+.tgrid {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 170px 140px;
+  align-items: center;
+}
+.thead2 {
+  height: 28px;
+  padding: 0 16px 0 0;
+  border-bottom: 1px solid var(--sep);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+  flex: none;
+}
+.trow {
+  min-height: 44px;
+  padding: 4px 16px 4px 0;
+  border-bottom: 1px solid var(--sep);
+  font-size: 13px;
+}
+.trow.sel {
+  background: var(--select);
+}
+.trow.dim {
+  color: var(--text-3);
+}
+.trow .tn-check {
+  margin-left: 14px;
+}
+.mcell {
+  position: relative;
+}
+.menu-pop {
+  position: absolute;
+  top: 28px;
+  left: 0;
+  z-index: 15;
+}
+.cardx {
+  border: 1px solid var(--sep);
+  border-radius: var(--radius-card);
+  background: var(--bg-content);
+  overflow: hidden;
+}
+.card-h {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--sep);
+}
+.card-b {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stepnum {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--bg-pressed);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+}
+.stepnum.ok {
+  background: var(--ok-dot);
+  color: #fff;
+}
+.stepnum.bad {
+  background: var(--danger-fill);
+  color: #fff;
+}
+.sdwrap {
+  flex: 1;
+  display: flex;
+  gap: 24px;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+.sdmain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sdmain.is-blocked .cardx {
+  opacity: 0.55;
+}
+.aside {
+  width: 220px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 12px;
+  line-height: 16px;
+}
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.log {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 16px;
+  background: #141416;
+  color: #d8d8dc;
+  border: 1px solid var(--sep);
+  border-radius: 8px;
+  padding: 10px 12px;
+  white-space: pre;
+  overflow: auto;
+  max-height: 200px;
+  margin: 0;
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--sep);
+  border-radius: 6px;
+  padding: 6px 10px;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.formrow {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--sep);
+}
+.formrow > .lbl {
+  padding-top: 5px;
+  font-weight: 500;
+  font-size: 13px;
+}
+.vgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.vcol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.outcome-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.drop-hint {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-card);
+  pointer-events: none;
+  z-index: 5;
+}
+.crow {
+  min-height: 36px;
+  background: var(--bg-subtle);
+}
+.crow-name {
+  padding-left: 22px;
+  font-weight: 400;
+  color: var(--text-2);
+}
+.disclose {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-tag);
+  color: var(--text-3);
+  flex: none;
+}
+.disclose:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+.disclose:focus-visible {
+  box-shadow: var(--focus);
+}
+.mcell .tn-popup {
+  width: 160px;
+}
+.tn-popup > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

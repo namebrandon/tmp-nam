@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SD card, failed</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="sdcard" conn="missing" count="" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">SD Card</h1><span class="sub">Generic STORAGE DEVICE · 31.9 GB</span><span class="spacer"></span><button class="btn btn-plain">Hide Log</button></header>
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 22px 28px; overflow: hidden">
+      <div style="display: flex; gap: 14px; align-items: flex-start">
+        <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--danger-fill); color: #fff; display: flex; align-items: center; justify-content: center; flex: none"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg></span>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h2 class="t-title">The card couldn't be created</h2>
+          <p class="muted">Reading back to verify failed: what's on the card doesn't match what was written. The card or the reader may be faulty. Try another card or reader.</p>
+          <p class="t-sm muted3">The card isn't usable as it is. Your unit and its firmware are unaffected.</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; padding-left: 46px"><button class="btn btn-primary">Try Again</button><button class="btn">Copy Log</button><button class="btn">Save Log…</button></div>
+      <div style="display: flex; gap: 16px; flex: 1; min-height: 0">
+        <div class="card" style="width: 260px; flex: none; padding: 4px 14px; align-self: flex-start">
+          <ul class="stages">
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span class="t-sm">Firmware checked</span><span></span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span class="t-sm">Extracted, verified</span><span></span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span class="t-sm">NAM support added</span><span></span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span class="t-sm">Filesystem, partitions</span><span></span></li>
+            <li class="done"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.2 4.2 7.4 8 2.8"/></svg></span><span class="t-sm">Written to card</span><span></span></li>
+            <li class="fail"><span class="ic"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l4 4M7 3 3 7"/></svg></span><span class="t-sm">Reading back to verify</span><span></span></li>
+          </ul>
+        </div>
+        <div class="log" style="flex: 1; min-width: 0" aria-label="Build log">[14:02:11] firmware: ToneMasterPro_v1_8_58.img sha256 ok
+[14:02:52] extract: rootfs, boot partitions
+[14:03:05] verify: extracted image checksums ok
+[14:03:08] nam: installing player 3e9a0c4f7b21
+[14:03:29] fs: building ext4 image
+[14:03:31] disk: /dev/disk4 unmounted, partition table written
+[14:03:31] write: 0 / 1.9 GB
+[14:09:47] write: 1.9 / 1.9 GB done
+[14:09:48] verify: reading back /dev/disk4
+[14:12:20] verify: mismatch at offset 0x5B3A0000
+[14:12:20] verify: expected 9c41…e07a got 0000…0000
+[14:12:20] error: read-back verification failed
+[14:12:21] disk: /dev/disk4 left unmounted</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

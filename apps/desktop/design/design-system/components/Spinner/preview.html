@@ -1,0 +1,15 @@
+<!-- @dsCard group="Status" height=72 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Spinner</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:16px;display:flex;gap:20px;align-items:center;font-size:12px;color:var(--text-3)}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.Spinner), h('span', { style: { display: 'flex', gap: 8, alignItems: 'center' } }, h(T.Spinner), 'Watching for cards'), h(T.Spinner, { size: 'lg' })));
+</script>
+</body>
+</html>

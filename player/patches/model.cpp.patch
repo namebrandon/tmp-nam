@@ -1,0 +1,897 @@
+diff --git a/NAM/activations.h b/NAM/activations.h
+index 1ba789c..01512c4 100644
+--- a/NAM/activations.h
++++ b/NAM/activations.h
+@@ -11,6 +11,10 @@
+ #include <unordered_map>
+ #include <vector>
+
++#if defined(__aarch64__)
++#include <arm_neon.h>
++#endif
++
+ #include <Eigen/Dense>
+
+ #include "json.hpp"
+@@ -258,7 +262,26 @@ public:
+   ActivationLeakyReLU(float ns) { negative_slope = ns; }
+   void apply(float* data, long size) override
+   {
+-    for (long pos = 0; pos < size; pos++)
++#if defined(__aarch64__)
++    const float32x4_t zero = vdupq_n_f32(0.0f);
++    const float32x4_t slope = vdupq_n_f32(negative_slope);
++    long pos = 0;
++#if defined(__clang__)
++#pragma clang loop unroll(disable)
++#elif defined(__GNUC__)
++#pragma GCC unroll 1
++#endif
++    for (; pos + 3 < size; pos += 4)
++    {
++      const float32x4_t input = vld1q_f32(data + pos);
++      const float32x4_t scaled = vmulq_f32(input, slope);
++      const uint32x4_t positive = vcgtq_f32(input, zero);
++      vst1q_f32(data + pos, vbslq_f32(positive, input, scaled));
++    }
++#else
++    long pos = 0;
++#endif
++    for (; pos < size; pos++)
+     {
+       data[pos] = leaky_relu(data[pos], negative_slope);
+     }
+diff --git a/NAM/container.cpp b/NAM/container.cpp
+index 2a103f4..52dbe49 100644
+--- a/NAM/container.cpp
++++ b/NAM/container.cpp
+@@ -35,6 +35,8 @@ ContainerModel::ContainerModel(std::vector<Submodel> submodels, const double exp
+   // Validate all submodels have the same expected sample rate
+   for (const auto& sm : _submodels)
+   {
++    if (sm.model->NumInputChannels() != 1 || sm.model->NumOutputChannels() != 1)
++      throw std::runtime_error("ContainerModel: submodels must be mono-in/mono-out");
+     double sr = sm.model->GetExpectedSampleRate();
+     if (sr != expected_sample_rate && sr != NAM_UNKNOWN_EXPECTED_SAMPLE_RATE
+         && expected_sample_rate != NAM_UNKNOWN_EXPECTED_SAMPLE_RATE)
+@@ -57,15 +59,29 @@ void ContainerModel::process(NAM_SAMPLE** input, NAM_SAMPLE** output, const int
+
+ void ContainerModel::prewarm()
+ {
++  const size_t active_index = _active_index.load(std::memory_order_acquire);
++  _submodels[active_index].model->prewarm();
++}
++
++void ContainerModel::SetPrewarmOnReset(const bool prewarmOnReset)
++{
++  DSP::SetPrewarmOnReset(prewarmOnReset);
+   for (auto& sm : _submodels)
+-    sm.model->prewarm();
++    sm.model->SetPrewarmOnReset(prewarmOnReset);
+ }
+
+ void ContainerModel::Reset(const double sampleRate, const int maxBufferSize)
+ {
+-  DSP::Reset(sampleRate, maxBufferSize);
+-  for (auto& sm : _submodels)
+-    sm.model->Reset(sampleRate, maxBufferSize);
++  std::lock_guard<std::mutex> lock(_slim_set_mutex);
++
++  // Update this container's reset state without dispatching through DSP::Reset(),
++  // which would prewarm the active child before the child receives these settings.
++  mExternalSampleRate = sampleRate;
++  mHaveExternalSampleRate = true;
++  SetMaxBufferSize(maxBufferSize);
++
++  const size_t active_index = _active_index.load(std::memory_order_acquire);
++  _submodels[active_index].model->Reset(sampleRate, maxBufferSize);
+ }
+
+ void ContainerModel::SetSlimmableSize(const double val)
+@@ -87,15 +103,15 @@ void ContainerModel::SetSlimmableSize(const double val)
+   }
+
+   // Plugin host can deliver param changes from both UI/controller and processor paths.
+-  // Serialize reset+prewarm so only one thread can perform model activation at a time.
++  // Serialize reset so only one thread can perform model activation at a time.
+   std::lock_guard<std::mutex> lock(_slim_set_mutex);
+   if (active_index == _active_index.load(std::memory_order_acquire))
+   {
+     return;
+   }
+-  // Setting _active_index puts the model in the RT path, so prewarm before doing that
++  // Setting _active_index puts the model in the RT path, so reset before doing that.
+   const double sr = mHaveExternalSampleRate ? mExternalSampleRate : mExpectedSampleRate;
+-  _submodels[active_index].model->ResetAndPrewarm(sr, GetMaxBufferSize());
++  _submodels[active_index].model->Reset(sr, GetMaxBufferSize());
+
+   // Finally set when we're ready:
+   _active_index.store(active_index, std::memory_order_release);
+diff --git a/NAM/container.h b/NAM/container.h
+index dccc914..36aee5d 100644
+--- a/NAM/container.h
++++ b/NAM/container.h
+@@ -37,6 +37,7 @@ public:
+   void process(NAM_SAMPLE** input, NAM_SAMPLE** output, const int num_frames) override;
+   void prewarm() override;
+   void Reset(const double sampleRate, const int maxBufferSize) override;
++  void SetPrewarmOnReset(const bool prewarmOnReset) override;
+   void SetSlimmableSize(const double val) override;
+
+ protected:
+diff --git a/NAM/conv1d.cpp b/NAM/conv1d.cpp
+index b561786..ff4fe77 100644
+--- a/NAM/conv1d.cpp
++++ b/NAM/conv1d.cpp
+@@ -1,4 +1,5 @@
+ #include "conv1d.h"
++#include "dsp.h"
+ #include <cstring>
+ #include <stdexcept>
+
+@@ -253,6 +254,30 @@ void Conv1D::Process(const Eigen::MatrixXf& input, const int num_frames)
+   }
+   else
+   {
++    const size_t kernel_size = this->_weight.size();
++    const bool eligible_dense8x8 = this->_num_groups == 1 && (kernel_size == 3 || kernel_size == 6 || kernel_size == 15)
++      && this->_weight[0].rows() == 8 && this->_weight[0].cols() == 8
++      && (num_frames == 32 || num_frames == 34 || num_frames == 35);
++    bool used_dense8x8 = false;
++    if (eligible_dense8x8)
++    {
++      _output.leftCols(num_frames).setZero();
++      used_dense8x8 = true;
++      for (size_t k = 0; k < kernel_size; ++k)
++      {
++        const long offset = this->_dilation * (k + 1 - (long)kernel_size);
++        const long lookback = -offset;
++        auto input_block = _input_buffer.Read(num_frames, lookback);
++        if (!detail::Dense8x8Product(this->_weight[k].data(), input_block.data(), num_frames,
++                                    input_block.outerStride(), input_block.innerStride(), _output.data(), false))
++        {
++          used_dense8x8 = false;
++          break;
++        }
++      }
++    }
++    if (!used_dense8x8)
++    {
+ #ifdef NAM_USE_INLINE_GEMM
+     // Hand-optimized inline GEMM for small matrices
+     // For output(out_ch, frames) += weight(out_ch, in_ch) * input(in_ch, frames)
+@@ -263,7 +288,6 @@ void Conv1D::Process(const Eigen::MatrixXf& input, const int num_frames)
+     //   input(i, f) is at input_ptr[f * in_ch + i]
+     const int out_ch = (int)get_out_channels();
+     const int in_ch = (int)get_in_channels();
+-    const size_t kernel_size = this->_weight.size();
+     const size_t weight_matrix_size = out_ch * in_ch;
+
+     // Fused kernel optimization for kernel_size=3
+@@ -624,6 +648,11 @@ void Conv1D::Process(const Eigen::MatrixXf& input, const int num_frames)
+       auto input_block = _input_buffer.Read(num_frames, lookback);
+       _output.leftCols(num_frames).noalias() += this->_weight[k] * input_block;
+     }
++#endif
++    }
++#if defined(NAM_DENSE8X8_DIAGNOSTICS) && defined(__aarch64__)
++    else
++      detail::RecordDense8x8Conv1D(num_frames, static_cast<int>(kernel_size));
+ #endif
+   }
+
+diff --git a/NAM/dsp.cpp b/NAM/dsp.cpp
+index e975001..1925f93 100644
+--- a/NAM/dsp.cpp
++++ b/NAM/dsp.cpp
+@@ -8,6 +8,10 @@
+ #include <unordered_map>
+ #include <unordered_set>
+
++#if defined(__aarch64__)
++#include <arm_neon.h>
++#endif
++
+ #include "dsp.h"
+ #include "registry.h"
+
+@@ -16,8 +20,175 @@
+
+ constexpr const long _INPUT_BUFFER_SAFETY_FACTOR = 32;
+
++namespace
++{
++
++thread_local bool gPrewarmOnResetDefault = true;
++
++class ScopedDSPPrewarmOnReset
++{
++public:
++  ScopedDSPPrewarmOnReset(nam::DSP& dsp, const bool prewarmOnReset)
++  : mDSP(dsp)
++  , mPreviousPrewarmOnReset(dsp.GetPrewarmOnReset())
++  {
++    mDSP.SetPrewarmOnReset(prewarmOnReset);
++  }
++
++  ~ScopedDSPPrewarmOnReset() { mDSP.SetPrewarmOnReset(mPreviousPrewarmOnReset); }
++
++  ScopedDSPPrewarmOnReset(const ScopedDSPPrewarmOnReset&) = delete;
++  ScopedDSPPrewarmOnReset& operator=(const ScopedDSPPrewarmOnReset&) = delete;
++
++private:
++  nam::DSP& mDSP;
++  bool mPreviousPrewarmOnReset;
++};
++
++} // namespace
++
++nam::ScopedPrewarmOnResetDefault::ScopedPrewarmOnResetDefault(const bool prewarmOnReset)
++: mPreviousPrewarmOnReset(gPrewarmOnResetDefault)
++{
++  gPrewarmOnResetDefault = prewarmOnReset;
++}
++
++nam::ScopedPrewarmOnResetDefault::~ScopedPrewarmOnResetDefault()
++{
++  gPrewarmOnResetDefault = mPreviousPrewarmOnReset;
++}
++
++#if defined(__aarch64__)
++namespace nam
++{
++namespace detail
++{
++namespace
++{
++constexpr int DENSE8X8_ROWS = 8;
++constexpr int DENSE8X8_DEPTH = 8;
++constexpr int DENSE8X8_MAX_FRAMES = 35;
++
++inline void PackDense8x8Rhs(const float* input, const int frames, const std::ptrdiff_t outer_stride, float* packed)
++{
++  for (int depth = 0; depth < DENSE8X8_DEPTH; ++depth)
++    for (int frame = 0; frame < frames; ++frame)
++      packed[depth * frames + frame] = input[frame * outer_stride + depth];
++}
++
++inline void AddDense8x8Output(float* output, const float32x4_t low, const float32x4_t high)
++{
++  const float32x4_t one = vdupq_n_f32(1.0f);
++  vst1q_f32(output, vfmaq_f32(vld1q_f32(output), low, one));
++  vst1q_f32(output + 4, vfmaq_f32(vld1q_f32(output + 4), high, one));
++}
++
++__attribute__((noinline)) void ComputeDense8x8Packed(const float* weights, const float* packed, const int frames,
++                                                     float* output)
++{
++  int frame = 0;
++  for (; frame + 7 < frames; frame += 8)
++  {
++    float32x4_t c0l = vdupq_n_f32(0.0f), c0h = vdupq_n_f32(0.0f);
++    float32x4_t c1l = vdupq_n_f32(0.0f), c1h = vdupq_n_f32(0.0f);
++    float32x4_t c2l = vdupq_n_f32(0.0f), c2h = vdupq_n_f32(0.0f);
++    float32x4_t c3l = vdupq_n_f32(0.0f), c3h = vdupq_n_f32(0.0f);
++    float32x4_t c4l = vdupq_n_f32(0.0f), c4h = vdupq_n_f32(0.0f);
++    float32x4_t c5l = vdupq_n_f32(0.0f), c5h = vdupq_n_f32(0.0f);
++    float32x4_t c6l = vdupq_n_f32(0.0f), c6h = vdupq_n_f32(0.0f);
++    float32x4_t c7l = vdupq_n_f32(0.0f), c7h = vdupq_n_f32(0.0f);
++    for (int depth = 0; depth < DENSE8X8_DEPTH; ++depth)
++    {
++      const float32x4_t weights_low = vld1q_f32(weights + depth * DENSE8X8_ROWS);
++      const float32x4_t weights_high = vld1q_f32(weights + depth * DENSE8X8_ROWS + 4);
++      const float32x4_t input_low = vld1q_f32(packed + depth * frames + frame);
++      const float32x4_t input_high = vld1q_f32(packed + depth * frames + frame + 4);
++      c0l = vfmaq_laneq_f32(c0l, weights_low, input_low, 0);
++      c0h = vfmaq_laneq_f32(c0h, weights_high, input_low, 0);
++      c1l = vfmaq_laneq_f32(c1l, weights_low, input_low, 1);
++      c1h = vfmaq_laneq_f32(c1h, weights_high, input_low, 1);
++      c2l = vfmaq_laneq_f32(c2l, weights_low, input_low, 2);
++      c2h = vfmaq_laneq_f32(c2h, weights_high, input_low, 2);
++      c3l = vfmaq_laneq_f32(c3l, weights_low, input_low, 3);
++      c3h = vfmaq_laneq_f32(c3h, weights_high, input_low, 3);
++      c4l = vfmaq_laneq_f32(c4l, weights_low, input_high, 0);
++      c4h = vfmaq_laneq_f32(c4h, weights_high, input_high, 0);
++      c5l = vfmaq_laneq_f32(c5l, weights_low, input_high, 1);
++      c5h = vfmaq_laneq_f32(c5h, weights_high, input_high, 1);
++      c6l = vfmaq_laneq_f32(c6l, weights_low, input_high, 2);
++      c6h = vfmaq_laneq_f32(c6h, weights_high, input_high, 2);
++      c7l = vfmaq_laneq_f32(c7l, weights_low, input_high, 3);
++      c7h = vfmaq_laneq_f32(c7h, weights_high, input_high, 3);
++    }
++    AddDense8x8Output(output + (frame + 0) * DENSE8X8_ROWS, c0l, c0h);
++    AddDense8x8Output(output + (frame + 1) * DENSE8X8_ROWS, c1l, c1h);
++    AddDense8x8Output(output + (frame + 2) * DENSE8X8_ROWS, c2l, c2h);
++    AddDense8x8Output(output + (frame + 3) * DENSE8X8_ROWS, c3l, c3h);
++    AddDense8x8Output(output + (frame + 4) * DENSE8X8_ROWS, c4l, c4h);
++    AddDense8x8Output(output + (frame + 5) * DENSE8X8_ROWS, c5l, c5h);
++    AddDense8x8Output(output + (frame + 6) * DENSE8X8_ROWS, c6l, c6h);
++    AddDense8x8Output(output + (frame + 7) * DENSE8X8_ROWS, c7l, c7h);
++  }
++  for (; frame < frames; ++frame)
++  {
++    float32x4_t low = vdupq_n_f32(0.0f);
++    float32x4_t high = vdupq_n_f32(0.0f);
++    for (int depth = 0; depth < DENSE8X8_DEPTH; ++depth)
++    {
++      const float value = packed[depth * frames + frame];
++      low = vfmaq_n_f32(low, vld1q_f32(weights + depth * DENSE8X8_ROWS), value);
++      high = vfmaq_n_f32(high, vld1q_f32(weights + depth * DENSE8X8_ROWS + 4), value);
++    }
++    AddDense8x8Output(output + frame * DENSE8X8_ROWS, low, high);
++  }
++}
++} // namespace
++
++#if defined(NAM_DENSE8X8_DIAGNOSTICS)
++namespace
++{
++Dense8x8Diagnostics gDense8x8Diagnostics{};
++}
++
++void ResetDense8x8Diagnostics() { gDense8x8Diagnostics = {}; }
++
++Dense8x8Diagnostics GetDense8x8Diagnostics() { return gDense8x8Diagnostics; }
++
++void RecordDense8x8Conv1x1(const int frames)
++{
++  ++gDense8x8Diagnostics.conv1x1_calls;
++  gDense8x8Diagnostics.conv1x1_frames += static_cast<unsigned long long>(frames);
++}
++
++void RecordDense8x8Conv1D(const int frames, const int taps)
++{
++  ++gDense8x8Diagnostics.conv1d_calls;
++  gDense8x8Diagnostics.conv1d_frames += static_cast<unsigned long long>(frames);
++  gDense8x8Diagnostics.conv1d_tap_products += static_cast<unsigned long long>(taps);
++}
++#endif
++
++bool Dense8x8Product(const float* weights, const float* input, const int frames,
++                     const std::ptrdiff_t input_outer_stride, const std::ptrdiff_t input_inner_stride,
++                     float* output, const bool assign)
++{
++  if ((frames != 32 && frames != 34 && frames != 35) || input_inner_stride != 1
++      || input_outer_stride < DENSE8X8_DEPTH)
++    return false;
++  alignas(16) float packed[DENSE8X8_DEPTH * DENSE8X8_MAX_FRAMES];
++  if (assign)
++    std::fill(output, output + DENSE8X8_ROWS * frames, 0.0f);
++  PackDense8x8Rhs(input, frames, input_outer_stride, packed);
++  ComputeDense8x8Packed(weights, packed, frames, output);
++  return true;
++}
++} // namespace detail
++} // namespace nam
++#endif
++
+ nam::DSP::DSP(const int in_channels, const int out_channels, const double expected_sample_rate)
+ : mExpectedSampleRate(expected_sample_rate)
++, mPrewarmOnReset(gPrewarmOnResetDefault)
+ , mInChannels(in_channels)
+ , mOutChannels(out_channels)
+ {
+@@ -98,7 +269,24 @@ void nam::DSP::Reset(const double sampleRate, const int maxBufferSize)
+   mHaveExternalSampleRate = true;
+   SetMaxBufferSize(maxBufferSize);
+
+-  prewarm();
++  if (GetPrewarmOnReset())
++    prewarm();
++}
++
++void nam::DSP::ResetAndPrewarm(const double sampleRate, const int maxBufferSize)
++{
++  ScopedDSPPrewarmOnReset scoped_prewarm_on_reset(*this, true);
++  Reset(sampleRate, maxBufferSize);
++}
++
++void nam::DSP::SetPrewarmOnReset(const bool prewarmOnReset)
++{
++  mPrewarmOnReset.store(prewarmOnReset, std::memory_order_release);
++}
++
++bool nam::DSP::GetPrewarmOnReset() const
++{
++  return mPrewarmOnReset.load(std::memory_order_acquire);
+ }
+
+ void nam::DSP::SetLoudness(const double loudness)
+@@ -454,8 +642,18 @@ Eigen::MatrixXf nam::Conv1x1::process(const Eigen::MatrixXf& input, const int nu
+   }
+   else
+   {
+-    // Single GEMM for all cases - block-diagonal zero structure handles grouping
+-    result.noalias() = this->_weight * input.leftCols(num_frames);
++    const bool used_dense8x8 = this->_num_groups == 1 && this->_weight.rows() == 8 && this->_weight.cols() == 8
++      && detail::Dense8x8Product(this->_weight.data(), input.data(), num_frames, input.outerStride(), input.innerStride(),
++                                result.data(), true);
++    if (!used_dense8x8)
++    {
++      // Single GEMM for all other cases - block-diagonal zero structure handles grouping
++      result.noalias() = this->_weight * input.leftCols(num_frames);
++    }
++#if defined(NAM_DENSE8X8_DIAGNOSTICS) && defined(__aarch64__)
++    else
++      detail::RecordDense8x8Conv1x1(num_frames);
++#endif
+   }
+
+   if (this->_do_bias)
+@@ -479,6 +677,11 @@ void nam::Conv1x1::process_(const Eigen::Ref<const Eigen::MatrixXf>& input, cons
+   }
+   else
+   {
++    const bool used_dense8x8 = this->_num_groups == 1 && this->_weight.rows() == 8 && this->_weight.cols() == 8
++      && detail::Dense8x8Product(this->_weight.data(), input.data(), num_frames, input.outerStride(), input.innerStride(),
++                                _output.data(), true);
++    if (!used_dense8x8)
++    {
+ #ifdef NAM_USE_INLINE_GEMM
+     // Hand-optimized GEMM for small matrices (1x1 convolution)
+     // output(out_ch, frames) = weight(out_ch, in_ch) * input(in_ch, frames)
+@@ -747,6 +950,11 @@ void nam::Conv1x1::process_(const Eigen::Ref<const Eigen::MatrixXf>& input, cons
+ #else
+     // Single GEMM for all cases - block-diagonal zero structure handles grouping
+     _output.leftCols(num_frames).noalias() = this->_weight * input.leftCols(num_frames);
++#endif
++    }
++#if defined(NAM_DENSE8X8_DIAGNOSTICS) && defined(__aarch64__)
++    else
++      detail::RecordDense8x8Conv1x1(num_frames);
+ #endif
+   }
+
+diff --git a/NAM/dsp.h b/NAM/dsp.h
+index 1fadcf7..c7727af 100644
+--- a/NAM/dsp.h
++++ b/NAM/dsp.h
+@@ -1,6 +1,8 @@
+ #pragma once
+
++#include <atomic>
+ #include <filesystem>
++#include <cstddef>
+ #include <iterator>
+ #include <memory>
+ #include <string>
+@@ -33,12 +35,60 @@
+
+ namespace nam
+ {
++namespace detail
++{
++#if defined(NAM_DENSE8X8_DIAGNOSTICS) && defined(__aarch64__)
++struct Dense8x8Diagnostics
++{
++  unsigned long long conv1x1_calls;
++  unsigned long long conv1x1_frames;
++  unsigned long long conv1d_calls;
++  unsigned long long conv1d_frames;
++  unsigned long long conv1d_tap_products;
++};
++
++void ResetDense8x8Diagnostics();
++Dense8x8Diagnostics GetDense8x8Diagnostics();
++void RecordDense8x8Conv1x1(int frames);
++void RecordDense8x8Conv1D(int frames, int taps);
++#endif
++
++#if defined(__aarch64__)
++bool Dense8x8Product(const float* weights, const float* input, int frames, std::ptrdiff_t input_outer_stride,
++                     std::ptrdiff_t input_inner_stride, float* output, bool assign);
++#else
++inline bool Dense8x8Product(const float*, const float*, int, std::ptrdiff_t, std::ptrdiff_t, float*, bool)
++{
++  return false;
++}
++#endif
++} // namespace detail
++
+ namespace wavenet
+ {
+ /// Forward declaration to allow WaveNet to access protected members of DSP
+ class WaveNet;
+ } // namespace wavenet
+
++/// \brief Temporarily change the thread-local prewarm-on-reset default for newly constructed DSP objects
++///
++/// Existing DSP objects are not affected. DSP instances constructed while this object is alive on the current thread
++/// copy the scoped default into their instance-level prewarm-on-reset setting.
++class ScopedPrewarmOnResetDefault
++{
++public:
++  explicit ScopedPrewarmOnResetDefault(const bool prewarmOnReset);
++  ~ScopedPrewarmOnResetDefault();
++
++  ScopedPrewarmOnResetDefault(const ScopedPrewarmOnResetDefault&) = delete;
++  ScopedPrewarmOnResetDefault& operator=(const ScopedPrewarmOnResetDefault&) = delete;
++
++  bool PreviousPrewarmOnReset() const { return mPreviousPrewarmOnReset; }
++
++private:
++  bool mPreviousPrewarmOnReset;
++};
++
+
+ /// \brief Base class for all DSP models
+ ///
+@@ -134,20 +184,27 @@ public:
+
+   /// \brief General function for resetting the DSP unit
+   ///
+-  /// This doesn't call prewarm(). If you want to do that, then you might want to use ResetAndPrewarm().
+-  /// See https://github.com/sdatkinson/NeuralAmpModelerCore/issues/96 for the reasoning.
++  /// By default, this calls prewarm() after updating the sample rate and buffer size. Use SetPrewarmOnReset() to
++  /// disable or re-enable that behavior for a DSP instance.
+   /// \param sampleRate Current sample rate
+   /// \param maxBufferSize Maximum buffer size to process
+   virtual void Reset(const double sampleRate, const int maxBufferSize);
+
+   /// \brief Reset the DSP unit, then prewarm
++  ///
++  /// Deprecated: ResetAndPrewarm() will be removed in v0.6.0. Reset() prewarms by default; use
++  /// SetPrewarmOnReset() to control whether Reset() calls prewarm().
+   /// \param sampleRate Current sample rate
+   /// \param maxBufferSize Maximum buffer size to process
+-  void ResetAndPrewarm(const double sampleRate, const int maxBufferSize)
+-  {
+-    Reset(sampleRate, maxBufferSize);
+-    prewarm();
+-  }
++  void ResetAndPrewarm(const double sampleRate, const int maxBufferSize);
++
++  /// \brief Control whether Reset() calls prewarm()
++  /// \param prewarmOnReset true for Reset() to call prewarm(), false to skip prewarm()
++  virtual void SetPrewarmOnReset(const bool prewarmOnReset);
++
++  /// \brief Check whether Reset() calls prewarm()
++  /// \return true if Reset() calls prewarm()
++  bool GetPrewarmOnReset() const;
+
+   /// \brief Set the input level
+   /// \param inputLevel Input level in dBu
+@@ -178,6 +235,7 @@ protected:
+   double mExternalSampleRate = -1.0;
+   // The largest buffer I expect to be told to process:
+   int mMaxBufferSize = 0;
++  std::atomic<bool> mPrewarmOnReset;
+
+   /// \brief Get how many samples should be processed for the model to be considered "warmed up"
+   ///
+diff --git a/NAM/get_dsp.cpp b/NAM/get_dsp.cpp
+index 3aa8592..6439364 100644
+--- a/NAM/get_dsp.cpp
++++ b/NAM/get_dsp.cpp
+@@ -139,26 +139,42 @@ std::vector<float> GetWeights(nlohmann::json const& j)
+     throw std::runtime_error("Corrupted model file is missing weights.");
+ }
+
+-std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename)
++void populate_dsp_data(const nlohmann::json& config, dspData& returnedConfig)
++{
++  verify_config_version(config["version"].get<std::string>());
++
++  nlohmann::json config_json = config["config"];
++  std::vector<float> weights = GetWeights(config);
++
++  returnedConfig.version = config["version"].get<std::string>();
++  returnedConfig.architecture = config["architecture"].get<std::string>();
++  returnedConfig.config = config_json;
++  returnedConfig.metadata = config.value("metadata", nlohmann::json());
++  returnedConfig.weights = weights;
++  returnedConfig.expected_sample_rate = nam::get_sample_rate_from_nam_file(config);
++}
++
++std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename, DspLoadOptions options)
+ {
+   dspData temp;
+-  return get_dsp(config_filename, temp);
++  return get_dsp(config_filename, temp, options);
+ }
+
+-std::unique_ptr<DSP> get_dsp(const nlohmann::json& config)
++std::unique_ptr<DSP> get_dsp(const nlohmann::json& config, DspLoadOptions options)
+ {
+   dspData temp;
+-  return get_dsp(config, temp);
++  return get_dsp(config, temp, options);
+ }
+
+-std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename, dspData& returnedConfig)
++std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename, dspData& returnedConfig,
++                             DspLoadOptions options)
+ {
+   if (!std::filesystem::exists(config_filename))
+     throw std::runtime_error("Config file doesn't exist!\n");
+   std::ifstream i(config_filename);
+   nlohmann::json j;
+   i >> j;
+-  get_dsp(j, returnedConfig);
++  populate_dsp_data(j, returnedConfig);
+
+   /*Copy to a new dsp_config object for get_dsp below,
+    since not sure if weights actually get modified as being non-const references on some
+@@ -166,24 +182,12 @@ std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename, dspDat
+    We need to return unmodified version of dsp_config via returnedConfig.*/
+   dspData conf = returnedConfig;
+
+-  return get_dsp(conf);
++  return get_dsp(conf, options);
+ }
+
+-std::unique_ptr<DSP> get_dsp(const nlohmann::json& config, dspData& returnedConfig)
++std::unique_ptr<DSP> get_dsp(const nlohmann::json& config, dspData& returnedConfig, DspLoadOptions options)
+ {
+-  verify_config_version(config["version"].get<std::string>());
+-
+-  auto architecture = config["architecture"];
+-  nlohmann::json config_json = config["config"];
+-  std::vector<float> weights = GetWeights(config);
+-
+-  // Assign values to returnedConfig
+-  returnedConfig.version = config["version"].get<std::string>();
+-  returnedConfig.architecture = config["architecture"].get<std::string>();
+-  returnedConfig.config = config_json;
+-  returnedConfig.metadata = config.value("metadata", nlohmann::json());
+-  returnedConfig.weights = weights;
+-  returnedConfig.expected_sample_rate = nam::get_sample_rate_from_nam_file(config);
++  populate_dsp_data(config, returnedConfig);
+
+   /*Copy to a new dsp_config object for get_dsp below,
+    since not sure if weights actually get modified as being non-const references on some
+@@ -191,7 +195,7 @@ std::unique_ptr<DSP> get_dsp(const nlohmann::json& config, dspData& returnedConf
+    We need to return unmodified version of dsp_config via returnedConfig.*/
+   dspData conf = returnedConfig;
+
+-  return get_dsp(conf);
++  return get_dsp(conf, options);
+ }
+
+ // =============================================================================
+@@ -224,9 +228,6 @@ std::unique_ptr<DSP> create_dsp(std::unique_ptr<ModelConfig> config, std::vector
+ {
+   auto out = config->create(std::move(weights), metadata.sample_rate);
+   apply_metadata(*out, metadata);
+-  // "pre-warm" the model to settle initial conditions
+-  // Can this be removed now that it's part of Reset()?
+-  out->prewarm();
+   return out;
+ }
+
+@@ -234,7 +235,10 @@ std::unique_ptr<DSP> create_dsp(std::unique_ptr<ModelConfig> config, std::vector
+ // get_dsp(dspData&) — now uses unified path
+ // =============================================================================
+
+-std::unique_ptr<DSP> get_dsp(dspData& conf)
++namespace
++{
++
++std::unique_ptr<DSP> get_dsp_with_current_prewarm_default(dspData& conf)
+ {
+   verify_config_version(conf.version);
+
+@@ -259,6 +263,20 @@ std::unique_ptr<DSP> get_dsp(dspData& conf)
+   return create_dsp(std::move(model_config), std::move(conf.weights), metadata);
+ }
+
++} // anonymous namespace
++
++std::unique_ptr<DSP> get_dsp(dspData& conf, DspLoadOptions options)
++{
++  if (!options.prewarm.has_value())
++    return get_dsp_with_current_prewarm_default(conf);
++
++  ScopedPrewarmOnResetDefault scoped_prewarm_default(*options.prewarm);
++  auto dsp = get_dsp_with_current_prewarm_default(conf);
++  if (dsp != nullptr)
++    dsp->SetPrewarmOnReset(scoped_prewarm_default.PreviousPrewarmOnReset());
++  return dsp;
++}
++
+ double get_sample_rate_from_nam_file(const nlohmann::json& j)
+ {
+   if (j.find("sample_rate") != j.end())
+diff --git a/NAM/get_dsp.h b/NAM/get_dsp.h
+index da874fe..c9e7941 100644
+--- a/NAM/get_dsp.h
++++ b/NAM/get_dsp.h
+@@ -2,6 +2,7 @@
+
+ #include <fstream>
+ #include <memory>
++#include <optional>
+ #include <vector>
+
+ #include "dsp.h"
+@@ -65,34 +66,52 @@ void verify_config_version(const std::string versionStr);
+ const std::string LATEST_FULLY_SUPPORTED_NAM_FILE_VERSION = "0.7.0";
+ const std::string EARLIEST_SUPPORTED_NAM_FILE_VERSION = "0.5.0";
+
++/// \brief Options that control DSP loading behavior
++struct DspLoadOptions
++{
++  /// \brief Whether to override the current prewarm-on-reset context during loading
++  ///
++  /// std::nullopt leaves the current thread-local context unchanged. Set this to false to avoid expensive prewarm work
++  /// during get_dsp(), or true to force prewarm during get_dsp(). When an override is provided, the returned model is
++  /// restored to the caller's previous prewarm-on-reset default before get_dsp() returns.
++  std::optional<bool> prewarm = std::nullopt;
++};
++
+ /// \brief Get NAM from a .nam file at the provided location
+ /// \param config_filename Path to the .nam model file
++/// \param options Loading options
+ /// \return Unique pointer to a DSP object
+-std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename);
++std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename, DspLoadOptions options = DspLoadOptions());
+
+ /// \brief Get NAM from a provided configuration struct
+ /// \param conf DSP data structure containing model configuration and weights
++/// \param options Loading options
+ /// \return Unique pointer to a DSP object
+-std::unique_ptr<DSP> get_dsp(dspData& conf);
++std::unique_ptr<DSP> get_dsp(dspData& conf, DspLoadOptions options = DspLoadOptions());
+
+ /// \brief Get NAM from a .nam file and store its configuration
+ ///
+ /// Creates an instance of DSP and also returns a dspData struct that holds the data of the model.
+ /// \param config_filename Path to the .nam model file
+ /// \param returnedConfig Output parameter that will be filled with the model data
++/// \param options Loading options
+ /// \return Unique pointer to a DSP object
+-std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename, dspData& returnedConfig);
++std::unique_ptr<DSP> get_dsp(const std::filesystem::path config_filename, dspData& returnedConfig,
++                             DspLoadOptions options = DspLoadOptions());
+
+ /// \brief Get NAM from a provided configuration JSON object
+ /// \param config JSON configuration object
+ /// \param returnedConfig Output parameter that will be filled with the model data
++/// \param options Loading options
+ /// \return Unique pointer to a DSP object
+-std::unique_ptr<DSP> get_dsp(const nlohmann::json& config, dspData& returnedConfig);
++std::unique_ptr<DSP> get_dsp(const nlohmann::json& config, dspData& returnedConfig,
++                             DspLoadOptions options = DspLoadOptions());
+
+ /// \brief Get NAM from a provided configuration JSON object (convenience overload)
+ /// \param config JSON configuration object
++/// \param options Loading options
+ /// \return Unique pointer to a DSP object
+-std::unique_ptr<DSP> get_dsp(const nlohmann::json& config);
++std::unique_ptr<DSP> get_dsp(const nlohmann::json& config, DspLoadOptions options = DspLoadOptions());
+
+ /// \brief Get sample rate from a .nam file
+ /// \param j JSON object from the .nam file
+diff --git a/NAM/model_config.h b/NAM/model_config.h
+index 32825a5..d9653da 100644
+--- a/NAM/model_config.h
++++ b/NAM/model_config.h
+@@ -106,7 +106,7 @@ struct ConfigParserHelper
+ /// \brief Construct a DSP object from a typed config, weights, and metadata
+ ///
+ /// This is the single construction path used by both JSON and binary loaders.
+-/// Handles construction, metadata application, and prewarm.
++/// Handles construction and metadata application.
+ /// \param config Architecture-specific configuration (abstract base)
+ /// \param weights Model weights (taken by value to allow move for WaveNet)
+ /// \param metadata Model metadata (version, sample rate, loudness, levels)
+diff --git a/NAM/wavenet/model.cpp b/NAM/wavenet/model.cpp
+index eaf74ad..f49f513 100644
+--- a/NAM/wavenet/model.cpp
++++ b/NAM/wavenet/model.cpp
+@@ -427,8 +427,9 @@ long nam::wavenet::detail::LayerArray::get_receptive_field() const
+ void nam::wavenet::detail::LayerArray::Process(const Eigen::MatrixXf& layer_inputs, const Eigen::MatrixXf& condition,
+                                                const int num_frames)
+ {
+-  // Zero head inputs accumulator (first layer array)
+-  this->_head_inputs.setZero();
++  // Zero only the active frames; later accumulation and the backing capacity
++  // remain unchanged.
++  this->_head_inputs.leftCols(num_frames).setZero();
+   ProcessInner(layer_inputs, condition, num_frames);
+ }
+
+@@ -689,6 +690,13 @@ void nam::wavenet::WaveNet::SetMaxBufferSize(const int maxBufferSize)
+   }
+ }
+
++void nam::wavenet::WaveNet::SetPrewarmOnReset(const bool prewarmOnReset)
++{
++  DSP::SetPrewarmOnReset(prewarmOnReset);
++  if (this->_condition_dsp != nullptr)
++    this->_condition_dsp->SetPrewarmOnReset(prewarmOnReset);
++}
++
+ void nam::wavenet::WaveNet::_process_condition(const int num_frames)
+ {
+   if (this->_condition_dsp == nullptr)
+diff --git a/NAM/wavenet/model.h b/NAM/wavenet/model.h
+index 968baf8..508f909 100644
+--- a/NAM/wavenet/model.h
++++ b/NAM/wavenet/model.h
+@@ -58,6 +58,8 @@ public:
+   /// \param num_frames Number of frames to process
+   void process(NAM_SAMPLE** input, NAM_SAMPLE** output, const int num_frames) override;
+
++  void SetPrewarmOnReset(const bool prewarmOnReset) override;
++
+   /// \brief Set model weights from a vector
+   /// \param weights Vector containing all model weights
+   void set_weights_(std::vector<float>& weights);
+diff --git a/NAM/wavenet/slimmable.cpp b/NAM/wavenet/slimmable.cpp
+index 19b019e..3314377 100644
+--- a/NAM/wavenet/slimmable.cpp
++++ b/NAM/wavenet/slimmable.cpp
+@@ -291,7 +291,7 @@ bool is_full_size(const std::vector<wavenet::LayerArrayParams>& params, const st
+
+ } // anonymous namespace
+
+-#ifdef _LIBCPP_VERSION
++#if defined(_LIBCPP_VERSION) || !defined(__cpp_lib_atomic_shared_ptr)
+ void SlimmableWavenet::_pending_clear_release()
+ {
+   std::atomic_store_explicit(&_pending_staged, std::shared_ptr<StagedSlimModel>{}, std::memory_order_release);
+@@ -410,8 +410,10 @@ std::unique_ptr<DSP> SlimmableWavenet::_create_wavenet_for_channels(const std::v
+     condition_dsp = get_dsp(_condition_dsp_json);
+
+   double sampleRate = _current_sample_rate > 0 ? _current_sample_rate : GetExpectedSampleRate();
+-  return std::make_unique<wavenet::WaveNet>(_in_channels, *params_ptr, _head_scale, _with_head, std::nullopt,
+-                                            std::move(weights), std::move(condition_dsp), sampleRate);
++  auto model = std::make_unique<wavenet::WaveNet>(_in_channels, *params_ptr, _head_scale, _with_head, std::nullopt,
++                                                  std::move(weights), std::move(condition_dsp), sampleRate);
++  model->SetPrewarmOnReset(GetPrewarmOnReset());
++  return model;
+ }
+
+ void SlimmableWavenet::_rebuild_model(const std::vector<int>& target_channels)
+@@ -481,6 +483,15 @@ void SlimmableWavenet::Reset(const double sampleRate, const int maxBufferSize)
+     pending->model->Reset(sampleRate, maxBufferSize);
+ }
+
++void SlimmableWavenet::SetPrewarmOnReset(const bool prewarmOnReset)
++{
++  DSP::SetPrewarmOnReset(prewarmOnReset);
++  if (_active_model)
++    _active_model->SetPrewarmOnReset(prewarmOnReset);
++  if (auto pending = _pending_load_acquire())
++    pending->model->SetPrewarmOnReset(prewarmOnReset);
++}
++
+ void SlimmableWavenet::SetSlimmableSize(const double val)
+ {
+   const size_t num_arrays = _original_params.size();
+diff --git a/NAM/wavenet/slimmable.h b/NAM/wavenet/slimmable.h
+index f0687c0..e6897e3 100644
+--- a/NAM/wavenet/slimmable.h
++++ b/NAM/wavenet/slimmable.h
+@@ -3,11 +3,8 @@
+ #include <memory>
+ #include <vector>
+
+-#ifdef _LIBCPP_VERSION
+-// libc++: std::atomic<std::shared_ptr<T>> is not viable; staging uses deprecated atomic_* free functions.
+-#else
+-  #include <atomic>
+-#endif
++#include <atomic>
++// C++17 uses upstream shared_ptr atomic free functions for staging.
+
+ #include "../dsp.h"
+ #include "json.hpp"
+@@ -48,6 +45,7 @@ public:
+   void process(NAM_SAMPLE** input, NAM_SAMPLE** output, const int num_frames) override;
+   void prewarm() override;
+   void Reset(const double sampleRate, const int maxBufferSize) override;
++  void SetPrewarmOnReset(const bool prewarmOnReset) override;
+   void SetSlimmableSize(const double val) override;
+
+ protected:
+@@ -70,7 +68,7 @@ private:
+     std::shared_ptr<DSP> model;
+     std::vector<int> channels;
+   };
+-#ifdef _LIBCPP_VERSION
++#if defined(_LIBCPP_VERSION) || !defined(__cpp_lib_atomic_shared_ptr)
+   /// Staged model; synchronized via deprecated std::atomic_* overloads for shared_ptr only.
+   std::shared_ptr<StagedSlimModel> _pending_staged;
+ #else

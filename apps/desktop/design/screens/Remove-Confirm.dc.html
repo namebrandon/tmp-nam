@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Remove capture, confirm</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1><span class="sub">9 on unit · 6.1 MB</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary">Add Captures…</button>
+    </header>
+    <table class="tbl">
+      <thead><tr><th>Name</th><th>Type</th><th class="r">Size</th><th class="r" style="padding-right: 16px">Gain</th></tr></thead>
+      <tbody>
+        <tr><td><span class="cname">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">Fender · Deluxe Reverb · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr class="sel"><td><span class="cname">Marshall JCM800 2203 Crunch</span><span class="csub">Marshall · JCM800 2203 · Amp + cab</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr><td><span class="cname">Mesa Mark IIC+ Lead</span><span class="csub">Mesa/Boogie · Mark IIC+ · Amp</span></td><td><span class="tag arch">A2 · 3</span></td><td class="r num">1.6 MB</td><td class="r num" style="padding-right: 16px">3.5×</td></tr>
+        <tr><td><span class="cname">Vox AC30 Top Boost</span><span class="csub">Vox · AC30 · Amp</span></td><td><span class="tag arch">A1 · Feather</span></td><td class="r num">296 KB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="scrim">
+    <div class="sheet" style="width: 440px" role="alertdialog" aria-labelledby="rm1">
+      <div class="sh-body">
+        <h2 id="rm1" class="t-title">Remove “Marshall JCM800 2203 Crunch” from the unit?</h2>
+        <p class="muted">Presets that use this capture will lose it. On the unit, you'll need to pick another IR in those presets.</p>
+        <p class="t-sm muted3">To get it back later, add the .nam file again. Size and gain settings are not kept.</p>
+      </div>
+      <div class="sh-foot"><button class="btn is-focus">Cancel</button><button class="btn btn-danger">Remove</button></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

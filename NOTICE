@@ -1,0 +1,17 @@
+TMP NAM
+
+Independent, unaffiliated project. Fender, Tone Master Pro, and all third-party
+names (amp, cabinet, and effect makers referenced in sample capture names) are
+trademarks of their respective owners, used nominatively to describe
+compatibility. No endorsement or affiliation is implied.
+
+This software is not produced, endorsed, or supported by Fender Musical
+Instruments Corporation.
+
+This repository contains no Fender firmware. The SD-card builder works only from
+the official ToneMasterPro_v1_8_58.img that each user obtains from Fender; the
+card is assembled on the user's own machine and never redistributed.
+
+Third-party software shipped on the card (NeuralAmpModelerCore, Eigen, SpeexDSP,
+Dropbear and its dependencies) keeps its own license, reproduced in
+device/licenses/.

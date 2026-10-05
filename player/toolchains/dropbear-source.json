@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "target": "aarch64-linux-musl",
+  "version": "2024.86",
+  "source": {
+    "url": "https://dropbear.nl/mirror/releases/dropbear-2024.86.tar.bz2",
+    "sha256": "e78936dffc395f2e0db099321d6be659190966b99712b55c530dd0a1822e0a5e",
+    "directory": "dropbear-2024.86",
+    "release_url": "https://github.com/mkj/dropbear/releases/tag/DROPBEAR_2024.86",
+    "signature_url": "https://dropbear.nl/mirror/releases/dropbear-2024.86.tar.bz2.asc",
+    "signing_key_url": "https://dropbear.nl/mirror/releases/dropbear-key-2015.asc",
+    "verified_signing_fingerprint": "F7347EF2EE2E07A267628CA944931494F29C6773"
+  },
+  "zig_version": "0.13.0",
+  "zig_metadata_url": "https://ziglang.org/download/index.json",
+  "zig_archives": {
+    "aarch64-macos": {
+      "url": "https://ziglang.org/download/0.13.0/zig-macos-aarch64-0.13.0.tar.xz",
+      "sha256": "46fae219656545dfaf4dce12fb4e8685cec5b51d721beee9389ab4194d43394c",
+      "directory": "zig-macos-aarch64-0.13.0"
+    },
+    "x86_64-macos": {
+      "url": "https://ziglang.org/download/0.13.0/zig-macos-x86_64-0.13.0.tar.xz",
+      "sha256": "8b06ed1091b2269b700b3b07f8e3be3b833000841bae5aa6a09b1a8b4773effd",
+      "directory": "zig-macos-x86_64-0.13.0"
+    },
+    "aarch64-linux": {
+      "url": "https://ziglang.org/download/0.13.0/zig-linux-aarch64-0.13.0.tar.xz",
+      "sha256": "041ac42323837eb5624068acd8b00cd5777dac4cf91179e8dad7a7e90dd0c556",
+      "directory": "zig-linux-aarch64-0.13.0"
+    },
+    "x86_64-linux": {
+      "url": "https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz",
+      "sha256": "d45312e61ebcc48032b77bc4cf7fd6915c11fa16e4aad116b66c9468211230ea",
+      "directory": "zig-linux-x86_64-0.13.0"
+    }
+  },
+  "configure_args": [
+    "--host=aarch64-linux-musl",
+    "--disable-zlib",
+    "--disable-pam",
+    "--disable-lastlog",
+    "--disable-utmp",
+    "--disable-wtmp"
+  ],
+  "make_args": [
+    "PROGRAMS=dropbear dropbearkey",
+    "STATIC=1"
+  ]
+}

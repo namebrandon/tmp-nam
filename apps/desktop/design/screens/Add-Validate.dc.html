@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add captures, files checked</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1><span class="sub">9 on unit · 6.1 MB</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary">Add Captures…</button>
+    </header>
+    <table class="tbl">
+      <thead><tr><th>Name</th><th>Type</th><th class="r">Size</th><th class="r" style="padding-right: 16px">Gain</th></tr></thead>
+      <tbody>
+        <tr><td><span class="cname">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">Fender · Deluxe Reverb · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr><td><span class="cname">Marshall JCM800 2203 Crunch</span><span class="csub">Marshall · JCM800 2203 · Amp + cab</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr><td><span class="cname">Mesa Mark IIC+ Lead</span><span class="csub">Mesa/Boogie · Mark IIC+ · Amp</span></td><td><span class="tag arch">A2 · 3</span></td><td class="r num">1.6 MB</td><td class="r num" style="padding-right: 16px">3.5×</td></tr>
+        <tr><td><span class="cname">Vox AC30 Top Boost</span><span class="csub">Vox · AC30 · Amp</span></td><td><span class="tag arch">A1 · Feather</span></td><td class="r num">296 KB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="scrim">
+    <div class="sheet" style="width: 540px" role="dialog" aria-labelledby="sh1">
+      <div class="sh-body">
+        <h2 id="sh1" class="t-title">Add captures to the unit</h2>
+        <p class="muted">4 files checked. 3 are valid captures and will be sent.</p>
+        <div class="card" style="overflow: hidden">
+          <div class="disk"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="var(--ok-dot)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><div><div style="font-weight: 500">Plexi 1968 Super Lead.nam</div><div class="t-cap muted3">Marshall · 1959 Super Lead · Amp</div></div><span style="display: flex; gap: 6px"><span class="tag arch">A2 · 2</span><span class="tag">48 kHz</span><span class="t-sm muted num" style="width: 52px; text-align: right">1.1 MB</span></span></div>
+          <div class="disk"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="var(--ok-dot)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><div><div style="font-weight: 500">JC-120 Clean.nam</div><div class="t-cap muted3">Roland · JC-120 · Amp</div></div><span style="display: flex; gap: 6px"><span class="tag arch">A1</span><span class="tag">48 kHz</span><span class="t-sm muted num" style="width: 52px; text-align: right">298 KB</span></span></div>
+          <div class="disk"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="var(--ok-dot)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><div><div style="font-weight: 500">Rectifier Modern Red.nam</div><div class="t-cap muted3">No gear details in file</div></div><span style="display: flex; gap: 6px"><span class="tag arch">A2 · 3</span><span class="tag">44.1 kHz</span><span class="t-sm muted num" style="width: 52px; text-align: right">1.6 MB</span></span></div>
+          <div class="disk" style="background: var(--danger-weak)"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="var(--danger)" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l8 8M12 4 4 12"/></svg><div><div style="font-weight: 500">orange_rv50.nam</div><div class="t-cap" style="color: var(--danger)">Not a valid .nam capture. The file is damaged or incomplete.</div></div><span class="t-sm muted">Skipped</span></div>
+        </div>
+        <div class="banner info"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4M8 5v.1"/></svg><div>After sending, the unit's audio engine restarts and is silent for a few seconds. Don't play through it live while this runs.</div></div>
+      </div>
+      <div class="sh-foot"><button class="btn btn-plain" style="margin-right: auto">Add More Files…</button><button class="btn">Cancel</button><button class="btn btn-primary">Send 3 Captures</button></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

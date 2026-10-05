@@ -1,0 +1,13 @@
+[Unit]
+Description=Power Wi-Fi after Fender server so last network auto-joins
+After=connman.service network.target
+Wants=connman.service
+
+[Service]
+# Let multi-user.target proceed while the script waits for the audio server.
+Type=simple
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/wifi-always-on.sh
+
+[Install]
+WantedBy=multi-user.target

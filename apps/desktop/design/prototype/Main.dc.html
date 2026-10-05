@@ -1,0 +1,1290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TMP NAM prototype</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/tmpnam/components/bundle.css">
+<script src="ds/tmpnam/components/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#141416}
+/* TMP NAM tokens, mirrored from the design system's tokens.json (dark only) */
+:root{
+  --bg-window:#232325;--bg-content:#1C1C1E;--bg-subtle:#252527;--bg-sidebar:#2A2A2D;--bg-control:#333336;
+  --bg-hover:rgba(255,255,255,0.06);--bg-pressed:rgba(255,255,255,0.11);--select:#25395F;
+  --text:#F2F2F4;--text-2:#C4C4C8;--text-3:#A6A6AB;--text-disabled:#68686D;--text-on-accent:#FFFFFF;
+  --sep:#38383B;--border:#47474B;--border-strong:#5C5C61;
+  --accent:#3A6AE0;--accent-hover:#4675E6;--accent-pressed:#3060D0;--accent-weak:#1F2C4A;--accent-text:#8DAEF7;
+  --ok:#6BCB86;--ok-dot:#3FB863;--ok-weak:#1C3324;--warn:#F0BE5A;--warn-dot:#E0A12A;--warn-weak:#3A2F15;
+  --danger:#F27E73;--danger-fill:#C8372B;--danger-fill-hover:#D4443A;--danger-weak:#3D1E1B;--scrim:rgba(0,0,0,0.45);
+  --shadow-sheet:0 18px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.10);
+  --shadow-pop:0 8px 28px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12);
+  --focus:0 0 0 3px rgba(90,135,240,0.5);
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;
+  --radius-tag:4px;--radius-control:6px;--radius-card:10px;--radius-window:12px;
+  --font-sans:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+.proto{width:1300px;height:740px;box-sizing:border-box;padding:20px;display:flex;gap:20px;background:#141416}
+.win{position:relative;width:960px;height:700px;flex:none;display:flex;border-radius:12px;border:1px solid var(--border);overflow:hidden;background:var(--bg-content)}
+.sbslot{height:100%;flex:none}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg-content)}
+.body{flex:1;min-height:0;display:flex}
+.list{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto}
+.thead{display:grid;grid-template-columns:minmax(0,1fr) 100px 66px 60px;align-items:center;height:28px;padding:0 16px 0 20px;border-bottom:1px solid var(--sep);font-size:11px;font-weight:600;color:var(--text-3);flex:none}
+.row{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 100px 66px 60px;align-items:center;min-height:44px;padding:4px 16px 4px 20px;border-bottom:1px solid var(--sep);cursor:default;font-size:13px;color:var(--text)}
+.row:hover{background:var(--bg-hover)}
+.row:focus-visible{box-shadow:inset var(--focus)}
+.row.sel{background:var(--select)}
+.row.dim{color:var(--text-3)}
+.r{text-align:right;font-variant-numeric:tabular-nums}
+.nm{display:flex;align-items:center;gap:6px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sub{display:block;font-size:11px;line-height:14px;color:var(--text-3);margin-top:2px}
+.chg{color:var(--accent-text)}
+.footer{height:40px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px 0 20px;border-top:1px solid var(--sep);font-size:12px;color:var(--text-3);background:var(--bg-subtle);margin-top:auto}
+.inspector{width:300px;flex:none;border-left:1px solid var(--sep);background:var(--bg-subtle);display:flex;flex-direction:column;overflow-y:auto}
+.sec{padding:16px 18px;border-bottom:1px solid var(--sep);display:flex;flex-direction:column;gap:10px}
+.sec:last-child{border-bottom:0}
+.h15{margin:0;font-size:15px;line-height:20px;font-weight:600}
+.lbl{font-size:12px;font-weight:600}
+.muted{color:var(--text-2)}
+.muted3{color:var(--text-3)}
+.small{font-size:12px;line-height:16px}
+.mono{font-family:var(--font-mono);font-size:12px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.panel{padding:16px 20px 18px;border-bottom:1px solid var(--sep);background:var(--bg-subtle);display:flex;flex-direction:column;gap:12px;flex:none}
+.items{display:grid;grid-template-columns:18px minmax(0,1fr) 150px;gap:6px 10px;align-items:center;font-size:12px}
+.items .tr{text-align:right;font-variant-numeric:tabular-nums}
+.bwrap{padding:14px 20px;border-bottom:1px solid var(--sep);flex:none}
+.center{flex:1;display:flex;align-items:center;justify-content:center;padding:32px}
+.empty{max-width:460px;display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.t-title{margin:0;font-size:17px;line-height:22px;font-weight:600}
+.t-display{margin:0;font-size:22px;line-height:28px;font-weight:700}
+.hrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.strip{display:flex;align-items:center;gap:10px;padding:6px 16px 6px 20px;border-bottom:1px solid var(--sep);background:var(--bg-subtle);font-size:12px;flex:none}
+.tgrid{display:grid;grid-template-columns:36px minmax(0,1fr) 92px 150px 140px;align-items:center}
+.thead2{height:28px;padding:0 16px 0 0;border-bottom:1px solid var(--sep);font-size:11px;font-weight:600;color:var(--text-3);flex:none}
+.trow{min-height:44px;padding:4px 16px 4px 0;border-bottom:1px solid var(--sep);font-size:13px}
+.trow.sel{background:var(--select)}
+.trow.dim{color:var(--text-3)}
+.trow input{accent-color:var(--accent);width:14px;height:14px;margin:0 0 0 14px}
+.mcell{position:relative}
+.menu{position:absolute;top:28px;left:0;z-index:15}
+.cardx{border:1px solid var(--sep);border-radius:10px;background:var(--bg-content);overflow:hidden}
+.card-h{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--sep)}
+.card-b{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.stepnum{width:22px;height:22px;flex:none;border-radius:50%;background:var(--bg-pressed);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--text-2)}
+.stepnum.ok{background:var(--ok-dot);color:#fff}
+.stepnum.bad{background:var(--danger-fill);color:#fff}
+.sdwrap{flex:1;display:flex;gap:24px;padding:20px 24px;overflow:hidden}
+.sdmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+.aside{width:220px;flex:none;display:flex;flex-direction:column;gap:12px;font-size:12px;line-height:16px}
+.label{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text-3)}
+.log{font-family:var(--font-mono);font-size:11px;line-height:16px;background:#141416;color:#D8D8DC;border:1px solid var(--sep);border-radius:8px;padding:10px 12px;white-space:pre;overflow:auto;max-height:200px;margin:0}
+.code{font-family:var(--font-mono);font-size:12px;background:var(--bg-subtle);border:1px solid var(--sep);border-radius:6px;padding:6px 10px;flex:1}
+.formrow{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;align-items:start;padding:14px 0;border-bottom:1px solid var(--sep)}
+.formrow > .lbl{padding-top:5px;font-weight:500;font-size:13px}
+.vgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.vcol{display:flex;flex-direction:column;gap:8px}
+.filebtn{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:default;background:var(--bg-control)}
+.filebtn:hover{border-color:var(--accent)}
+.filebtn:focus-visible{box-shadow:var(--focus)}
+.syscrim{position:absolute;inset:0;background:var(--scrim);display:flex;align-items:center;justify-content:center;z-index:30}
+.sysdlg{width:300px;padding:20px;border-radius:12px;background:#2C2C2E;box-shadow:var(--shadow-sheet);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.sysdlg input{width:100%;box-sizing:border-box;height:26px;border-radius:6px;border:1px solid var(--border);background:#3A3A3C;color:var(--text);padding:0 8px;font:inherit;font-size:13px}
+.sysdlg input:focus{outline:none;box-shadow:var(--focus)}
+.controls{width:280px;flex:none;border:1px dashed #4A4A4F;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;color:var(--text-2);font-size:12px;line-height:17px;box-sizing:border-box;height:700px}
+.controls h2{margin:0;font-size:13px;font-weight:600;color:var(--text)}
+.cgroup{display:flex;flex-direction:column;gap:8px}
+</style>
+</helmet>
+<div class="proto tn-root">
+<div class="win">
+  <div class="sbslot">
+    <x-import component-from-global-scope="TmpNam.Sidebar" active="{{page}}" capture-count="{{capCount}}" unit="{{unit}}" activity="{{activity}}" on-navigate="{{nav}}" style="display: block; height: 100%;"></x-import>
+  </div>
+  <div class="main">
+
+    <!-- ============ CAPTURES ============ -->
+    <sc-if value="{{isCap}}" hint-placeholder-val="{{ true }}">
+      <x-import component-from-global-scope="TmpNam.Toolbar" title="Captures" subtitle="{{capSub}}">
+        <x-import component-from-global-scope="TmpNam.Button" variant="primary" icon="add" disabled="{{addDisabled}}" title="{{addHint}}" on-click="{{openAdd}}">Add Captures…</x-import>
+      </x-import>
+      <sc-if value="{{capBanner.show}}" hint-placeholder-val="{{ false }}">
+        <div class="bwrap">
+          <x-import component-from-global-scope="TmpNam.Banner" tone="{{capBanner.tone}}" title="{{capBanner.title}}" actions="{{capBanner.actions}}" on-dismiss="{{dismissCap}}">{{capBanner.body}}</x-import>
+        </div>
+      </sc-if>
+      <sc-if value="{{sendPanel.show}}" hint-placeholder-val="{{ false }}">
+        <section class="panel" aria-live="polite">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 600">{{sendPanel.title}}</span>
+              <span class="small muted">{{sendPanel.sub}}</span>
+            </div>
+          </div>
+          <x-import component-from-global-scope="TmpNam.ProgressBar" value="{{sendPanel.value}}" indeterminate="{{sendPanel.indet}}" label="{{sendPanel.title}}"></x-import>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <sc-for list="{{sendPanel.items}}" as="it" hint-placeholder-count="3">
+              <div class="items">
+                <span style="display: flex; align-items: center">
+                  <sc-if value="{{it.isSent}}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="TmpNam.Icon" name="check" style="color: var(--ok-dot)"></x-import></sc-if>
+                  <sc-if value="{{it.isNow}}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="TmpNam.Spinner"></x-import></sc-if>
+                  <sc-if value="{{it.isWait}}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="TmpNam.StatusDot" tone="off"></x-import></sc-if>
+                </span>
+                <span style="{{it.nameStyle}}">{{it.name}}</span>
+                <span class="tr muted3">{{it.detail}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+
+      <sc-if value="{{capNoUnit}}" hint-placeholder-val="{{ false }}">
+        <div class="center">
+          <div class="empty">
+            <sc-if value="{{unitLooking}}" hint-placeholder-val="{{ false }}">
+              <div class="hrow" style="gap: 12px"><x-import component-from-global-scope="TmpNam.Spinner" size="lg"></x-import><h2 class="t-title">Looking for the Tone Master Pro…</h2></div>
+              <p class="muted" style="margin: 0">This takes a few seconds after you plug it in. If the unit isn't connected yet:</p>
+            </sc-if>
+            <sc-if value="{{unitMissing}}" hint-placeholder-val="{{ true }}">
+              <x-import component-from-global-scope="TmpNam.Icon" name="usb" size="{{n28}}" style="color: var(--text-3)"></x-import>
+              <h2 class="t-title">Connect the Tone Master Pro</h2>
+              <p class="muted" style="margin: 0">Captures are read from the unit, so this page needs it.</p>
+            </sc-if>
+            <x-import component-from-global-scope="TmpNam.ConnectSteps"></x-import>
+            <p class="small muted3" style="margin: 0">It's detected automatically. Nothing to click here.</p>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{capNone}}" hint-placeholder-val="{{ false }}">
+        <div class="center">
+          <div class="empty">
+            <h2 class="t-title">No captures on the unit</h2>
+            <p class="muted" style="margin: 0">Captures you add show up on the Tone Master Pro as User IRs, ready to use in any preset.</p>
+            <div class="hrow">
+              <x-import component-from-global-scope="TmpNam.Button" variant="primary" disabled="{{addDisabled}}" on-click="{{openAdd}}">Add .nam Files…</x-import>
+              <x-import component-from-global-scope="TmpNam.Button" on-click="{{goT3k}}">Install from Tone3000</x-import>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{capShowList}}" hint-placeholder-val="{{ true }}">
+        <div class="body">
+          <div class="list">
+            <div class="thead"><span>Name</span><span>Type</span><span class="r">Size</span><span class="r">Gain</span></div>
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="8">
+              <button type="button" class="{{r.cls}}" onClick="{{r.select}}" aria-pressed="{{r.selected}}">
+                <span style="min-width: 0">
+                  <span class="nm">{{r.name}}<sc-if value="{{r.isNew}}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="TmpNam.Tag" tone="accent">New</x-import></sc-if></span>
+                  <sc-if value="{{r.hasFlag}}" hint-placeholder-val="{{ false }}"><span class="sub"><x-import component-from-global-scope="TmpNam.Tag" tone="{{r.flagTone}}">{{r.flagText}}</x-import></span></sc-if>
+                  <sc-if value="{{r.noFlag}}" hint-placeholder-val="{{ true }}"><span class="sub">{{r.gear}}</span></sc-if>
+                </span>
+                <span><x-import component-from-global-scope="TmpNam.Tag" tone="arch">{{r.archTag}}</x-import></span>
+                <span class="r">{{r.size}}</span>
+                <span class="r">{{r.gain}}<sc-if value="{{r.changed}}" hint-placeholder-val="{{ false }}"><span class="chg"> •</span></sc-if></span>
+              </button>
+            </sc-for>
+            <div class="footer">{{capFooter}}</div>
+          </div>
+
+          <aside class="inspector" aria-label="Capture details">
+            <sc-if value="{{insp.show}}" hint-placeholder-val="{{ true }}">
+              <div class="sec" style="gap: 6px">
+                <h2 class="h15">{{insp.name}}</h2>
+                <span class="small muted">{{insp.gearLine}}</span>
+                <div class="tags" style="margin-top: 4px">
+                  <x-import component-from-global-scope="TmpNam.Tag" tone="arch">{{insp.archLabel}}</x-import>
+                  <sc-if value="{{insp.hasRate}}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="TmpNam.Tag">{{insp.rate}}</x-import></sc-if>
+                  <sc-if value="{{insp.hasSize}}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="TmpNam.Tag">{{insp.fsize}}</x-import></sc-if>
+                </div>
+              </div>
+
+              <sc-if value="{{insp.isMissing}}" hint-placeholder-val="{{ false }}">
+                <div class="sec">
+                  <x-import component-from-global-scope="TmpNam.Banner" tone="error" title="The unit lists this capture, but its file is gone">Presets that use it won't load it. Add the .nam file again, or remove the entry.</x-import>
+                  <span class="small"><span class="muted3">Expected file </span><span class="mono" style="font-size: 11px">{{insp.fileName}}</span></span>
+                  <div class="hrow">
+                    <x-import component-from-global-scope="TmpNam.Button" variant="primary" disabled="{{insp.disabled}}" on-click="{{refile}}">Choose File…</x-import>
+                    <x-import component-from-global-scope="TmpNam.Button" destructive-text="{{yes}}" disabled="{{insp.disabled}}" on-click="{{askRemove}}">Remove Entry…</x-import>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{insp.isUnreg}}" hint-placeholder-val="{{ false }}">
+                <div class="sec">
+                  <x-import component-from-global-scope="TmpNam.Banner" tone="warn" title="On the unit, but not registered">The file is on the card, but the unit doesn't list it, so presets can't use it yet.</x-import>
+                  <div class="hrow">
+                    <x-import component-from-global-scope="TmpNam.Button" variant="primary" disabled="{{insp.disabled}}" on-click="{{register}}">Register</x-import>
+                    <x-import component-from-global-scope="TmpNam.Button" destructive-text="{{yes}}" disabled="{{insp.disabled}}" on-click="{{askRemove}}">Delete File…</x-import>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{insp.isFailed}}" hint-placeholder-val="{{ false }}">
+                <div class="sec">
+                  <x-import component-from-global-scope="TmpNam.Banner" tone="error" title="Didn't load after the engine restart">It won't play until it's sent again or removed.</x-import>
+                  <div class="hrow">
+                    <x-import component-from-global-scope="TmpNam.Button" variant="primary" disabled="{{insp.disabled}}" on-click="{{resendFailed}}">Send Again</x-import>
+                    <x-import component-from-global-scope="TmpNam.Button" destructive-text="{{yes}}" disabled="{{insp.disabled}}" on-click="{{askRemove}}">Remove…</x-import>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{insp.isOk}}" hint-placeholder-val="{{ true }}">
+                <div class="sec">
+                  <span class="lbl">{{insp.sizeTitle}}</span>
+                  <sc-if value="{{insp.isA2}}" hint-placeholder-val="{{ true }}">
+                    <x-import component-from-global-scope="TmpNam.SizePicker" sizes="{{insp.sizes}}" value="{{insp.size}}" disabled="{{insp.disabled}}" on-change="{{setSize}}"></x-import>
+                    <span class="small muted3">Larger sizes sound closer to the amp but use more of the unit's processing. If it crackles, go smaller.</span>
+                  </sc-if>
+                  <sc-if value="{{insp.a1Known}}" hint-placeholder-val="{{ false }}">
+                    <span class="small muted">{{insp.a1Text}}</span>
+                    <div><x-import component-from-global-scope="TmpNam.Button" size="sm" on-click="{{showInT3k}}">Show in Tone3000</x-import></div>
+                  </sc-if>
+                  <sc-if value="{{insp.a1Unknown}}" hint-placeholder-val="{{ false }}">
+                    <span class="small muted">An A1 file holds only one size. To use another size, add that variant's .nam file.</span>
+                  </sc-if>
+                </div>
+                <div class="sec">
+                  <x-import component-from-global-scope="TmpNam.GainControl" value="{{insp.gain}}" previous="{{insp.prev}}" disabled="{{insp.disabled}}" on-change="{{setGain}}"></x-import>
+                </div>
+                <div class="sec" style="flex: 1">
+                  <sc-if value="{{insp.changed}}" hint-placeholder-val="{{ false }}">
+                    <x-import component-from-global-scope="TmpNam.Banner" tone="note" title="Saved to the unit">Size and gain apply the next time you select this capture on the unit. If it's selected now, pick another capture and come back.</x-import>
+                  </sc-if>
+                  <sc-if value="{{insp.unchanged}}" hint-placeholder-val="{{ true }}">
+                    <span class="small muted3">Size and gain apply the next time you select this capture on the unit.</span>
+                  </sc-if>
+                  <div style="flex: 1"></div>
+                  <div><x-import component-from-global-scope="TmpNam.Button" destructive-text="{{yes}}" disabled="{{insp.disabled}}" title="{{busyReason}}" on-click="{{askRemove}}">Remove from Unit…</x-import></div>
+                </div>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{insp.none}}" hint-placeholder-val="{{ false }}">
+              <div class="center"><span class="small muted3">Select a capture to set its size and gain.</span></div>
+            </sc-if>
+          </aside>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ============ TONE3000 ============ -->
+    <sc-if value="{{isT3k}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="TmpNam.Toolbar" title="Tone3000" subtitle="{{t3kSub}}">
+        <sc-if value="{{t3kList}}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="TmpNam.SegmentedControl" options="{{filterOptions}}" value="{{t3kFilter}}" on-change="{{setFilter}}"></x-import>
+          <x-import component-from-global-scope="TmpNam.Button" icon="refresh" icon-only="{{yes}}" disabled="{{busy}}" on-click="{{refreshTones}}">Refresh</x-import>
+        </sc-if>
+      </x-import>
+
+      <sc-if value="{{t3kNoKey}}" hint-placeholder-val="{{ false }}">
+        <div class="center">
+          <div class="empty" style="max-width: 480px; gap: 16px">
+            <h2 class="t-title">Install tones from your Tone3000 account</h2>
+            <p class="muted" style="margin: 0">See your bookmarked tones and the tones you've published, and send them to the unit in one go. This needs your own Tone3000 API key, entered once.</p>
+            <x-import component-from-global-scope="TmpNam.ConnectSteps" steps="{{keySteps}}"></x-import>
+            <x-import component-from-global-scope="TmpNam.TextField" label="API key" mono="{{yes}}" placeholder="Paste your API key" value="{{keyDraft}}" on-change="{{onKey}}" help="Stored in your Mac's Keychain. You can change or remove it in Settings." style="align-self: stretch">
+              <x-import component-from-global-scope="TmpNam.Button" variant="primary" disabled="{{saveKeyDisabled}}" on-click="{{saveKey}}">Save Key</x-import>
+            </x-import>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{t3kSignedOut}}" hint-placeholder-val="{{ false }}">
+        <div class="center">
+          <div class="empty" style="max-width: 440px; gap: 16px">
+            <h2 class="t-title">Sign in to Tone3000</h2>
+            <p class="muted" style="margin: 0">Your API key is saved. Sign in to see your bookmarks and your own tones.</p>
+            <x-import component-from-global-scope="TmpNam.Button" variant="primary" size="lg" icon="external" on-click="{{signIn}}">Sign In with Browser</x-import>
+            <span class="small muted3">Opens tone3000.com in your browser. Approve access there, then come back.</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{t3kSigningIn}}" hint-placeholder-val="{{ false }}">
+        <div class="center">
+          <div class="empty" style="max-width: 440px; gap: 16px" aria-live="polite">
+            <div class="hrow" style="gap: 12px"><x-import component-from-global-scope="TmpNam.Spinner" size="lg"></x-import><h2 class="t-title">Waiting for you in the browser</h2></div>
+            <p class="muted" style="margin: 0">Approve TMP NAM on the Tone3000 page that just opened. This window continues on its own once you do.</p>
+            <div class="hrow">
+              <x-import component-from-global-scope="TmpNam.Button" on-click="{{reopenBrowser}}">Open Page Again</x-import>
+              <x-import component-from-global-scope="TmpNam.Button" on-click="{{cancelSignIn}}">Cancel</x-import>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{t3kLoading}}" hint-placeholder-val="{{ false }}">
+        <div class="center" aria-live="polite">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+            <x-import component-from-global-scope="TmpNam.Spinner" size="lg"></x-import>
+            <span style="font-weight: 600">Loading your tones</span>
+            <span class="small muted3">Bookmarks and your own tones, with the models each one offers</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{t3kList}}" hint-placeholder-val="{{ false }}">
+        <div class="strip">
+          <span class="muted">Picking from your allowed variants:</span><span>{{allowedText}}</span>
+          <span style="margin-left: auto"><x-import component-from-global-scope="TmpNam.Button" variant="plain" size="sm" disabled="{{busy}}" on-click="{{openVariants}}">Change…</x-import></span>
+        </div>
+        <sc-if value="{{t3kBanner.show}}" hint-placeholder-val="{{ false }}">
+          <div class="bwrap">
+            <x-import component-from-global-scope="TmpNam.Banner" tone="{{t3kBanner.tone}}" title="{{t3kBanner.title}}" actions="{{t3kBanner.actions}}" on-dismiss="{{dismissT3k}}">{{t3kBanner.body}}</x-import>
+          </div>
+        </sc-if>
+        <sc-if value="{{installPanel.show}}" hint-placeholder-val="{{ false }}">
+          <section class="panel" aria-live="polite">
+            <div style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 600">{{installPanel.title}}</span>
+              <span class="small muted">{{installPanel.sub}}</span>
+            </div>
+            <x-import component-from-global-scope="TmpNam.ProgressBar" value="{{installPanel.value}}" indeterminate="{{installPanel.indet}}" label="{{installPanel.title}}"></x-import>
+          </section>
+        </sc-if>
+        <div class="tgrid thead2"><span></span><span>Tone</span><span>Source</span><span>Model</span><span>On unit</span></div>
+        <div style="flex: 1; min-height: 0; overflow-y: auto">
+          <sc-for list="{{toneRows}}" as="t" hint-placeholder-count="8">
+            <div class="{{t.cls}}">
+              <input type="checkbox" checked="{{t.checked}}" disabled="{{t.cbDisabled}}" onChange="{{t.toggle}}" aria-label="{{t.aria}}">
+              <span style="min-width: 0"><span class="nm">{{t.title}}</span><span class="sub">{{t.sub}}</span></span>
+              <span><x-import component-from-global-scope="TmpNam.Tag" tone="{{t.srcTone}}">{{t.src}}</x-import></span>
+              <span class="mcell">
+                <x-import component-from-global-scope="TmpNam.PopupButton" tone="{{t.popTone}}" marked="{{t.marked}}" open="{{t.menuOpen}}" disabled="{{busy}}" on-click="{{t.toggleMenu}}">{{t.label}}</x-import>
+                <sc-if value="{{t.menuOpen}}" hint-placeholder-val="{{ false }}">
+                  <span class="menu"><x-import component-from-global-scope="TmpNam.Menu" items="{{t.menuItems}}" width="{{n280}}"></x-import></span>
+                </sc-if>
+              </span>
+              <span>
+                <sc-if value="{{t.stOnUnit}}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="TmpNam.Tag" tone="ok">On unit</x-import></sc-if>
+                <sc-if value="{{t.stFailed}}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="TmpNam.Tag" tone="danger">Didn't load</x-import></sc-if>
+                <sc-if value="{{t.stText}}" hint-placeholder-val="{{ true }}"><span class="small muted3">{{t.statusText}}</span></sc-if>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+        <div class="footer" style="height: 56px; background: var(--bg-content)">
+          <sc-if value="{{installHint.show}}" hint-placeholder-val="{{ false }}">
+            <x-import component-from-global-scope="TmpNam.StatusDot" tone="off"></x-import>
+            <span>{{installHint.text}}</span>
+          </sc-if>
+          <sc-if value="{{installHint.hide}}" hint-placeholder-val="{{ true }}">
+            <span style="color: var(--text); font-weight: 600">{{selText}}</span><span>{{dlText}}</span>
+          </sc-if>
+          <span style="flex: 1"></span>
+          <x-import component-from-global-scope="TmpNam.Button" disabled="{{clearDisabled}}" on-click="{{clearSel}}">Clear</x-import>
+          <x-import component-from-global-scope="TmpNam.Button" variant="primary" disabled="{{installDisabled}}" on-click="{{install}}">{{installLabel}}</x-import>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ============ SD CARD ============ -->
+    <sc-if value="{{isSd}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="TmpNam.Toolbar" title="SD Card" subtitle="{{sdSub}}">
+        <sc-if value="{{sdHasLog}}" hint-placeholder-val="{{ false }}">
+          <x-import component-from-global-scope="TmpNam.Button" variant="plain" on-click="{{toggleLog}}">{{logLabel}}</x-import>
+        </sc-if>
+      </x-import>
+
+      <sc-if value="{{sdSetup}}" hint-placeholder-val="{{ true }}">
+        <div class="sdwrap">
+          <div class="sdmain">
+            <sc-if value="{{sd.denied}}" hint-placeholder-val="{{ false }}">
+              <x-import component-from-global-scope="TmpNam.Banner" tone="error" title="Administrator access wasn't given" on-dismiss="{{dismissDenied}}">Nothing was written to the card. Writing to an SD card needs the password of an administrator account on this Mac.</x-import>
+            </sc-if>
+            <div class="cardx">
+              <div class="card-h"><span class="{{sdFileStep.cls}}">{{sdFileStep.mark}}</span><span style="font-weight: 600">Fender firmware file</span></div>
+              <div class="card-b">
+                <sc-if value="{{sdFileNone}}" hint-placeholder-val="{{ true }}">
+                  <p class="small muted" style="margin: 0">The official <span class="mono">ToneMasterPro_v1_8_58.img</span> from Fender. Other versions won't work.</p>
+                  <div><x-import component-from-global-scope="TmpNam.Button" disabled="{{busy}}" on-click="{{openFilePick}}">Choose File…</x-import></div>
+                </sc-if>
+                <sc-if value="{{sdFileSet}}" hint-placeholder-val="{{ false }}">
+                  <div class="hrow" style="gap: 10px; flex-wrap: nowrap">
+                    <div style="flex: 1; min-width: 0"><div class="mono" style="font-weight: 600">{{sdFileName}}</div><div class="small muted3">In Downloads</div></div>
+                    <x-import component-from-global-scope="TmpNam.Tag" tone="{{sdFileTagTone}}">{{sdFileTag}}</x-import>
+                    <x-import component-from-global-scope="TmpNam.Button" size="sm" disabled="{{busy}}" on-click="{{openFilePick}}">Change…</x-import>
+                  </div>
+                  <sc-if value="{{sdFileWrong}}" hint-placeholder-val="{{ false }}">
+                    <p class="small" style="margin: 0; color: var(--danger)">This isn't the expected firmware. The card needs exactly ToneMasterPro_v1_8_58.img, unmodified. A renamed or partly downloaded file fails this check too.</p>
+                  </sc-if>
+                </sc-if>
+              </div>
+            </div>
+            <div class="cardx">
+              <div class="card-h"><span class="{{sdDiskStep.cls}}">{{sdDiskStep.mark}}</span><span style="font-weight: 600">SD card</span><span class="small muted3" style="margin-left: auto">Detected automatically</span></div>
+              <div role="radiogroup" aria-label="SD card">
+                <sc-for list="{{disks}}" as="d" hint-placeholder-count="3">
+                  <x-import component-from-global-scope="TmpNam.Radio" row="{{yes}}" name="disk" label="{{d.name}}" detail="{{d.detail}}" note="{{d.note}}" checked="{{d.checked}}" disabled="{{d.disabled}}" on-change="{{d.pick}}"></x-import>
+                </sc-for>
+              </div>
+            </div>
+            <div class="hrow" style="gap: 14px; margin-top: 4px">
+              <x-import component-from-global-scope="TmpNam.Button" variant="primary" size="lg" disabled="{{createDisabled}}" on-click="{{openCreate}}">Create SD Card…</x-import>
+              <span class="small muted3">{{createHint}}</span>
+            </div>
+          </div>
+          <aside class="aside">
+            <span class="label">About the card</span>
+            <p style="margin: 0"><b>The unit itself isn't changed.</b> <span class="muted">Its internal firmware is never modified.</span></p>
+            <p style="margin: 0"><b>Remove the card to go back.</b> <span class="muted">Without it, the unit boots its stock firmware.</span></p>
+            <p style="margin: 0"><b>Keep your current card.</b> <span class="muted">If you already have a working NAM card, keep it as a spare and use a new card here.</span></p>
+          </aside>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{sdRunning}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; display: flex; justify-content: center; padding: 24px; overflow-y: auto">
+          <div style="width: 540px; display: flex; flex-direction: column; gap: 16px" aria-live="polite">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <h2 class="t-title">Creating the NAM card</h2>
+              <span class="small muted">{{sdStepText}}</span>
+            </div>
+            <x-import component-from-global-scope="TmpNam.ProgressBar" value="{{sdPct}}" size="lg" label="Creating the NAM card"></x-import>
+            <div class="cardx" style="padding: 2px 16px">
+              <x-import component-from-global-scope="TmpNam.StageList" stages="{{sdStages}}"></x-import>
+            </div>
+            <x-import component-from-global-scope="TmpNam.Banner" tone="info">Keep the card in and the Mac awake. You can use other pages meanwhile.</x-import>
+            <sc-if value="{{sd.showLog}}" hint-placeholder-val="{{ false }}"><pre class="log">{{logText}}</pre></sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{sdSuccess}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; display: flex; justify-content: center; padding: 40px 24px; overflow-y: auto">
+          <div style="width: 480px; display: flex; flex-direction: column; gap: 20px">
+            <div class="hrow" style="gap: 14px; flex-wrap: nowrap">
+              <span style="width: 36px; height: 36px; border-radius: 50%; background: var(--ok-dot); color: #fff; display: flex; align-items: center; justify-content: center; flex: none"><x-import component-from-global-scope="TmpNam.Icon" name="check" stroke-width="{{n2}}"></x-import></span>
+              <div style="display: flex; flex-direction: column; gap: 2px"><h2 class="t-display">Card ready</h2><span class="muted">Written and verified. The card has been ejected; you can remove it.</span></div>
+            </div>
+            <div class="cardx">
+              <div class="card-h"><span style="font-weight: 600">Next, on the Tone Master Pro</span></div>
+              <div class="card-b"><x-import component-from-global-scope="TmpNam.ConnectSteps" steps="{{nextSteps}}"></x-import></div>
+            </div>
+            <p class="small muted" style="margin: 0">When the preset screen shows, plug in USB-C to manage captures here. To go back to stock, power off and remove the card. Keep your previous working card as a spare.</p>
+            <sc-if value="{{sd.showLog}}" hint-placeholder-val="{{ false }}"><pre class="log">{{logText}}</pre></sc-if>
+            <div class="hrow">
+              <x-import component-from-global-scope="TmpNam.Button" variant="primary" on-click="{{sdDone}}">Done</x-import>
+              <x-import component-from-global-scope="TmpNam.Button" on-click="{{sdAnother}}">Make Another</x-import>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{sdFailed}}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 22px 28px; overflow-y: auto">
+          <div class="hrow" style="gap: 14px; align-items: flex-start; flex-wrap: nowrap">
+            <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--danger-fill); color: #fff; display: flex; align-items: center; justify-content: center; flex: none"><x-import component-from-global-scope="TmpNam.Icon" name="close" stroke-width="{{n2}}"></x-import></span>
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <h2 class="t-title">The card couldn't be created</h2>
+              <p class="muted" style="margin: 0">Reading back to verify failed: what's on the card doesn't match what was written. The card or the reader may be faulty. Try another card or reader.</p>
+              <p class="small muted3" style="margin: 0">The card isn't usable as it is. Your unit and its firmware are unaffected.</p>
+            </div>
+          </div>
+          <div class="hrow" style="padding-left: 46px">
+            <x-import component-from-global-scope="TmpNam.Button" variant="primary" on-click="{{sdRetry}}">Try Again</x-import>
+            <x-import component-from-global-scope="TmpNam.Button" on-click="{{sdDone}}">Back</x-import>
+          </div>
+          <div class="hrow" style="align-items: flex-start; flex-wrap: nowrap; gap: 16px">
+            <div class="cardx" style="width: 270px; flex: none; padding: 2px 14px">
+              <x-import component-from-global-scope="TmpNam.StageList" stages="{{sdStages}}"></x-import>
+            </div>
+            <sc-if value="{{sd.showLog}}" hint-placeholder-val="{{ true }}"><pre class="log" style="flex: 1; min-width: 0; max-height: 330px">{{logText}}</pre></sc-if>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- ============ SETTINGS ============ -->
+    <sc-if value="{{isSet}}" hint-placeholder-val="{{ false }}">
+      <x-import component-from-global-scope="TmpNam.Toolbar" title="Settings">
+        <x-import component-from-global-scope="TmpNam.SegmentedControl" options="{{setOptions}}" value="{{setSection}}" on-change="{{setSectionFn}}"></x-import>
+      </x-import>
+      <div style="padding: 12px 40px; max-width: 680px; overflow-y: auto">
+        <sc-if value="{{setIsT3k}}" hint-placeholder-val="{{ true }}">
+          <div class="formrow">
+            <span class="lbl">API key</span>
+            <sc-if value="{{hasKey}}" hint-placeholder-val="{{ true }}">
+              <x-import component-from-global-scope="TmpNam.TextField" mono="{{yes}}" value="••••••••••••••••a91e" disabled="{{yes}}" help="Your own key from tone3000.com › Settings › API. Stored in the Keychain. Removing it also signs you out.">
+                <x-import component-from-global-scope="TmpNam.Button" on-click="{{replaceKey}}">Replace…</x-import>
+                <x-import component-from-global-scope="TmpNam.Button" destructive-text="{{yes}}" on-click="{{replaceKey}}">Remove</x-import>
+              </x-import>
+            </sc-if>
+            <sc-if value="{{noKey}}" hint-placeholder-val="{{ false }}">
+              <div class="hrow"><span class="muted">No key saved.</span><x-import component-from-global-scope="TmpNam.Button" on-click="{{goT3k}}">Add Key…</x-import></div>
+            </sc-if>
+          </div>
+          <div class="formrow">
+            <span class="lbl">Account</span>
+            <div class="hrow" style="gap: 10px">
+              <x-import component-from-global-scope="TmpNam.StatusDot" tone="{{acctTone}}" label="{{acctText}}"></x-import>
+              <span style="margin-left: auto">
+                <sc-if value="{{signedIn}}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="TmpNam.Button" on-click="{{signOut}}">Sign Out</x-import></sc-if>
+                <sc-if value="{{canSignIn}}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="TmpNam.Button" on-click="{{signInFromSettings}}">Sign In…</x-import></sc-if>
+              </span>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{setIsVar}}" hint-placeholder-val="{{ false }}">
+          <div class="formrow">
+            <span class="lbl">Sync may download</span>
+            <div class="vgrid">
+              <div class="vcol"><span style="font-weight: 600">A2</span>
+                <sc-for list="{{liveA2}}" as="v" hint-placeholder-count="3"><x-import component-from-global-scope="TmpNam.Checkbox" label="{{v.label}}" checked="{{v.checked}}" on-change="{{v.toggle}}"></x-import></sc-for>
+              </div>
+              <div class="vcol"><span style="font-weight: 600">A1</span>
+                <sc-for list="{{liveA1}}" as="v" hint-placeholder-count="4"><x-import component-from-global-scope="TmpNam.Checkbox" label="{{v.label}}" checked="{{v.checked}}" on-change="{{v.toggle}}"></x-import></sc-for>
+              </div>
+            </div>
+          </div>
+          <div class="formrow">
+            <span class="lbl">Which one is picked</span>
+            <span class="small muted" style="padding-top: 5px">If a tone has several allowed models, A2 wins over A1, then the largest allowed size. You can override it per tone on the Tone3000 page.</span>
+          </div>
+          <div class="formrow" style="border-bottom: 0">
+            <span class="lbl">Before playing live</span>
+            <x-import component-from-global-scope="TmpNam.Banner" tone="warn">Size labels don't guarantee a capture runs without glitches on the unit. Check each one by ear.</x-import>
+          </div>
+        </sc-if>
+        <sc-if value="{{setIsUnit}}" hint-placeholder-val="{{ false }}">
+          <div class="formrow">
+            <span class="lbl">Connection</span>
+            <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 5px">
+              <x-import component-from-global-scope="TmpNam.StatusDot" tone="{{unitTone}}" label="{{unitText}}"></x-import>
+              <sc-if value="{{unitMissing}}" hint-placeholder-val="{{ false }}"><x-import component-from-global-scope="TmpNam.ConnectSteps"></x-import></sc-if>
+            </div>
+          </div>
+          <div class="formrow">
+            <span class="lbl">SD card build</span>
+            <sc-if value="{{unitKnown}}" hint-placeholder-val="{{ true }}"><div class="hrow"><span class="code">nam-card-2026.09-r3</span><x-import component-from-global-scope="TmpNam.Button" size="sm">Copy</x-import></div></sc-if>
+            <sc-if value="{{unitUnknown}}" hint-placeholder-val="{{ false }}"><span class="muted3" style="padding-top: 5px">Shown when the unit is connected</span></sc-if>
+          </div>
+          <div class="formrow" style="border-bottom: 0">
+            <span class="lbl">NAM player</span>
+            <sc-if value="{{unitKnown}}" hint-placeholder-val="{{ true }}">
+              <div style="display: flex; flex-direction: column; gap: 6px"><div class="hrow"><span class="code">3e9a0c4f7b21d58e</span><x-import component-from-global-scope="TmpNam.Button" size="sm">Copy</x-import></div><span class="small muted3">The version of the NAM player on the card, as a hash.</span></div>
+            </sc-if>
+            <sc-if value="{{unitUnknown}}" hint-placeholder-val="{{ false }}"><span class="muted3" style="padding-top: 5px">Shown when the unit is connected</span></sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- ============ SHEETS ============ -->
+  <sc-if value="{{sheetAdd}}" hint-placeholder-val="{{ false }}">
+    <x-import component-from-global-scope="TmpNam.Sheet" title="Add captures to the unit" width="{{n540}}" actions="{{addActions}}" extra="{{addExtra}}" on-close="{{closeSheet}}">
+      <p class="muted" style="margin: 0">4 files checked. 3 are valid captures and will be sent.</p>
+      <div class="cardx">
+        <sc-for list="{{addFiles}}" as="f" hint-placeholder-count="4">
+          <div style="{{f.rowStyle}}">
+            <x-import component-from-global-scope="TmpNam.Icon" name="{{f.icon}}" style="{{f.iconStyle}}"></x-import>
+            <div style="min-width: 0"><div style="font-weight: 500">{{f.file}}</div><div class="small" style="{{f.subStyle}}">{{f.sub}}</div></div>
+            <span class="tags" style="justify-content: flex-end">
+              <sc-if value="{{f.ok}}" hint-placeholder-val="{{ true }}"><x-import component-from-global-scope="TmpNam.Tag" tone="arch">{{f.arch}}</x-import><x-import component-from-global-scope="TmpNam.Tag">{{f.rate}}</x-import><span class="small muted" style="width: 52px; text-align: right">{{f.size}}</span></sc-if>
+              <sc-if value="{{f.bad}}" hint-placeholder-val="{{ false }}"><span class="small muted">Skipped</span></sc-if>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <x-import component-from-global-scope="TmpNam.Banner" tone="info">After sending, the unit's audio engine restarts and is silent for a few seconds. Don't play through it live while this runs.</x-import>
+    </x-import>
+  </sc-if>
+
+  <sc-if value="{{sheetRemove}}" hint-placeholder-val="{{ false }}">
+    <x-import component-from-global-scope="TmpNam.Sheet" title="{{removeTitle}}" width="{{n440}}" alert="{{yes}}" actions="{{removeActions}}" on-close="{{closeSheet}}">
+      <p class="muted" style="margin: 0">Presets that use this capture will lose it. On the unit, you'll need to pick another IR in those presets.</p>
+      <p class="small muted3" style="margin: 0">To get it back later, add the .nam file again. Size and gain settings are not kept.</p>
+    </x-import>
+  </sc-if>
+
+  <sc-if value="{{sheetVariants}}" hint-placeholder-val="{{ false }}">
+    <x-import component-from-global-scope="TmpNam.Sheet" title="Allowed variants" width="{{n520}}" actions="{{variantActions}}" extra="{{variantExtra}}" on-close="{{closeSheet}}">
+      <p class="muted" style="margin: 0">Tone3000 publishes each capture in several sizes. Choose which ones the sync may download.</p>
+      <div class="vgrid">
+        <div class="cardx card-b"><span style="font-weight: 600">A2 <span class="small muted3" style="font-weight: 400">· several sizes in one file</span></span>
+          <sc-for list="{{draftA2}}" as="v" hint-placeholder-count="3"><x-import component-from-global-scope="TmpNam.Checkbox" label="{{v.label}}" checked="{{v.checked}}" on-change="{{v.toggle}}"></x-import></sc-for>
+        </div>
+        <div class="cardx card-b"><span style="font-weight: 600">A1 <span class="small muted3" style="font-weight: 400">· one network</span></span>
+          <sc-for list="{{draftA1}}" as="v" hint-placeholder-count="4"><x-import component-from-global-scope="TmpNam.Checkbox" label="{{v.label}}" checked="{{v.checked}}" on-change="{{v.toggle}}"></x-import></sc-for>
+        </div>
+      </div>
+      <p class="small muted" style="margin: 0">When a tone has more than one allowed model, the sync picks A2 first, then the largest allowed size. You can still choose another model per tone.</p>
+      <x-import component-from-global-scope="TmpNam.Banner" tone="warn" title="Size labels are not a guarantee">A model labelled Feather or Nano can still crackle or drop out on the unit. Check every capture by ear before using it live.</x-import>
+    </x-import>
+  </sc-if>
+
+  <sc-if value="{{sheetFile}}" hint-placeholder-val="{{ false }}">
+    <x-import component-from-global-scope="TmpNam.Sheet" title="Choose the firmware file" width="{{n440}}" actions="{{fileActions}}" on-close="{{closeSheet}}">
+      <p class="small muted3" style="margin: 0">Stands in for the macOS file dialog. Pick one of the files in Downloads.</p>
+      <button type="button" class="filebtn" onClick="{{pickGoodFile}}"><span class="mono" style="font-weight: 600">ToneMasterPro_v1_8_58.img</span><span class="small muted3">The expected firmware</span></button>
+      <button type="button" class="filebtn" onClick="{{pickWrongFile}}"><span class="mono" style="font-weight: 600">ToneMasterPro_v1_9_02.img</span><span class="small muted3">A different firmware version</span></button>
+    </x-import>
+  </sc-if>
+
+  <sc-if value="{{sheetConfirm}}" hint-placeholder-val="{{ false }}">
+    <x-import component-from-global-scope="TmpNam.Sheet" title="Erase this card and create the NAM card?" width="{{n460}}" alert="{{yes}}" actions="{{confirmActions}}" on-close="{{closeSheet}}">
+      <div class="cardx card-b" style="gap: 4px; background: var(--bg-subtle)">
+        <span style="font-weight: 600">{{diskSel.name}}</span>
+        <span class="small muted">{{diskSel.detail}} · <span class="mono" style="font-size: 11px">{{diskSel.dev}}</span></span>
+      </div>
+      <p class="muted" style="margin: 0">Everything on this card will be deleted. Check it's the card you meant: other disks are never touched.</p>
+      <p class="small muted3" style="margin: 0">Next, macOS asks for your administrator password. Writing then takes several minutes. Keep the card in and the Mac awake.</p>
+    </x-import>
+  </sc-if>
+
+  <sc-if value="{{sheetAdmin}}" hint-placeholder-val="{{ false }}">
+    <div class="syscrim">
+      <div class="sysdlg" role="dialog" aria-labelledby="adm-t">
+        <x-import component-from-global-scope="TmpNam.Icon" name="lock" size="{{n40}}" style="color: var(--text-2)"></x-import>
+        <h2 id="adm-t" style="margin: 0; font-size: 13px; font-weight: 600">TMP NAM wants to make changes.</h2>
+        <p style="margin: 0; font-size: 11px; color: var(--text-2)">Enter your password to allow this.</p>
+        <span style="width: 100%; box-sizing: border-box; height: 26px; border-radius: 6px; border: 1px solid var(--border); background: #3A3A3C; padding: 0 8px; font-size: 13px; line-height: 24px; text-align: left">Pedro</span>
+        <input aria-label="Password" type="password" placeholder="Password">
+        <div style="display: flex; gap: 8px; width: 100%">
+          <x-import component-from-global-scope="TmpNam.Button" on-click="{{adminCancel}}" style="flex: 1">Cancel</x-import>
+          <x-import component-from-global-scope="TmpNam.Button" variant="primary" on-click="{{adminOk}}" style="flex: 1">OK</x-import>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+<!-- ============ PROTOTYPE CONTROLS (not part of the app) ============ -->
+<aside class="controls" aria-label="Prototype controls">
+  <span class="label">Prototype controls</span>
+  <p style="margin: 0">Not part of the app. These stand in for the real world around it.</p>
+  <div class="cgroup">
+    <h2>Tone Master Pro</h2>
+    <x-import component-from-global-scope="TmpNam.StatusDot" tone="{{unitTone}}" label="{{unitText}}"></x-import>
+    <div class="hrow">
+      <x-import component-from-global-scope="TmpNam.Button" size="sm" disabled="{{plugDisabled}}" on-click="{{plug}}">Plug In USB-C</x-import>
+      <x-import component-from-global-scope="TmpNam.Button" size="sm" disabled="{{unplugDisabled}}" on-click="{{unplug}}">Unplug</x-import>
+    </div>
+    <span class="muted3">Unplug while captures are sending to see the recovery.</span>
+  </div>
+  <div class="cgroup">
+    <h2>Make the next one fail</h2>
+    <x-import component-from-global-scope="TmpNam.Checkbox" label="Engine restart: last capture doesn't load" checked="{{failRestart}}" on-change="{{toggleFailRestart}}"></x-import>
+    <x-import component-from-global-scope="TmpNam.Checkbox" label="SD card: read-back verify fails" checked="{{failVerify}}" on-change="{{toggleFailVerify}}"></x-import>
+  </div>
+  <div class="cgroup">
+    <h2>Things to try</h2>
+    <span>Select a capture, change its size or gain. Add Captures…, then switch pages while it sends. Tone3000: paste any text as the key, sign in, pick models, install. SD Card: choose the wrong file first.</span>
+  </div>
+  <div style="margin-top: auto"><x-import component-from-global-scope="TmpNam.Button" on-click="{{reset}}">Reset Prototype</x-import></div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1300,"height":740}}'>
+var A2_ORDER = ['Full', 'Feather', 'Nano'];
+var A1_ORDER = ['Standard', 'Lite', 'Feather', 'Nano'];
+var DEFAULT_ALLOWED = { A2: ['Feather', 'Nano'], A1: ['Feather', 'Nano'] };
+function rank(m) { var p = m.split(' '); return p[0] === 'A2' ? A2_ORDER.indexOf(p[1]) : 10 + A1_ORDER.indexOf(p[1]); }
+function isAllowed(al, m) { var p = m.split(' '); return (al[p[0]] || []).indexOf(p[1]) >= 0; }
+function autoPick(models, al) {
+  var ok = models.filter(function (m) { return isAllowed(al, m); }).sort(function (a, b) { return rank(a) - rank(b); });
+  return ok[0] || null;
+}
+function fmtModel(m) { return m.replace(' ', ' · '); }
+function fmtX(x) { return (Math.round(x * 10) / 10) + '×'; }
+function fmtKb(n) { return n >= 1000 ? (Math.round(n / 100) / 10) + ' MB' : Math.round(n) + ' KB'; }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+function modelKb(m) { var p = m.split(' '); return p[0] === 'A2' ? (p[1] === 'Full' ? 1400 : 1100) : (p[1] === 'Standard' ? 300 : p[1] === 'Lite' ? 220 : 160); }
+
+var CAPS0 = [
+  { id: 'c1', name: "Fender Deluxe Reverb '65 Vibrato", gear: 'Fender · Deluxe Reverb · Amp', arch: 'A2', sizes: ['Feather', 'Full'], size: 'Full', rate: '48 kHz', kb: 1100, gain: 4 },
+  { id: 'c2', name: 'Marshall JCM800 2203 Crunch', gear: 'Marshall · JCM800 2203 · Amp + cab', arch: 'A2', sizes: ['Feather', 'Full'], size: 'Feather', rate: '48 kHz', kb: 1100, gain: 4 },
+  { id: 'c3', name: 'Mesa Mark IIC+ Lead', gear: 'Mesa/Boogie · Mark IIC+ · Amp', arch: 'A2', sizes: ['Feather', 'Standard', 'Full'], size: 'Standard', rate: '44.1 kHz', kb: 1600, gain: 3.5 },
+  { id: 'c4', name: 'Vox AC30 Top Boost', gear: 'Vox · AC30 · Amp', arch: 'A1', variant: 'Feather', toneId: 't10', rate: '48 kHz', kb: 296, gain: 1 },
+  { id: 'c5', name: 'Friedman BE-100 BE Channel', gear: 'Friedman · BE-100 · Amp', arch: 'A2', sizes: ['Feather', 'Full'], size: 'Full', rate: '48 kHz', kb: 1100, gain: 4 },
+  { id: 'c6', name: 'Klon Centaur into Twin', gear: 'Klon · Centaur · Pedal', arch: 'A1', rate: '48 kHz', kb: 301, gain: 2 },
+  { id: 'c7', name: 'Bogner Ecstasy Blue', gear: 'Bogner · Ecstasy 101B · Amp', arch: 'A1', rate: '48 kHz', kb: 298, gain: 4.5 },
+  { id: 'c8', name: 'Dumble ODS Clean', gear: '', arch: 'A1', rate: '', kb: 0, gain: 1, flag: 'missing', fileName: 'dumble_ods_clean.nam' },
+  { id: 'c9', name: 'bluesbreaker_v2.nam', gear: '', arch: 'A1', rate: '48 kHz', kb: 301, gain: 1, flag: 'unreg' }
+];
+var ADD_FILES = [
+  { name: 'Plexi 1968 Super Lead', file: 'Plexi 1968 Super Lead.nam', gear: 'Marshall · 1959 Super Lead · Amp', arch: 'A2', sizes: ['Feather', 'Full'], rate: '48 kHz', kb: 1100 },
+  { name: 'JC-120 Clean', file: 'JC-120 Clean.nam', gear: 'Roland · JC-120 · Amp', arch: 'A1', rate: '48 kHz', kb: 298 },
+  { name: 'Rectifier Modern Red', file: 'Rectifier Modern Red.nam', gear: '', arch: 'A2', sizes: ['Feather', 'Standard', 'Full'], rate: '44.1 kHz', kb: 1600 }
+];
+var TONES0 = [
+  { id: 't1', title: 'Plexi Super Lead 1968', author: 'tonehunter', src: 'Bookmark', models: ['A2 Full', 'A2 Feather', 'A2 Nano', 'A1 Standard', 'A1 Feather'] },
+  { id: 't2', title: "Fender Deluxe Reverb '65 Vibrato", author: 'riffwright', src: 'Yours', models: ['A2 Full', 'A2 Feather', 'A2 Nano'], onUnit: true },
+  { id: 't3', title: 'Dual Rectifier Modern', author: 'mbtones', src: 'Bookmark', models: ['A1 Standard', 'A1 Feather', 'A1 Nano'] },
+  { id: 't4', title: 'TS808 into JC-120', author: 'kpcaps', src: 'Bookmark', models: ['A1 Standard'] },
+  { id: 't5', title: 'Bogner Shiva 20th Lead', author: 'tonehunter', src: 'Bookmark', models: ['A2 Full', 'A2 Feather', 'A2 Nano', 'A1 Standard', 'A1 Feather'] },
+  { id: 't6', title: 'Marshall JCM800 2203 Crunch', author: 'riffwright', src: 'Yours', models: ['A2 Full', 'A2 Feather', 'A2 Nano'], onUnit: true },
+  { id: 't7', title: 'Orange Rockerverb 50 Dirty', author: 'halfstack', src: 'Bookmark', models: ['A2 Full', 'A2 Feather', 'A1 Standard'] },
+  { id: 't8', title: 'Matchless DC-30 Ch. 2', author: 'vintagecaps', src: 'Bookmark', models: ['A1 Standard', 'A1 Nano'] },
+  { id: 't9', title: 'Mesa Mark IIC+ Lead', author: 'riffwright', src: 'Yours', models: ['A2 Full', 'A2 Feather', 'A2 Nano'], onUnit: true },
+  { id: 't10', title: 'Vox AC30 Top Boost', author: 'amptraveler', src: 'Bookmark', models: ['A1 Standard', 'A1 Lite', 'A1 Feather', 'A1 Nano'], onUnit: true }
+];
+function archTag(c, long) { return c.arch === 'A2' ? 'A2 · ' + c.sizes.length + (long ? ' sizes' : '') : c.variant ? 'A1 · ' + c.variant : 'A1'; }
+var DISKS = [
+  { id: 'd1', name: 'Generic STORAGE DEVICE', detail: '31.9 GB · USB', dev: '/dev/disk4' },
+  { id: 'd2', name: 'SanDisk SDDR-B531', detail: '63.9 GB · USB', dev: '/dev/disk5' },
+  { id: 'd3', name: 'Built-in SD Card Reader', detail: '63.9 GB · Internal', refused: 'Not a USB reader' }
+];
+var STAGES = [
+  ['Checking the firmware file', 700, 'firmware: ToneMasterPro_v1_8_58.img sha256 ok'],
+  ['Extracting', 1200, 'extract: rootfs, boot partitions'],
+  ['Verifying the extracted files', 700, 'verify: extracted image checksums ok'],
+  ['Adding NAM support', 500, 'nam: installing player 3e9a0c4f7b21'],
+  ['Building the filesystem', 1000, 'fs: building ext4 image'],
+  ['Preparing partitions', 500, 'disk: partition table written'],
+  ['Writing to the card', 6000, 'write: done'],
+  ['Reading back to verify', 4000, 'verify: read-back matches']
+];
+var STAGE_TOTAL = STAGES.reduce(function (a, s) { return a + s[1]; }, 0);
+function stamp(sec) {
+  var t = 14 * 3600 + 2 * 60 + 11 + sec;
+  var hh = Math.floor(t / 3600), mm = Math.floor(t / 60) % 60, ss = t % 60;
+  return '[' + hh + ':' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss + ']';
+}
+function initialState() {
+  return {
+    page: 'captures', unit: 'connected', caps: clone(CAPS0), sel: 'c3', sheet: null, op: null, capBanner: null, remaining: null, removeId: null,
+    t3k: 'nokey', keyDraft: '', t3kFilter: 'All', tones: clone(TONES0), menuFor: null, t3kBanner: null,
+    allowed: clone(DEFAULT_ALLOWED), draft: null,
+    sd: { file: null, disk: 'd1', phase: 'setup', stage: 0, writePct: 0, log: [], showLog: false, denied: false, elapsed: 0 },
+    setSection: 'Tone3000', failRestart: false, failVerify: false
+  };
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = initialState();
+    this.buckets = { op: [], sd: [], unit: [], auth: [] };
+  }
+  componentWillUnmount() { var self = this; Object.keys(this.buckets).forEach(function (b) { self.clear(b); }); }
+  after(b, ms, fn) { this.buckets[b].push(setTimeout(fn, ms)); }
+  every(b, ms, fn) { this.buckets[b].push(setInterval(fn, ms)); }
+  clear(b) { this.buckets[b].forEach(function (t) { clearTimeout(t); clearInterval(t); }); this.buckets[b] = []; }
+
+  /* ---------- unit ---------- */
+  plug() {
+    var self = this;
+    this.clear('unit');
+    this.setState({ unit: 'looking' });
+    this.after('unit', 1600, function () { if (self.state.unit === 'looking') self.setState({ unit: 'connected' }); });
+  }
+  unplug() {
+    var s = this.state;
+    this.clear('unit');
+    if (s.op && s.op.phase === 'restart') { this.clear('op'); this.finishOp(true); return; }
+    if (s.op) {
+      this.clear('op');
+      var op = s.op, sent = op.items.filter(function (i) { return i.state === 'sent'; });
+      var rest = op.items.filter(function (i) { return i.state !== 'sent'; }).map(function (i) { i.state = 'wait'; i.done = 0; return i; });
+      var now = op.items.filter(function (i) { return i.state === 'now'; })[0];
+      if (op.kind === 'send') {
+        var caps = this.addCaps(clone(s.caps), sent, -1);
+        this.setState({ unit: 'missing', op: null, caps: caps, remaining: { kind: 'send', items: rest },
+          capBanner: { kind: 'resume', tone: 'error', title: 'The unit disconnected while sending',
+            body: sent.length + ' of ' + op.items.length + ' captures reached the unit. The interrupted file was not kept. Reconnect to send the rest.' } });
+      } else {
+        this.setState({ unit: 'missing', op: null, remaining: { kind: 'install', items: rest },
+          t3kBanner: { kind: 'resume', tone: 'error', title: 'The unit disconnected during the install',
+            body: (op.phase === 'download' ? 'Nothing was sent yet.' : sent.length + ' of ' + op.items.length + ' tones reached the unit.') + ' Reconnect to install the rest.' } });
+      }
+      return;
+    }
+    this.setState({ unit: 'missing' });
+  }
+
+  /* ---------- long operations ---------- */
+  startSend(files) {
+    var op = { kind: 'send', phase: 'send', i: 0, items: files.map(function (f) { return { f: f, name: f.name, total: f.kb, done: 0, state: 'wait' }; }) };
+    this.setState({ op: op, sheet: null, capBanner: null, remaining: null });
+    this.runTransfer();
+  }
+  startInstall(items) {
+    var op = { kind: 'install', phase: 'download', dl: 0, i: 0, items: items };
+    this.setState({ op: op, sheet: null, t3kBanner: null, remaining: null, menuFor: null });
+    this.runTransfer();
+  }
+  runTransfer() {
+    var self = this;
+    this.every('op', 120, function () {
+      var op = clone(self.state.op);
+      if (!op) return;
+      if (op.phase === 'download') {
+        op.dl = Math.min(100, op.dl + 6);
+        if (op.dl >= 100) { op.phase = 'send'; op.items.forEach(function (i) { i.state = 'downloaded'; }); }
+        self.setState({ op: op });
+        return;
+      }
+      var it = op.items[op.i];
+      it.state = 'now';
+      it.done = Math.min(it.total, it.done + Math.max(40, it.total / 12));
+      if (it.done >= it.total) { it.state = 'sent'; op.i++; }
+      if (op.i >= op.items.length) {
+        op.phase = 'restart';
+        self.clear('op');
+        self.setState({ op: op, unit: self.state.unit === 'connected' ? 'busy' : self.state.unit });
+        self.after('op', 2600, function () { self.finishOp(false); });
+        return;
+      }
+      self.setState({ op: op });
+    });
+  }
+  addCaps(caps, items, failedIdx) {
+    caps.forEach(function (c) { c.isNew = false; });
+    items.forEach(function (it, idx) {
+      var f = it.f;
+      var cap = { id: 'n' + Math.random().toString(36).slice(2, 8), name: f.name, gear: f.gear || '', arch: f.arch, variant: f.variant || null, toneId: f.toneId || null, sizes: f.sizes, size: f.sizes ? f.sizes[0] : null,
+        rate: f.rate, kb: f.kb, gain: 1, isNew: true, f: f };
+      if (idx === failedIdx) cap.flag = 'failed';
+      var at = -1;
+      caps.forEach(function (c, i) { if (c.name === cap.name) at = i; });
+      if (at >= 0) { cap.id = caps[at].id; caps.splice(at, 1); }
+      caps.unshift(cap);
+    });
+    return caps;
+  }
+  finishOp(disconnected) {
+    var s = this.state, op = s.op;
+    if (!op) return;
+    var n = op.items.length, fail = s.failRestart && !disconnected, failedIdx = fail ? n - 1 : -1;
+    var unit = disconnected ? 'missing' : s.unit === 'busy' ? 'connected' : s.unit;
+    var caps = this.addCaps(clone(s.caps), op.items, failedIdx);
+    var failedName = fail ? op.items[n - 1].name : null;
+    var patch = { op: null, unit: unit, caps: caps, failRestart: fail ? false : s.failRestart };
+    if (op.kind === 'send') {
+      patch.sel = caps[0].id;
+      patch.capBanner = disconnected
+        ? { tone: 'warn', title: 'The unit disconnected during the engine restart', body: 'All ' + n + ' captures were sent. Reconnect to check they loaded.' }
+        : fail
+          ? { kind: 'failed', tone: 'warn', title: (n - 1) + ' of ' + n + ' captures added', body: failedName + " was sent, but the unit didn't load it after the engine restart. It won't play until this is fixed." }
+          : { tone: 'ok', title: n === 1 ? '1 capture added' : n + ' captures added', body: 'They appear under User IRs on the unit. New captures start at 1× gain.' };
+    } else {
+      var ids = {};
+      op.items.forEach(function (it, idx) { ids[it.id] = idx === failedIdx ? 'failed' : 'ok'; });
+      patch.tones = clone(s.tones).map(function (t) {
+        if (ids[t.id]) { t.checked = false; t.status = ids[t.id] === 'failed' ? 'failed' : null; if (ids[t.id] === 'ok') t.onUnit = true; }
+        return t;
+      });
+      patch.t3kBanner = fail
+        ? { kind: 'failed', tone: 'warn', title: (n - 1) + ' of ' + n + ' tones installed', body: failedName + " was sent, but the unit didn't load it after the engine restart." }
+        : { kind: 'done', tone: 'ok', title: n === 1 ? '1 tone installed' : n + ' tones installed', body: "They're on the unit as User IRs. New captures start at 1× gain; set it in Captures." };
+    }
+    this.setState(patch);
+  }
+
+  /* ---------- SD card ---------- */
+  sdPatch(p) { this.setState({ sd: Object.assign({}, this.state.sd, p) }); }
+  startBuild() {
+    this.clear('sd');
+    var base = Object.assign({}, this.state.sd, { phase: 'running', stage: 0, writePct: 0, log: [], denied: false, elapsed: 0 });
+    this.setState({ sheet: null });
+    this.runStage(0, base);
+  }
+  runStage(i, base) {
+    var self = this, st = STAGES[i];
+    var sd = base || this.state.sd;
+    var log = sd.log.concat([stamp(Math.round(sd.elapsed / 100)) + ' ' + st[0].toLowerCase() + '…']);
+    this.setState({ sd: Object.assign({}, sd, { stage: i, log: log, writePct: 0 }) });
+    if (i === 6) {
+      this.every('sd', 150, function () { var w = Math.min(100, self.state.sd.writePct + 2.6); self.sdPatch({ writePct: w }); });
+    }
+    this.after('sd', st[1], function () {
+      self.clear('sd');
+      var sd2 = self.state.sd;
+      var el = sd2.elapsed + st[1] * 60;
+      if (i === 7 && self.state.failVerify) {
+        var t = stamp(Math.round(el / 100));
+        self.setState({ failVerify: false, sd: Object.assign({}, sd2, { phase: 'failed', showLog: true, elapsed: el,
+          log: sd2.log.concat([t + ' verify: mismatch at offset 0x5B3A0000', t + ' verify: expected 9c41…e07a got 0000…0000', t + ' error: read-back verification failed', t + ' disk: /dev/disk4 left unmounted']) }) });
+        return;
+      }
+      var line = stamp(Math.round(el / 100)) + ' ' + st[2];
+      if (i === STAGES.length - 1) {
+        self.setState({ sd: Object.assign({}, sd2, { phase: 'success', elapsed: el, log: sd2.log.concat([line, stamp(Math.round(el / 100)) + ' disk: ejected']) }) });
+        return;
+      }
+      self.setState({ sd: Object.assign({}, sd2, { elapsed: el, log: sd2.log.concat([line]) }) });
+      self.runStage(i + 1);
+    });
+  }
+
+  /* ---------- Tone3000 ---------- */
+  signIn() {
+    var self = this;
+    this.clear('auth');
+    this.setState({ t3k: 'signingin', page: 'tone3000' });
+    this.after('auth', 3200, function () {
+      self.setState({ t3k: 'loading' });
+      self.after('auth', 1200, function () { self.setState({ t3k: 'list' }); });
+    });
+  }
+  updTone(id, fn) { this.setState({ tones: clone(this.state.tones).map(function (t) { if (t.id === id) fn(t); return t; }) }); }
+
+  renderVals() {
+    var self = this, s = this.state;
+    var connected = s.unit === 'connected';
+    var sdRunning = s.sd.phase === 'running';
+    var busy = !!s.op || sdRunning;
+    var busyReason = s.op ? 'Available when the transfer finishes' : sdRunning ? 'Available when the SD card is done' : '';
+    var op = s.op;
+
+    /* activity */
+    var activity = null;
+    if (op) {
+      var n = op.items.length;
+      if (op.phase === 'restart') activity = { title: 'Restarting audio engine', detail: 'A few seconds' };
+      else if (op.phase === 'download') activity = { title: 'Installing ' + n + (n === 1 ? ' tone' : ' tones'), detail: 'Downloading from Tone3000', value: op.dl };
+      else {
+        var cur = op.items[Math.min(op.i, n - 1)];
+        var tot = op.items.reduce(function (a, i) { return a + i.total; }, 0), dn = op.items.reduce(function (a, i) { return a + i.done; }, 0);
+        activity = { title: op.kind === 'send' ? 'Sending captures' : 'Installing ' + n + (n === 1 ? ' tone' : ' tones'), detail: (op.i + 1) + ' of ' + n + ' · ' + cur.name, value: Math.round(dn / tot * 100) };
+      }
+    } else if (sdRunning) {
+      activity = { title: 'Creating SD card', detail: STAGES[s.sd.stage][0] + (s.sd.stage === 6 ? ' · ' + Math.round(s.sd.writePct) + '%' : ''), value: this.sdPct() };
+    }
+
+    /* ---------- captures ---------- */
+    var caps = s.caps;
+    var totalKb = caps.reduce(function (a, c) { return a + (c.kb || 0); }, 0);
+    var listUnit = connected || s.unit === 'busy';
+    var selC = caps.filter(function (c) { return c.id === s.sel; })[0] || null;
+    var rows = caps.map(function (c) {
+      var sel = c.id === s.sel;
+      var flagText = c.flag === 'missing' ? 'File missing' : c.flag === 'unreg' ? 'Not registered' : c.flag === 'failed' ? "Didn't load after restart" : '';
+      return {
+        name: c.name, gear: c.gear || 'No gear details in file', archTag: archTag(c, false),
+        size: c.flag === 'missing' ? '—' : fmtKb(c.kb), gain: c.flag === 'unreg' ? '—' : fmtX(c.gain), changed: !!c.changed,
+        isNew: !!c.isNew, hasFlag: !!c.flag, noFlag: !c.flag, flagText: flagText,
+        flagTone: c.flag === 'unreg' ? 'warn' : 'danger', selected: sel ? 'true' : 'false',
+        cls: 'row' + (sel ? ' sel' : '') + (c.flag === 'missing' ? ' dim' : ''),
+        select: function () { self.setState({ sel: c.id }); }
+      };
+    });
+    var flagged = caps.filter(function (c) { return c.flag; }).length;
+    var changedN = caps.filter(function (c) { return c.changed; }).length;
+    var capFooter = busy && op && op.kind === 'send' ? 'Size, gain and removal are paused until the transfer finishes.'
+      : flagged ? flagged + (flagged === 1 ? ' capture needs' : ' captures need') + ' attention · select one to fix it'
+      : changedN ? '• Changed since last selected on the unit' : caps.length + ' captures';
+    var inspDisabled = busy || !connected;
+    var insp = { show: !!selC, none: !selC };
+    if (selC) {
+      insp = {
+        show: true, none: false, name: selC.name,
+        gearLine: selC.gear || (selC.flag ? 'Gear details unavailable' : 'No gear details in file'),
+        archLabel: archTag(selC, true),
+        a1Known: selC.arch !== 'A2' && !!selC.variant, a1Unknown: selC.arch !== 'A2' && !selC.variant,
+        a1Text: 'This file is the ' + (selC.variant || '') + ' size. An A1 file holds only one size, so to try another, install that variant from Tone3000.',
+        rate: selC.rate, hasRate: !!selC.rate, fsize: fmtKb(selC.kb), hasSize: !!selC.kb,
+        isMissing: selC.flag === 'missing', isUnreg: selC.flag === 'unreg', isFailed: selC.flag === 'failed', isOk: !selC.flag,
+        isA2: selC.arch === 'A2', isA1: selC.arch !== 'A2', sizeTitle: selC.arch === 'A2' ? 'Size the player loads' : 'Size',
+        sizes: selC.sizes || [], size: selC.size, gain: selC.gain, prev: selC.prevGain == null ? null : selC.prevGain,
+        changed: !!selC.changed, unchanged: !selC.changed, fileName: selC.fileName || '', disabled: inspDisabled
+      };
+    }
+    function updCap(fn) {
+      self.setState({ caps: clone(self.state.caps).map(function (c) { if (c.id === self.state.sel) fn(c); return c; }) });
+    }
+    var sendPanel = { show: !!(op && op.kind === 'send') };
+    if (sendPanel.show) {
+      var tot2 = op.items.reduce(function (a, i) { return a + i.total; }, 0), dn2 = op.items.reduce(function (a, i) { return a + i.done; }, 0);
+      var restart = op.phase === 'restart';
+      sendPanel = {
+        show: true,
+        title: restart ? "Restarting the unit's audio engine" : 'Sending ' + op.items.length + (op.items.length === 1 ? ' capture' : ' captures') + ' to the unit',
+        sub: restart ? 'All sent. The unit is silent for a few seconds while it loads them.' : 'Keep the USB cable connected. You can switch pages; the transfer keeps going.',
+        value: restart ? null : Math.round(dn2 / tot2 * 100), indet: restart,
+        items: op.items.map(function (i) {
+          return { name: i.name, isSent: i.state === 'sent', isNow: i.state === 'now', isWait: i.state === 'wait',
+            nameStyle: i.state === 'now' ? 'font-weight: 600' : i.state === 'wait' ? 'color: var(--text-3)' : '',
+            detail: i.state === 'sent' ? 'Sent · ' + fmtKb(i.total) : i.state === 'now' ? fmtKb(i.done) + ' of ' + fmtKb(i.total) : 'Waiting' };
+        })
+      };
+    }
+    function bannerActions(b, kind) {
+      if (!b) return [];
+      if (b.kind === 'resume') {
+        var k = s.remaining ? s.remaining.items.length : 0;
+        return [{ label: (kind === 'send' ? 'Send Remaining ' : 'Install Remaining ') + k, variant: 'primary', disabled: !connected || busy, onClick: function () {
+          var r = self.state.remaining;
+          if (!r) return;
+          if (r.kind === 'send') self.startSend(r.items.map(function (i) { return i.f; }));
+          else self.startInstall(r.items.map(function (i) { i.state = 'wait'; i.done = 0; return i; }));
+        } }, { label: 'Discard', onClick: function () { self.setState({ remaining: null, capBanner: null, t3kBanner: null }); } }];
+      }
+      if (b.kind === 'failed' && kind === 'send') {
+        return [{ label: 'Send Again', disabled: !connected || busy, onClick: function () { self.resendFailed(); } },
+          { label: 'Remove It', disabled: busy, onClick: function () { var f = self.state.caps.filter(function (c) { return c.flag === 'failed'; })[0]; if (f) self.setState({ sel: f.id, sheet: 'remove', removeId: f.id }); } }];
+      }
+      if (kind === 'install' && (b.kind === 'failed' || b.kind === 'done')) {
+        var acts = [{ label: 'Open Captures', onClick: function () { self.setState({ page: 'captures' }); } }];
+        if (b.kind === 'failed') acts.unshift({ label: 'Try Again', disabled: !connected || busy, onClick: function () {
+          var t = self.state.tones.filter(function (x) { return x.status === 'failed'; })[0];
+          if (t) self.installTones([t]);
+        } });
+        return acts;
+      }
+      return [];
+    }
+    var capBanner = s.capBanner ? Object.assign({ show: true }, s.capBanner, { actions: bannerActions(s.capBanner, 'send') }) : { show: false };
+
+    /* ---------- tone3000 ---------- */
+    var al = s.allowed;
+    var toneList = s.tones.filter(function (t) { return s.t3kFilter === 'All' || (s.t3kFilter === 'Mine' ? t.src === 'Yours' : t.src === 'Bookmark'); });
+    var selTones = s.tones.filter(function (t) { return t.checked && (t.pick || autoPick(t.models, al)); });
+    var toneRows = toneList.map(function (t) {
+      var auto = autoPick(t.models, al), pick = t.pick || auto;
+      var noA2 = t.models.every(function (m) { return m.indexOf('A2') !== 0; });
+      var opItem = op && op.kind === 'install' ? op.items.filter(function (i) { return i.id === t.id; })[0] : null;
+      var statusText = '—';
+      if (opItem) statusText = op.phase === 'download' ? 'Downloading' : opItem.state === 'downloaded' ? 'Waiting to send' : opItem.state === 'now' ? 'Sending · ' + Math.round(opItem.done / opItem.total * 100) + '%' : opItem.state === 'sent' ? 'Sent' : 'Waiting';
+      else if (!connected && !t.onUnit) statusText = 'Unknown';
+      var allowedM = t.models.filter(function (m) { return isAllowed(al, m); }).sort(function (a, b) { return rank(a) - rank(b); });
+      var other = t.models.filter(function (m) { return !isAllowed(al, m); }).sort(function (a, b) { return rank(a) - rank(b); });
+      var items = [{ type: 'header', label: 'Allowed by your settings' }];
+      if (!allowedM.length) items.push({ label: 'None of its models are allowed', disabled: true });
+      allowedM.forEach(function (m) {
+        items.push({ label: fmtModel(m), checked: m === pick, note: m === auto ? 'picked automatically' : '', onClick: function () {
+          self.setState({ menuFor: null, tones: clone(self.state.tones).map(function (x) { if (x.id === t.id) x.pick = m === auto ? null : m; return x; }) });
+        } });
+      });
+      if (other.length) { items.push({ type: 'separator' }); items.push({ type: 'header', label: 'Published, not allowed' }); other.forEach(function (m) { items.push({ label: fmtModel(m), disabled: true }); }); }
+      items.push({ type: 'separator' });
+      items.push({ label: 'Change Allowed Variants…', link: true, onClick: function () { self.setState({ menuFor: null, sheet: 'variants', draft: clone(self.state.allowed) }); } });
+      return {
+        title: t.title, sub: 'by ' + t.author + (noA2 ? (t.models.length === 1 ? ' · only ' + fmtModel(t.models[0]) + ' published' : ' · only A1 published') : ''),
+        src: t.src, srcTone: t.src === 'Yours' ? 'accent' : 'neutral',
+        label: pick ? fmtModel(pick) : 'No allowed model', popTone: pick ? 'default' : 'warn', marked: !!t.pick,
+        checked: !!t.checked && !!pick, cbDisabled: !pick || busy, aria: 'Select ' + t.title,
+        cls: 'tgrid trow' + (t.checked && pick ? ' sel' : '') + (pick ? '' : ' dim'),
+        toggle: function () { self.updTone(t.id, function (x) { x.checked = !x.checked; }); },
+        menuOpen: s.menuFor === t.id, menuItems: items,
+        toggleMenu: function () { self.setState({ menuFor: self.state.menuFor === t.id ? null : t.id }); },
+        stOnUnit: !!t.onUnit && !opItem && t.status !== 'failed', stFailed: t.status === 'failed' && !opItem,
+        stText: !(t.onUnit && !opItem) && !(t.status === 'failed' && !opItem), statusText: statusText
+      };
+    });
+    var count = selTones.length;
+    var dlKb = selTones.reduce(function (a, t) { return a + modelKb(t.pick || autoPick(t.models, al)); }, 0);
+    var installHint = !connected && !op ? { show: true, hide: false, text: 'Connect the unit to install. Your selection is kept.' }
+      : op && op.kind === 'install' ? { show: true, hide: false, text: 'Keep the USB cable connected. Selection and models are paused until this finishes.' }
+      : busy ? { show: true, hide: false, text: busyReason + '.' } : { show: false, hide: true };
+    var installPanel = { show: !!(op && op.kind === 'install') };
+    if (installPanel.show) {
+      var n3 = op.items.length;
+      installPanel = { show: true, title: 'Installing ' + n3 + (n3 === 1 ? ' tone' : ' tones'),
+        sub: op.phase === 'download' ? 'Step 1 of 3 · downloading from Tone3000' : op.phase === 'send' ? 'Step 2 of 3 · sending to the unit' : 'Step 3 of 3 · restarting the audio engine, a few seconds',
+        value: op.phase === 'restart' ? null : activity.value, indet: op.phase === 'restart' };
+    }
+    var t3kBanner = s.t3kBanner ? Object.assign({ show: true }, s.t3kBanner, { actions: bannerActions(s.t3kBanner, 'install') }) : { show: false };
+    function varList(src, arch, order, live) {
+      return order.map(function (size) {
+        return { label: size, checked: (src[arch] || []).indexOf(size) >= 0, toggle: function () {
+          var key = live ? 'allowed' : 'draft';
+          var a = clone(self.state[key]);
+          var i = a[arch].indexOf(size);
+          if (i >= 0) a[arch].splice(i, 1); else a[arch].push(size);
+          var patch = {}; patch[key] = a; self.setState(patch);
+        } };
+      });
+    }
+    function allowedLine(a) {
+      var parts = [];
+      if (a.A2.length) parts.push('A2 ' + A2_ORDER.filter(function (x) { return a.A2.indexOf(x) >= 0; }).join(', '));
+      if (a.A1.length) parts.push('A1 ' + A1_ORDER.filter(function (x) { return a.A1.indexOf(x) >= 0; }).join(', '));
+      return parts.length ? parts.join(' · ') : 'none (nothing can be installed)';
+    }
+    var t3kSigned = s.t3k === 'list' || s.t3k === 'loading';
+
+    /* ---------- sd ---------- */
+    var sd = s.sd;
+    var diskSel = DISKS.filter(function (d) { return d.id === sd.disk; })[0] || DISKS[0];
+    var fileOk = sd.file === 'ok';
+    var createHint = !sd.file ? 'Choose a firmware file and a card first.'
+      : !fileOk ? 'Needs the right firmware file.'
+      : busy ? busyReason + '.' : 'Erases ' + diskSel.name + '. Takes several minutes.';
+    var sdStages = STAGES.map(function (st, i) {
+      var state = 'todo', detail = i >= 6 ? 'minutes' : '';
+      if (sd.phase === 'success' || i < sd.stage) { state = 'done'; detail = 'done'; }
+      else if (i === sd.stage && sd.phase === 'running') { state = 'now'; detail = i === 6 ? Math.round(sd.writePct) + '% · about ' + Math.max(1, Math.ceil((100 - sd.writePct) / 25)) + ' min left' : i === 7 ? 'a few min' : ''; }
+      else if (i === sd.stage && sd.phase === 'failed') { state = 'fail'; detail = 'failed'; }
+      return { label: st[0], state: state, detail: detail };
+    }).filter(function (x, i) { return !(sd.phase === 'failed' && i > sd.stage); });
+
+    function act(label, variant, fn, extra) { return Object.assign({ label: label, variant: variant, onClick: fn }, extra || {}); }
+    var closeSheet = function () { self.setState({ sheet: null }); };
+    var removeC = caps.filter(function (c) { return c.id === s.removeId; })[0];
+
+    return {
+      yes: true, n2: 2, n28: 28, n40: 40, n280: 280, n440: 440, n460: 460, n520: 520, n540: 540,
+      page: s.page, unit: s.unit, activity: activity, busy: busy, busyReason: busyReason,
+      capCount: listUnit ? caps.length : '',
+      nav: function (k) { self.setState({ page: k, menuFor: null }); },
+      isCap: s.page === 'captures', isT3k: s.page === 'tone3000', isSd: s.page === 'sdcard', isSet: s.page === 'settings',
+      unitLooking: s.unit === 'looking', unitMissing: s.unit === 'missing',
+      unitTone: connected ? 'ok' : s.unit === 'busy' ? 'warn' : 'off',
+      unitText: connected ? 'Connected over USB · NAM card' : s.unit === 'busy' ? 'Connected · engine restarting' : s.unit === 'looking' ? 'Looking for the unit…' : 'Not connected',
+      unitKnown: listUnit, unitUnknown: !listUnit,
+      plugDisabled: s.unit !== 'missing', unplugDisabled: s.unit === 'missing',
+      plug: function () { self.plug(); }, unplug: function () { self.unplug(); },
+      failRestart: s.failRestart, failVerify: s.failVerify,
+      toggleFailRestart: function () { self.setState({ failRestart: !self.state.failRestart }); },
+      toggleFailVerify: function () { self.setState({ failVerify: !self.state.failVerify }); },
+      reset: function () { Object.keys(self.buckets).forEach(function (b) { self.clear(b); }); self.setState(initialState()); },
+
+      /* captures */
+      capSub: listUnit ? caps.length + ' on unit · ' + fmtKb(totalKb) : s.unit === 'looking' ? 'Looking for the unit…' : 'Unit not connected',
+      addDisabled: !connected || busy, addHint: !connected ? 'Connect the unit first' : busyReason,
+      openAdd: function () { self.setState({ sheet: 'add' }); },
+      capBanner: capBanner, dismissCap: function () { self.setState({ capBanner: null }); },
+      sendPanel: sendPanel,
+      capNoUnit: !listUnit, capNone: listUnit && caps.length === 0, capShowList: listUnit && caps.length > 0,
+      rows: rows, capFooter: capFooter, insp: insp,
+      setSize: function (v) { updCap(function (c) { c.size = v; c.changed = true; }); },
+      setGain: function (v) { updCap(function (c) { if (c.prevGain == null) c.prevGain = c.gain; c.gain = v; c.changed = true; }); },
+      askRemove: function () { self.setState({ sheet: 'remove', removeId: self.state.sel }); },
+      register: function () { updCap(function (c) { c.flag = null; c.gain = 1; }); },
+      refile: function () { updCap(function (c) { c.flag = null; c.kb = 302; c.rate = '48 kHz'; c.gear = 'Dumble · Overdrive Special · Amp'; }); },
+      resendFailed: function () { self.resendFailed(); },
+      goT3k: function () { self.setState({ page: 'tone3000' }); },
+      showInT3k: function () {
+        var c = self.state.caps.filter(function (x) { return x.id === self.state.sel; })[0];
+        self.setState({ page: 'tone3000', t3kFilter: 'All', menuFor: c && self.state.t3k === 'list' ? c.toneId || null : null });
+      },
+
+      /* sheets */
+      sheetAdd: s.sheet === 'add', sheetRemove: s.sheet === 'remove', sheetVariants: s.sheet === 'variants',
+      sheetFile: s.sheet === 'filepick', sheetConfirm: s.sheet === 'sdconfirm', sheetAdmin: s.sheet === 'admin',
+      closeSheet: closeSheet,
+      addFiles: ADD_FILES.map(function (f) {
+        return { file: f.file, sub: f.gear || 'No gear details in file', arch: f.arch === 'A2' ? 'A2 · ' + f.sizes.length : 'A1', rate: f.rate, size: fmtKb(f.kb), ok: true, bad: false,
+          icon: 'check', iconStyle: 'color: var(--ok-dot)', subStyle: 'color: var(--text-3)',
+          rowStyle: 'display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--sep)' };
+      }).concat([{ file: 'orange_rv50.nam', sub: 'Not a valid .nam capture. The file is damaged or incomplete.', ok: false, bad: true,
+        icon: 'close', iconStyle: 'color: var(--danger)', subStyle: 'color: var(--danger)',
+        rowStyle: 'display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 12px; background: var(--danger-weak)' }]),
+      addActions: [act('Cancel', 'secondary', closeSheet), act('Send 3 Captures', 'primary', function () { self.startSend(ADD_FILES); })],
+      addExtra: { label: 'Add More Files…', onClick: function () {} },
+      removeTitle: removeC ? 'Remove “' + removeC.name + '” from the unit?' : 'Remove this capture?',
+      removeActions: [act('Cancel', 'secondary', closeSheet, { autoFocus: true }), act('Remove', 'danger', function () {
+        var list = self.state.caps, idx = -1;
+        list.forEach(function (c, i) { if (c.id === self.state.removeId) idx = i; });
+        var next = list.filter(function (c) { return c.id !== self.state.removeId; });
+        var nsel = next.length ? next[Math.min(Math.max(idx, 0), next.length - 1)].id : null;
+        self.setState({ caps: next, sel: nsel, sheet: null, removeId: null, capBanner: self.state.capBanner && self.state.capBanner.kind === 'failed' ? null : self.state.capBanner });
+      })],
+
+      /* tone3000 */
+      t3kSub: t3kSigned ? 'Signed in as riffwright' : s.t3k === 'signingin' ? 'Signing in…' : 'Not signed in',
+      t3kNoKey: s.t3k === 'nokey', t3kSignedOut: s.t3k === 'signedout', t3kSigningIn: s.t3k === 'signingin', t3kLoading: s.t3k === 'loading', t3kList: s.t3k === 'list',
+      keySteps: ['On tone3000.com, open Settings › API and create a key.', 'Paste the key below.'],
+      keyDraft: s.keyDraft, onKey: function (e) { self.setState({ keyDraft: e && e.target ? e.target.value : '' }); },
+      saveKeyDisabled: !s.keyDraft.trim(), saveKey: function () { self.setState({ t3k: 'signedout' }); },
+      signIn: function () { self.signIn(); },
+      reopenBrowser: function () {},
+      cancelSignIn: function () { self.clear('auth'); self.setState({ t3k: 'signedout' }); },
+      filterOptions: ['All', 'Bookmarked', 'Mine'], t3kFilter: s.t3kFilter,
+      setFilter: function (v) { self.setState({ t3kFilter: v, menuFor: null }); },
+      refreshTones: function () { self.setState({ t3k: 'loading', menuFor: null }); self.after('auth', 900, function () { self.setState({ t3k: 'list' }); }); },
+      allowedText: allowedLine(al),
+      openVariants: function () { self.setState({ sheet: 'variants', draft: clone(self.state.allowed), menuFor: null }); },
+      t3kBanner: t3kBanner, dismissT3k: function () { self.setState({ t3kBanner: null }); },
+      installPanel: installPanel, toneRows: toneRows,
+      installHint: installHint,
+      selText: count ? count + ' selected' : 'Nothing selected',
+      dlText: count ? ' · about ' + fmtKb(dlKb) + ' to download' : ' · tick the tones to install',
+      clearDisabled: !count || busy,
+      clearSel: function () { self.setState({ tones: clone(self.state.tones).map(function (t) { t.checked = false; return t; }) }); },
+      installDisabled: !connected || busy || !count,
+      installLabel: count ? 'Install ' + count + ' on Unit' : 'Install on Unit',
+      install: function () { self.installTones(selTones); },
+      draftA2: s.draft ? varList(s.draft, 'A2', A2_ORDER, false) : [], draftA1: s.draft ? varList(s.draft, 'A1', A1_ORDER, false) : [],
+      liveA2: varList(al, 'A2', A2_ORDER, true), liveA1: varList(al, 'A1', A1_ORDER, true),
+      variantActions: [act('Cancel', 'secondary', closeSheet), act('Save', 'primary', function () {
+        var a = self.state.draft;
+        self.setState({ allowed: a, sheet: null, tones: clone(self.state.tones).map(function (t) {
+          if (t.pick && !isAllowed(a, t.pick)) t.pick = null;
+          if (!autoPick(t.models, a)) t.checked = false;
+          return t;
+        }) });
+      })],
+      variantExtra: { label: 'Restore Default', onClick: function () { self.setState({ draft: clone(DEFAULT_ALLOWED) }); } },
+
+      /* sd */
+      sd: sd, sdSub: sdRunning || sd.phase === 'failed' ? diskSel.name + ' · ' + diskSel.detail.split(' · ')[0] : 'Make a card that boots the unit with NAM support',
+      sdSetup: sd.phase === 'setup', sdRunning: sdRunning, sdSuccess: sd.phase === 'success', sdFailed: sd.phase === 'failed',
+      sdHasLog: sd.phase !== 'setup', logLabel: sd.showLog ? 'Hide Log' : 'Show Log',
+      toggleLog: function () { self.sdPatch({ showLog: !self.state.sd.showLog }); },
+      logText: sd.log.join('\n'),
+      sdFileNone: !sd.file, sdFileSet: !!sd.file, sdFileWrong: sd.file === 'wrong',
+      sdFileName: sd.file === 'wrong' ? 'ToneMasterPro_v1_9_02.img' : 'ToneMasterPro_v1_8_58.img',
+      sdFileTag: fileOk ? 'Verified' : 'Wrong file', sdFileTagTone: fileOk ? 'ok' : 'danger',
+      sdFileStep: fileOk ? { cls: 'stepnum ok', mark: '✓' } : sd.file === 'wrong' ? { cls: 'stepnum bad', mark: '1' } : { cls: 'stepnum', mark: '1' },
+      sdDiskStep: sd.disk ? { cls: 'stepnum ok', mark: '✓' } : { cls: 'stepnum', mark: '2' },
+      openFilePick: function () { self.setState({ sheet: 'filepick' }); },
+      fileActions: [act('Cancel', 'secondary', closeSheet)],
+      pickGoodFile: function () { self.setState({ sheet: null, sd: Object.assign({}, self.state.sd, { file: 'ok' }) }); },
+      pickWrongFile: function () { self.setState({ sheet: null, sd: Object.assign({}, self.state.sd, { file: 'wrong' }) }); },
+      disks: DISKS.map(function (d) {
+        return { name: d.name, detail: d.detail, note: d.refused || '', disabled: !!d.refused || busy, checked: sd.disk === d.id,
+          pick: function () { self.sdPatch({ disk: d.id }); } };
+      }),
+      diskSel: diskSel,
+      createDisabled: !fileOk || !sd.disk || busy, createHint: createHint,
+      openCreate: function () { self.setState({ sheet: 'sdconfirm', sd: Object.assign({}, self.state.sd, { denied: false }) }); },
+      confirmActions: [act('Cancel', 'secondary', closeSheet, { autoFocus: true }), act('Erase and Create', 'danger', function () { self.setState({ sheet: 'admin' }); })],
+      adminCancel: function () { self.setState({ sheet: null, sd: Object.assign({}, self.state.sd, { denied: true }) }); },
+      adminOk: function () { self.startBuild(); },
+      dismissDenied: function () { self.sdPatch({ denied: false }); },
+      sdStages: sdStages, sdPct: this.sdPct(),
+      sdStepText: 'Step ' + (sd.stage + 1) + ' of 8 · ' + STAGES[sd.stage][0] + (sd.stage >= 6 ? '. This one takes minutes.' : ''),
+      nextSteps: ['Power the unit off.', 'Insert the card.', 'Power it on. It boots with NAM support.'],
+      sdDone: function () { self.sdPatch({ phase: 'setup', showLog: false, log: [] }); },
+      sdAnother: function () { self.sdPatch({ phase: 'setup', showLog: false, log: [], disk: null }); },
+      sdRetry: function () { self.setState({ sheet: 'sdconfirm', sd: Object.assign({}, self.state.sd, { phase: 'setup', showLog: false }) }); },
+
+      /* settings */
+      setOptions: ['Tone3000', 'Allowed Variants', 'Unit'], setSection: s.setSection,
+      setSectionFn: function (v) { self.setState({ setSection: v }); },
+      setIsT3k: s.setSection === 'Tone3000', setIsVar: s.setSection === 'Allowed Variants', setIsUnit: s.setSection === 'Unit',
+      hasKey: s.t3k !== 'nokey', noKey: s.t3k === 'nokey',
+      replaceKey: function () { self.clear('auth'); self.setState({ t3k: 'nokey', keyDraft: '' }); },
+      signedIn: t3kSigned, canSignIn: s.t3k === 'signedout',
+      acctTone: t3kSigned ? 'ok' : 'off', acctText: t3kSigned ? 'Signed in as riffwright' : s.t3k === 'signingin' ? 'Signing in…' : 'Not signed in',
+      signOut: function () { self.setState({ t3k: 'signedout' }); },
+      signInFromSettings: function () { self.signIn(); }
+    };
+  }
+
+  sdPct() {
+    var sd = this.state.sd;
+    if (sd.phase === 'success') return 100;
+    var done = STAGES.slice(0, sd.stage).reduce(function (a, s) { return a + s[1]; }, 0);
+    if (sd.stage === 6) done += STAGES[6][1] * sd.writePct / 100;
+    return Math.round(done / STAGE_TOTAL * 100);
+  }
+  resendFailed() {
+    var f = this.state.caps.filter(function (c) { return c.flag === 'failed'; })[0];
+    if (f && f.f) { this.setState({ sel: f.id }); this.startSend([f.f]); }
+  }
+  installTones(tones) {
+    var al = this.state.allowed;
+    var items = tones.map(function (t) {
+      var m = t.pick || autoPick(t.models, al), arch = m.split(' ')[0], kb = modelKb(m);
+      return { id: t.id, name: t.title, total: kb, done: 0, state: 'wait',
+        f: { name: t.title, gear: '', arch: arch, variant: arch === 'A1' ? m.split(' ')[1] : null, toneId: t.id, sizes: arch === 'A2' ? (m === 'A2 Full' ? ['Feather', 'Full'] : ['Nano', 'Feather']) : null, rate: '48 kHz', kb: kb } };
+    });
+    if (items.length) this.startInstall(items);
+  }
+}
+</script>
+</body>
+</html>

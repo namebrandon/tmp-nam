@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add captures, one failed to load</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="connected" count="11" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1><span class="sub">11 on unit · 7.5 MB</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Add Captures…</button>
+    </header>
+    <div style="padding: 14px 20px; border-bottom: 1px solid var(--sep)">
+      <div class="banner warn" role="alert">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 14.5 13.5h-13z"/><path d="M8 6.5v3M8 11.6v.1"/></svg>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+          <div><div class="bt">2 of 3 captures added</div>Rectifier Modern Red was sent, but the unit didn't load it after the engine restart. It won't play until this is fixed.</div>
+          <div style="display: flex; gap: 8px"><button class="btn btn-sm">Send Again</button><button class="btn btn-sm">Remove It</button></div>
+        </div>
+        <button class="btn btn-plain btn-sm" aria-label="Dismiss">Dismiss</button>
+      </div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Name</th><th>Type</th><th class="r">Size</th><th class="r" style="padding-right: 16px">Gain</th></tr></thead>
+      <tbody>
+        <tr><td><span class="cname">Plexi 1968 Super Lead <span class="tag accent" style="margin-left: 6px">New</span></span><span class="csub">Marshall · 1959 Super Lead · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">1×</td></tr>
+        <tr><td><span class="cname">JC-120 Clean <span class="tag accent" style="margin-left: 6px">New</span></span><span class="csub">Roland · JC-120 · Amp</span></td><td><span class="tag arch">A1</span></td><td class="r num">298 KB</td><td class="r num" style="padding-right: 16px">1×</td></tr>
+        <tr class="sel"><td><span class="cname">Rectifier Modern Red</span><span class="csub" style="margin-top: 2px"><span class="tag danger">Didn't load after restart</span></span></td><td><span class="tag arch">A2 · 3</span></td><td class="r num">1.6 MB</td><td class="r num" style="padding-right: 16px">1×</td></tr>
+        <tr><td><span class="cname">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">Fender · Deluxe Reverb · Amp</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr><td><span class="cname">Marshall JCM800 2203 Crunch</span><span class="csub">Marshall · JCM800 2203 · Amp + cab</span></td><td><span class="tag arch">A2 · 2</span></td><td class="r num">1.1 MB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+        <tr><td><span class="cname">Mesa Mark IIC+ Lead</span><span class="csub">Mesa/Boogie · Mark IIC+ · Amp</span></td><td><span class="tag arch">A2 · 3</span></td><td class="r num">1.6 MB</td><td class="r num" style="padding-right: 16px">3.5×</td></tr>
+        <tr><td><span class="cname">Vox AC30 Top Boost</span><span class="csub">Vox · AC30 · Amp</span></td><td><span class="tag arch">A1 · Feather</span></td><td class="r num">296 KB</td><td class="r num" style="padding-right: 16px">4×</td></tr>
+      </tbody>
+    </table>
+    <div style="flex: 1"></div>
+    <div class="footer">New captures start at 1×. Set gain per capture: about 4× matches the stock blocks.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

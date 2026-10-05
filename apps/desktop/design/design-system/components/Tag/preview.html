@@ -1,0 +1,17 @@
+<!-- @dsCard group="Status" height=64 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Tag</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.Tag, { tone: 'arch' }, 'A1 · Feather'), h(T.Tag, { tone: 'arch' }, 'A1'),h(T.Tag, { tone: 'arch' }, 'A2 · 3 sizes'), h(T.Tag, null, '48 kHz'), h(T.Tag, null, 'Bookmark'),
+  h(T.Tag, { tone: 'accent' }, 'Yours'), h(T.Tag, { tone: 'ok' }, 'On unit'), h(T.Tag, { tone: 'warn' }, 'Not registered'),
+  h(T.Tag, { tone: 'danger' }, 'File missing'), h(T.Tag, { tone: 'accent' }, 'New')));
+</script>
+</body>
+</html>

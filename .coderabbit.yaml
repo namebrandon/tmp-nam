@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit is installed on the personal pcavadas account (not an organization). With
+# request_changes_workflow it submits a formal Approve / Request-changes review, which
+# counts toward the "protect main" ruleset's required approval; auto-merge.yml then lets
+# GitHub merge the owner's PRs. External PRs additionally need @pcavadas to merge.
+language: en-US
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    custom_checks:
+      - name: "Behavioral parity"
+        mode: warning
+        instructions: |
+          Bugs here tend to be omissions: a guard present on one path and missing on its sibling.
+          Name the siblings of every changed unit and check guards, cancel/stop paths, error states
+          and cleanup are consistent across them. Siblings in this repo include:
+          - `Unit::add` over HID (AddUserIR + install) vs the restart fallback (register, then one
+            paced `reload_engine`) in apps/desktop/src-tauri/src/unit.rs;
+          - the macOS (ioreg, diskutil, osascript) vs Linux (sysfs, lsblk/sfdisk, pkexec) branches in
+            console.rs, crates/sdcard/src/card.rs and apps/desktop/src-tauri/src/sdcard.rs;
+          - image-file output (image.rs) vs physical card (card.rs) in crates/sdcard;
+          - the real backend vs the simulator (`TMP_NAM_SIM`, unit.rs) vs the browser mock
+            (apps/desktop/src/lib/mock.ts).
+          Report a finding citing both paths when one side lacks what the other has. Report nothing
+          when they are consistent.
+
+  path_instructions:
+    - path: "{device/release.json,tools/release/**,player/bootstrap_nam_deps.sh,player/cross_toolchain.sh}"
+      instructions: |
+        device/release.json pins every byte that lands on the card. Hashes change only together with
+        the file they pin; ARM binaries and `source_sha256` change only via tools/release/build_player.py
+        -> publish_release.py. Flag any hash edit without the matching asset change. The two player
+        scripts are pinned compiled inputs and must stay byte-identical until the next rebuild.
+    - path: "{apps/desktop/src-tauri/unit_helper.py,device/helpers/**}"
+      instructions: |
+        Runs on the unit: Python 3.5. Flag f-strings, `subprocess.run(capture_output=...)`, walrus,
+        type-annotated assignments and anything newer than 3.5.
+    - path: "device/{scripts,systemd}/**"
+      instructions: |
+        Device shell is BusyBox ash: flag bashisms. A changed asset must have its release.json entry
+        (bytes + sha256) updated in the same PR.
+    - path: "apps/desktop/src-tauri/src/{unit,console}.rs"
+      instructions: |
+        - The engine (tm-stomp-server) may be restarted only through `reload_engine` (paced: systemd
+          allows 2 starts per minute). Flag any `systemctl stop`/`start`, or an unpaced `restart`.
+        - Never edit userIRs.json while HID-added changes are pending (the engine persists ~0.5-0.8 s
+          after a change; both writers use userIRs.json.tmp).
+        - `systemctl is-active A B` exits 0 if ANY unit is active: each state must be read separately.
+        - Console lines are <= 1 KiB (ash fgets mode); file pushes are acknowledged batches.
+    - path: "apps/desktop/src-tauri/src/hid.rs"
+      instructions: |
+        One HID message is capped at 65,535 bytes; the engine drops a client after 0.75 s without
+        traffic (heartbeat must keep running during long operations); the session stays open for the
+        connection because macOS refuses exclusive re-opens for tens of seconds after a close.
+    - path: "crates/sdcard/src/templates.rs"
+      instructions: |
+        Generated files must stay byte-identical: the ext4 audit compares them. Flag whitespace or
+        line-ending changes.
+    - path: "crates/sdcard/src/card.rs"
+      instructions: |
+        Writes raw block devices. Flag any path that could select the system disk, skip the
+        removable/size checks, or write before unmounting.
+    - path: "{.github/**,.coderabbit.yaml,package.json,commitlint.config.js,rust-toolchain.toml,**/Cargo.toml,apps/desktop/package.json,apps/desktop/src-tauri/tauri.conf.json}"
+      instructions: |
+        Setups must follow each tool's official documentation (see CLAUDE.md "Official documentation
+        first"). Flag custom scripts or glue where the tool documents a standard way, restated
+        defaults, reimplemented built-in features, undocumented deviations from the cited guide, and
+        new third-party actions/dependencies that are thin, single-maintainer or stale when an
+        official one exists. Adaptations are fine when a comment explains why.
+    - path: "apps/desktop/src/**"
+      instructions: |
+        Lint is strict and inline disables are impossible (noInlineConfig): flag workarounds such as
+        `any` casts. Async loaders are kicked from effects with `defer()` (src/lib/format.ts), never
+        called directly (react-hooks/set-state-in-effect).
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CLAUDE.md"
+      - "CONTRIBUTING.md"
+      - "BUILDING.md"
+
+chat:
+  auto_reply: true
+  allow_non_org_members: false

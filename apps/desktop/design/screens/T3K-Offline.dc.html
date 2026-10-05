@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tone3000, unit not connected</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="tone3000" conn="missing" count="" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Tone3000</h1><span class="sub">Signed in as riffwright</span>
+      <span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Show"><button class="on">All</button><button>Bookmarked</button><button>Mine</button></div>
+      <button class="btn btn-icon" aria-label="Refresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v3h-3"/></svg></button>
+    </header>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 20px; border-bottom: 1px solid var(--sep); background: var(--bg-subtle); font-size: 12px">
+      <span class="muted">Picking from your allowed variants:</span><span>A2 Feather, Nano · A1 Feather, Nano</span>
+      <button class="btn btn-plain btn-sm" style="margin-left: auto">Change…</button>
+    </div>
+    <table class="tbl">
+      <thead><tr><th style="width: 36px; padding-right: 0"><input type="checkbox" aria-label="Select all" style="vertical-align: middle"></th><th>Tone</th><th>Source</th><th>Model</th><th style="padding-right: 20px">On unit</th></tr></thead>
+      <tbody>
+        <tr class="sel"><td style="padding-right: 0"><input type="checkbox" checked aria-label="Select Plexi Super Lead 1968"></td><td><span class="cname">Plexi Super Lead 1968</span><span class="csub">by tonehunter</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup">A2 · Feather</button></td><td class="muted3" style="padding-right: 20px">Unknown</td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Fender Deluxe Reverb"></td><td><span class="cname">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">by riffwright</span></td><td><span class="tag accent">Yours</span></td><td><button class="popup">A2 · Feather</button></td><td class="muted3" style="padding-right: 20px">Unknown</td></tr>
+        <tr class="sel"><td style="padding-right: 0"><input type="checkbox" checked aria-label="Select Dual Rectifier Modern"></td><td><span class="cname">Dual Rectifier Modern</span><span class="csub">by mbtones · only A1 published</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup">A1 · Feather</button></td><td class="muted3" style="padding-right: 20px">Unknown</td></tr>
+        <tr class="dim"><td style="padding-right: 0"><input type="checkbox" disabled aria-label="Select TS808 into JC-120"></td><td><span class="cname">TS808 into JC-120</span><span class="csub">by kpcaps · only A1 Standard published</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup warn">No allowed model</button></td><td class="muted3" style="padding-right: 20px">Unknown</td></tr>
+        <tr class="sel"><td style="padding-right: 0"><input type="checkbox" checked aria-label="Select Bogner Shiva"></td><td><span class="cname">Bogner Shiva 20th Lead</span><span class="csub">by tonehunter</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup">A2 · Nano</button></td><td class="muted3" style="padding-right: 20px">Unknown</td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Marshall JCM800"></td><td><span class="cname">Marshall JCM800 2203 Crunch</span><span class="csub">by riffwright</span></td><td><span class="tag accent">Yours</span></td><td><button class="popup">A2 · Feather</button></td><td class="muted3" style="padding-right: 20px">Unknown</td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Orange Rockerverb"></td><td><span class="cname">Orange Rockerverb 50 Dirty</span><span class="csub">by halfstack</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup">A2 · Feather</button></td><td class="muted3" style="padding-right: 20px">Unknown</td></tr>
+      </tbody>
+    </table>
+    <div style="flex: 1"></div>
+    <div class="footer" style="height: 64px; background: var(--bg-content)">
+      <span class="dot off"></span>
+      <div style="display: flex; flex-direction: column"><span style="color: var(--text); font-weight: 600">Connect the unit to install</span><span>Boot from the NAM SD card, wait for the preset screen, plug in USB-C. Your selection is kept.</span></div>
+      <span style="flex: 1"></span>
+      <button class="btn btn-primary" disabled>Install 3 on Unit</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

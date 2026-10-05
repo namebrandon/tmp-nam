@@ -1,0 +1,15 @@
+# LF everywhere; the card's text files are hashed into device/release.json, so a
+# CRLF checkout would break `cargo test -p tmp-sdcard --test release`.
+* text=auto eol=lf
+
+# Byte-exact: pinned assets, pinned compiled inputs, release tooling.
+device/** -text
+player/** -text
+tools/release/** -text
+crates/sdcard/src/templates.rs -text
+
+*.nam binary
+*.so binary
+*.png binary
+*.icns binary
+*.ico binary

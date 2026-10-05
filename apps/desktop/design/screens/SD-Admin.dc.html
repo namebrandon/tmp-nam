@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SD card, administrator password</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="sdcard" conn="missing" count="" activity="Creating SD card" detail="Waiting for your password" pct="-1" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">SD Card</h1><span class="sub">Generic STORAGE DEVICE · 31.9 GB</span></header>
+    <div class="center">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: .6">
+        <span class="spinner lg"></span>
+        <span class="t-head">Waiting for administrator approval</span>
+      </div>
+    </div>
+  </div>
+  <div class="scrim" style="align-items: center; background: var(--scrim)">
+    <div class="dialog" role="dialog" aria-labelledby="ad1" style="width: 300px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; background: var(--bg-window)">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="color: var(--text-2)"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+      <h2 id="ad1" class="t-head" style="font-size: 13px">TMP NAM wants to make changes.</h2>
+      <p class="t-cap muted">Enter your password to allow this.</p>
+      <input class="input" value="Pedro" aria-label="User name" style="text-align: left">
+      <input class="input is-focus" type="password" placeholder="Password" aria-label="Password">
+      <div style="display: flex; gap: 8px; width: 100%"><button class="btn" style="flex: 1">Cancel</button><button class="btn btn-primary" style="flex: 1">OK</button></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

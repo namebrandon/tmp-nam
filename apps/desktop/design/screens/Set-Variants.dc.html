@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings, allowed variants</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="settings" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">Settings</h1><span class="spacer"></span><div class="seg" role="tablist" aria-label="Settings sections"><button role="tab">Tone3000</button><button class="on" role="tab" aria-selected="true">Allowed Variants</button><button role="tab">Unit</button></div><span class="spacer"></span></header>
+    <div style="padding: 12px 40px; max-width: 680px">
+      <div class="form-row">
+        <span class="lbl">Sync may download</span>
+        <div style="display: flex; flex-direction: column; gap: 14px">
+          <div class="vgrid">
+            <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+              <legend class="t-head" style="margin-bottom: 8px">A2</legend>
+              <label class="checkrow"><input type="checkbox"> <span>Full</span></label>
+              <label class="checkrow"><input type="checkbox" checked> <span>Feather</span></label>
+              <label class="checkrow"><input type="checkbox" checked> <span>Nano</span></label>
+            </fieldset>
+            <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px">
+              <legend class="t-head" style="margin-bottom: 8px">A1</legend>
+              <label class="checkrow"><input type="checkbox"> <span>Standard</span></label>
+              <label class="checkrow"><input type="checkbox"> <span>Lite</span></label>
+              <label class="checkrow"><input type="checkbox" checked> <span>Feather</span></label>
+              <label class="checkrow"><input type="checkbox" checked> <span>Nano</span></label>
+            </fieldset>
+          </div>
+          <button class="btn btn-sm" style="align-self: flex-start" disabled>Restore Default</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <span class="lbl">Which one is picked</span>
+        <span class="t-sm muted" style="padding-top: 5px">If a tone has several allowed models, A2 wins over A1, then the largest allowed size. You can override it per tone on the Tone3000 page.</span>
+      </div>
+      <div class="form-row">
+        <span class="lbl">Before playing live</span>
+        <div class="banner warn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 14.5 13.5h-13z"/><path d="M8 6.5v3M8 11.6v.1"/></svg><div>Size labels don't guarantee a capture runs without glitches on the unit. Check each one by ear.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

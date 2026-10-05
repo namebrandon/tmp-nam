@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings, unit connected</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="settings" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">Settings</h1><span class="spacer"></span><div class="seg" role="tablist" aria-label="Settings sections"><button role="tab">Tone3000</button><button role="tab">Allowed Variants</button><button class="on" role="tab" aria-selected="true">Unit</button></div><span class="spacer"></span></header>
+    <div style="padding: 12px 40px; max-width: 680px">
+      <div class="form-row">
+        <span class="lbl">Connection</span>
+        <div style="display: flex; align-items: center; gap: 8px; padding-top: 5px"><span class="dot ok"></span><span>Tone Master Pro connected over USB</span></div>
+      </div>
+      <div class="form-row">
+        <span class="lbl">SD card build</span>
+        <div style="display: flex; align-items: center; gap: 8px"><span class="code" style="flex: 1">nam-card-2026.09-r3</span><button class="btn btn-sm">Copy</button></div>
+      </div>
+      <div class="form-row">
+        <span class="lbl">NAM player</span>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: center; gap: 8px"><span class="code" style="flex: 1">3e9a0c4f7b21d58e</span><button class="btn btn-sm">Copy</button></div>
+          <span class="help">The version of the NAM player on the card, as a hash.</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <span class="lbl"></span>
+        <div style="display: flex; flex-direction: column; gap: 6px"><button class="btn" style="align-self: flex-start">Copy All Details</button><span class="help">Paste these when asking for help with the card.</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

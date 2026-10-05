@@ -1,0 +1,17 @@
+<!-- @dsCard group="Inputs" height=180 subtitle="row layout: the SD card list" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Radio</title>
+<style>body{margin:0;background:var(--bg-content)} #root{margin:16px;max-width:460px;border:1px solid var(--sep);border-radius:10px;overflow:hidden}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.Radio, { row: true, name: 'd', label: 'Generic STORAGE DEVICE', detail: '31.9 GB · USB', checked: true, onChange: function () {} }),
+  h(T.Radio, { row: true, name: 'd', label: 'SanDisk SDDR-B531', detail: '63.9 GB · USB', checked: false, onChange: function () {} }),
+  h(T.Radio, { row: true, name: 'd', label: 'Built-in SD Card Reader', detail: '63.9 GB · Internal', note: 'Not a USB reader', disabled: true })));
+</script>
+</body>
+</html>

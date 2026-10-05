@@ -1,0 +1,15 @@
+<!-- @dsCard group="Layout" height=90 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Toolbar</title>
+<style>body{margin:0;background:var(--bg-content)} #root{border-bottom:0}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(T.Toolbar, { title: 'Captures', subtitle: '9 on unit · 6.1 MB' },
+  h(T.Button, { variant: 'primary', icon: 'add' }, 'Add Captures…')));
+</script>
+</body>
+</html>

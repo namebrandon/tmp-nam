@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Allowed variants sheet</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="tone3000" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Tone3000</h1><span class="sub">Signed in as riffwright</span>
+    </header>
+    <table class="tbl">
+      <thead><tr><th style="width: 36px; padding-right: 0"></th><th>Tone</th><th>Source</th><th>Model</th><th>On unit</th></tr></thead>
+      <tbody>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Plexi"></td><td><span class="cname">Plexi Super Lead 1968</span><span class="csub">by tonehunter</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup">A2 · Feather</button></td><td class="muted3">—</td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Fender"></td><td><span class="cname">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">by riffwright</span></td><td><span class="tag accent">Yours</span></td><td><button class="popup">A2 · Feather</button></td><td><span class="tag ok">On unit</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="scrim">
+    <div class="sheet" style="width: 520px" role="dialog" aria-labelledby="av1">
+      <div class="sh-body">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h2 id="av1" class="t-title">Allowed variants</h2>
+          <p class="muted">Tone3000 publishes each capture in several sizes. Choose which ones the sync may download.</p>
+        </div>
+        <div class="vgrid">
+          <fieldset class="card" style="margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+            <legend class="t-head" style="padding: 0 4px">A2 <span class="t-sm muted3" style="font-weight: 400">· several sizes in one file</span></legend>
+            <label class="checkrow"><input type="checkbox"> <span>Full</span></label>
+            <label class="checkrow"><input type="checkbox" checked> <span>Feather</span></label>
+            <label class="checkrow"><input type="checkbox" checked> <span>Nano</span></label>
+          </fieldset>
+          <fieldset class="card" style="margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+            <legend class="t-head" style="padding: 0 4px">A1 <span class="t-sm muted3" style="font-weight: 400">· one network</span></legend>
+            <label class="checkrow"><input type="checkbox"> <span>Standard</span></label>
+            <label class="checkrow"><input type="checkbox"> <span>Lite</span></label>
+            <label class="checkrow"><input type="checkbox" checked> <span>Feather</span></label>
+            <label class="checkrow"><input type="checkbox" checked> <span>Nano</span></label>
+          </fieldset>
+        </div>
+        <p class="t-sm muted">When a tone has more than one allowed model, the sync picks A2 first, then the largest allowed size. You can still choose another model per tone.</p>
+        <div class="banner warn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 14.5 13.5h-13z"/><path d="M8 6.5v3M8 11.6v.1"/></svg><div><div class="bt">Size labels are not a guarantee</div>A model labelled Feather or Nano can still crackle or drop out on the unit. Check every capture by ear before using it live.</div></div>
+      </div>
+      <div class="sh-foot"><button class="btn btn-plain" style="margin-right: auto">Restore Default</button><button class="btn">Cancel</button><button class="btn btn-primary">Save</button></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

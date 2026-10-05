@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Captures, unit not found</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="missing" count="" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" disabled>Add Captures…</button>
+    </header>
+    <div class="center">
+      <div class="empty" style="max-width: 460px">
+        <svg viewBox="0 0 16 16" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-3)"><path d="M6 1.5v3.5m4-3.5v3.5M4.5 5h7v3a3.5 3.5 0 0 1-7 0zM8 11.5v3"/></svg>
+        <h2 class="t-title">Connect the Tone Master Pro</h2>
+        <p class="muted">The unit isn't connected. Captures are read from the unit, so this page needs it.</p>
+        <ol class="steps">
+          <li>Insert the NAM SD card and power the unit on.</li>
+          <li>Wait for the preset screen.</li>
+          <li>Plug the unit's USB-C cable into this Mac.</li>
+        </ol>
+        <p class="t-sm muted3">It's detected automatically. Nothing to click here.</p>
+        <div class="divider" style="align-self: stretch; margin: 6px 0"></div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span class="t-head">No NAM SD card yet?</span>
+          <span class="t-sm muted">The unit has to boot from a NAM card for this app to see it. You can make one with a USB card reader.</span>
+          <button class="btn" style="align-self: flex-start; margin-top: 4px">Make an SD Card</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

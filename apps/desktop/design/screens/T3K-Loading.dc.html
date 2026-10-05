@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tone3000, loading</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="tone3000" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Tone3000</h1><span class="sub">Signed in as riffwright</span>
+      <span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Show"><button class="on">All</button><button>Bookmarked</button><button>Mine</button></div>
+      <button class="btn btn-icon" disabled aria-label="Refresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v3h-3"/></svg></button>
+    </header>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 20px; border-bottom: 1px solid var(--sep); background: var(--bg-subtle); font-size: 12px">
+      <span class="muted">Picking from your allowed variants:</span><span>A2 Feather, Nano · A1 Feather, Nano</span>
+      <button class="btn btn-plain btn-sm" style="margin-left: auto">Change…</button>
+    </div>
+    <table class="tbl">
+      <thead><tr><th style="width: 36px; padding-right: 0"><input type="checkbox" disabled aria-label="Select all" style="vertical-align: middle"></th><th>Tone</th><th>Source</th><th>Model</th><th style="padding-right: 20px">On unit</th></tr></thead>
+    </table>
+    <div class="center" aria-live="polite">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+        <span class="spinner lg"></span>
+        <span class="t-head">Loading your tones</span>
+        <span class="t-sm muted3">Bookmarks and your own tones, with the models each one offers</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

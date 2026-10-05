@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tone3000, sign-in failed</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="tone3000" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">Tone3000</h1><span class="sub">Not signed in</span></header>
+    <div class="center">
+      <div class="empty" style="max-width: 460px; gap: 16px">
+        <div class="banner error" role="alert" style="align-self: stretch">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4M8 11v.1"/></svg>
+          <div><div class="bt">Tone3000 didn't accept your API key</div>The key may have been deleted or mistyped. Create a new one on tone3000.com › Settings › API.</div>
+        </div>
+        <div class="field" style="align-self: stretch">
+          <label for="k2">API key</label>
+          <div style="display: flex; gap: 8px"><input id="k2" class="input mono is-error" value="t3k_7d1e0b…c4a9"><button class="btn btn-primary">Save and Sign In</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

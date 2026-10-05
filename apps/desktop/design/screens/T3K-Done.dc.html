@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tone3000, install finished</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="tone3000" conn="connected" count="11" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Tone3000</h1><span class="sub">Signed in as riffwright</span>
+      <span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Show"><button class="on">All</button><button>Bookmarked</button><button>Mine</button></div>
+      <button class="btn btn-icon" aria-label="Refresh"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 2.5v3h-3"/></svg></button>
+    </header>
+    <div style="padding: 14px 20px; border-bottom: 1px solid var(--sep)">
+      <div class="banner warn" role="alert">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 14.5 13.5h-13z"/><path d="M8 6.5v3M8 11.6v.1"/></svg>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 8px">
+          <div><div class="bt">2 of 3 tones installed</div>Dual Rectifier Modern was sent, but the unit didn't load it after the engine restart.</div>
+          <div style="display: flex; gap: 8px"><button class="btn btn-sm">Try Again</button><button class="btn btn-sm">Open Captures</button></div>
+        </div>
+        <button class="btn btn-plain btn-sm">Dismiss</button>
+      </div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th style="width: 36px; padding-right: 0"><input type="checkbox" aria-label="Select all" style="vertical-align: middle"></th><th>Tone</th><th>Source</th><th>Model</th><th style="padding-right: 20px">On unit</th></tr></thead>
+      <tbody>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Plexi Super Lead 1968"></td><td><span class="cname">Plexi Super Lead 1968</span><span class="csub">by tonehunter</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup">A2 · Feather</button></td><td style="padding-right: 20px"><span class="tag ok">On unit</span></td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Fender Deluxe Reverb"></td><td><span class="cname">Fender Deluxe Reverb '65 Vibrato</span><span class="csub">by riffwright</span></td><td><span class="tag accent">Yours</span></td><td><button class="popup">A2 · Feather</button></td><td style="padding-right: 20px"><span class="tag ok">On unit</span></td></tr>
+        <tr class="sel"><td style="padding-right: 0"><input type="checkbox" checked aria-label="Select Dual Rectifier Modern"></td><td><span class="cname">Dual Rectifier Modern</span><span class="csub">by mbtones · only A1 published</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup">A1 · Feather</button></td><td style="padding-right: 20px"><span class="tag danger">Didn't load</span></td></tr>
+        <tr class="dim"><td style="padding-right: 0"><input type="checkbox" disabled aria-label="Select TS808 into JC-120"></td><td><span class="cname">TS808 into JC-120</span><span class="csub">by kpcaps · only A1 Standard published</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup warn">No allowed model</button></td><td class="muted3" style="padding-right: 20px">—</td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Bogner Shiva"></td><td><span class="cname">Bogner Shiva 20th Lead</span><span class="csub">by tonehunter</span></td><td><span class="tag">Bookmark</span></td><td><button class="popup">A2 · Nano</button></td><td style="padding-right: 20px"><span class="tag ok">On unit</span></td></tr>
+        <tr><td style="padding-right: 0"><input type="checkbox" aria-label="Select Marshall JCM800"></td><td><span class="cname">Marshall JCM800 2203 Crunch</span><span class="csub">by riffwright</span></td><td><span class="tag accent">Yours</span></td><td><button class="popup">A2 · Feather</button></td><td style="padding-right: 20px"><span class="tag ok">On unit</span></td></tr>
+      </tbody>
+    </table>
+    <div style="flex: 1"></div>
+    <div class="footer" style="height: 56px; background: var(--bg-content)">
+      <span style="color: var(--text); font-weight: 600">1 selected</span><span>· New captures start at 1× gain. Set it in Captures.</span>
+      <span style="flex: 1"></span>
+      <button class="btn">Clear</button>
+      <button class="btn btn-primary">Install 1 on Unit</button>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

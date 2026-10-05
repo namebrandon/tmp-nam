@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TMP NAM foundations</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="dsroot {{theme}}" style="width: 1440px; min-height: 1320px">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 40px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span class="t-label">TMP NAM · Design system v1</span>
+      <h1 class="ds-h">Foundations</h1>
+      <p class="muted" style="max-width: 640px">A native-feeling Mac tool, dark appearance only: the window stays dark whatever the system setting. Neutral surfaces, one blue for actions and selection, three status colours that only ever mean status. System font, 13 px body, the same metrics as AppKit controls.</p>
+    </div>
+    <div class="demo" style="width: 440px; gap: 6px">
+      <span class="t-head">Rules the screens follow</span>
+      <span class="t-sm muted">Blue = something you can do or have selected. Never decoration.</span>
+      <span class="t-sm muted">Green, amber, red = unit/file/operation status. Always paired with text.</span>
+      <span class="t-sm muted">Icons only where they name a place or a state. No illustrations.</span>
+      <span class="t-sm muted">Labels say what happens: "Send 3 Captures", not "Continue".</span>
+    </div>
+  </div>
+
+  <section class="ds-sec">
+    <h2>Colour — dark only</h2>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px">
+      <div class="swatch"><div class="chip"><span style="background:#232325"></span></div><b>bg-window</b><span class="spec">#232325</span><span class="muted3">Behind sheets, DS boards</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#1C1C1E"></span></div><b>bg-content</b><span class="spec">#1C1C1E</span><span class="muted3">Lists, panes, sheets</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#252527"></span></div><b>bg-subtle</b><span class="spec">#252527</span><span class="muted3">Inspector, footers, code</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#2A2A2D"></span></div><b>bg-sidebar</b><span class="spec">#2A2A2D</span><span class="muted3">Source list</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#333336"></span></div><b>bg-control</b><span class="spec">#333336</span><span class="muted3">Buttons, fields, pop-ups</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#25395F"></span></div><b>select</b><span class="spec">#25395F</span><span class="muted3">Selected row · text 10.3:1</span></div>
+
+      <div class="swatch"><div class="chip"><span style="background:#F2F2F4"></span></div><b>text</b><span class="spec">#F2F2F4</span><span class="muted3">15.2:1 on content</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#C4C4C8"></span></div><b>text-2</b><span class="spec">#C4C4C8</span><span class="muted3">9.8:1 · secondary copy</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#A6A6AB"></span></div><b>text-3</b><span class="spec">#A6A6AB</span><span class="muted3">7.0:1 · 4.7:1 on selection</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#38383B"></span></div><b>sep</b><span class="spec">#38383B</span><span class="muted3">Row and pane dividers</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#47474B"></span></div><b>border</b><span class="spec">#47474B</span><span class="muted3">Control outlines</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#5C5C61"></span></div><b>border-strong</b><span class="spec">#5C5C61</span><span class="muted3">Architecture tags, radios</span></div>
+
+      <div class="swatch"><div class="chip"><span style="background:#3A6AE0"></span></div><b>accent</b><span class="spec">#3A6AE0</span><span class="muted3">Primary fill · white 4.9:1</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#8DAEF7"></span></div><b>accent-text</b><span class="spec">#8DAEF7</span><span class="muted3">Links, plain buttons · 7.7:1</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#1F2C4A"></span></div><b>accent-weak</b><span class="spec">#1F2C4A</span><span class="muted3">"Applies next time" notes</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#3FB863"></span><span style="background:#1C3324"></span></div><b>ok-dot · ok-weak</b><span class="spec">#3FB863 · #1C3324</span><span class="muted3">Connected, "On unit" · text #6BCB86</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#E0A12A"></span><span style="background:#3A2F15"></span></div><b>warn-dot · warn-weak</b><span class="spec">#E0A12A · #3A2F15</span><span class="muted3">Flags, prerequisites · text #F0BE5A</span></div>
+      <div class="swatch"><div class="chip"><span style="background:#C8372B"></span><span style="background:#F27E73"></span><span style="background:#3D1E1B"></span></div><b>danger-fill · danger · weak</b><span class="spec">#C8372B · #F27E73 · #3D1E1B</span><span class="muted3">Erase button · error text · banners</span></div>
+    </div>
+  </section>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 40px">
+    <section class="ds-sec">
+      <h2>Type — system font (SF Pro), SF Mono for hashes and paths</h2>
+      <div class="demo" style="gap: 0; padding: 0">
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sep)"><span class="spec">display</span><span class="t-display">Card created</span><span class="spec">22/28 · Bold</span></div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sep)"><span class="spec">title</span><span class="t-title">Connect the Tone Master Pro</span><span class="spec">17/22 · Semibold</span></div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sep)"><span class="spec">toolbar</span><span style="font-size: 15px; font-weight: 600">Captures</span><span class="spec">15/20 · Semibold</span></div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sep)"><span class="spec">headline</span><span class="t-head">Output gain</span><span class="spec">13/18 · Semibold</span></div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sep)"><span class="spec">body</span><span class="t-body">Applies the next time you select this capture on the unit.</span><span class="spec">13/18 · Regular</span></div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sep)"><span class="spec">small</span><span class="t-sm muted">Sending 2 of 3 · 1.4 MB of 2.9 MB</span><span class="spec">12/16 · Regular</span></div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sep)"><span class="spec">caption</span><span class="t-cap muted3">Marshall · JCM800 2203 · Amp</span><span class="spec">11/14 · Regular</span></div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--sep)"><span class="spec">label</span><span class="t-label">Unit</span><span class="spec">11/14 · Semibold caps</span></div>
+        <div style="display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; padding: 14px 18px"><span class="spec">mono</span><span class="mono">3e9a0c4f7b21 · ToneMasterPro_v1_8_58.img</span><span class="spec">12/16 · SF Mono</span></div>
+      </div>
+      <p class="help">Numbers in tables, progress and gain use tabular figures so columns don't jitter while values change.</p>
+    </section>
+
+    <section class="ds-sec">
+      <h2>Spacing, radius, elevation</h2>
+      <div class="demo">
+        <div class="demo-row"><span class="demo-lbl">Space</span>
+          <div style="display: flex; align-items: flex-end; gap: 10px">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 4px; height: 4px; background: var(--accent)"></span><span class="spec">4</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 8px; height: 8px; background: var(--accent)"></span><span class="spec">8</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 12px; height: 12px; background: var(--accent)"></span><span class="spec">12</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 16px; height: 16px; background: var(--accent)"></span><span class="spec">16</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 20px; height: 20px; background: var(--accent)"></span><span class="spec">20</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 24px; height: 24px; background: var(--accent)"></span><span class="spec">24</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><span style="width: 32px; height: 32px; background: var(--accent)"></span><span class="spec">32</span></div>
+          </div>
+        </div>
+        <p class="help">Page padding 20 × 24. Inspector sections 16 × 18. Control gap 8. Group gap 14–20.</p>
+        <div class="divider"></div>
+        <div class="demo-row"><span class="demo-lbl">Radius</span>
+          <div style="display: flex; gap: 14px; align-items: center">
+            <div style="width: 44px; height: 32px; border: 1px solid var(--border-strong); border-radius: 4px"></div><span class="spec">4 tag</span>
+            <div style="width: 44px; height: 32px; border: 1px solid var(--border-strong); border-radius: 6px"></div><span class="spec">6 control</span>
+            <div style="width: 44px; height: 32px; border: 1px solid var(--border-strong); border-radius: 10px"></div><span class="spec">10 card</span>
+            <div style="width: 44px; height: 32px; border: 1px solid var(--border-strong); border-radius: 12px"></div><span class="spec">12 window</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="demo-row"><span class="demo-lbl">Elevation</span>
+          <div style="display: flex; gap: 18px">
+            <div style="width: 110px; height: 56px; border-radius: 10px; border: 1px solid var(--sep); background: var(--bg-content); display: flex; align-items: center; justify-content: center" class="spec">0 · flat</div>
+            <div style="width: 110px; height: 56px; border-radius: 10px; box-shadow: var(--shadow-pop); background: var(--bg-content); display: flex; align-items: center; justify-content: center" class="spec">1 · popover</div>
+            <div style="width: 110px; height: 56px; border-radius: 10px; box-shadow: var(--shadow-sheet); background: var(--bg-content); display: flex; align-items: center; justify-content: center" class="spec">2 · sheet</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="demo-row"><span class="demo-lbl">Window</span><span class="t-sm muted">Default 960 × 700. Minimum 720 × 520. Sidebar 200 (collapses to 56 below 820). Inspector 300 (becomes a sheet below 820).</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="ds-sec">
+    <h2>Icons — 16 px, 1.5 stroke, only where they name a place or a state</h2>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px">
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8h2l2-5 3 10 2-7 1.2 2h2.8"/></svg><span class="t-sm">Captures</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5a3 3 0 0 1-.3-6 4 4 0 0 1 7.7 1 2.5 2.5 0 0 1 .3 5"/><path d="M8 8v6m-2-2 2 2 2-2"/></svg><span class="t-sm">Tone3000</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h6v13h-8V3.5z"/><path d="M7 4v2m2-2v2"/></svg><span class="t-sm">SD card</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h7m3 0h2M2 11.5h2m3 0h7"/><circle cx="10.5" cy="4.5" r="1.5"/><circle cx="5.5" cy="11.5" r="1.5"/></svg><span class="t-sm">Settings</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2 14.5 13.5h-13z"/><path d="M8 6.5v3"/><path d="M8 11.6v.1"/></svg><span class="t-sm">Warning</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v4"/><path d="M8 11v.1"/></svg><span class="t-sm">Error</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><path d="M8 5v.1"/></svg><span class="t-sm">Info</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 1.5v3.5m4-3.5v3.5M4.5 5h7v3a3.5 3.5 0 0 1-7 0zM8 11.5v3"/></svg><span class="t-sm">USB / unit</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M3 8h10"/></svg><span class="t-sm">Add</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.5 12 13 4.5"/></svg><span class="t-sm">Done</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5h4.5V7M13.5 2.5 7.5 8.5M11.5 9.5v4h-9v-9h4"/></svg><span class="t-sm">Opens browser</span></div>
+      <div class="demo" style="flex-direction: row; align-items: center"><svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2h7v12L8 11l-3.5 3z"/></svg><span class="t-sm">Bookmark</span></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: 'dark' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "comment": "The NAM player and SSH tools' compiled inputs. device/release.json source_sha256 must list exactly these files (explicit + every pattern match) at their current hashes; crates/sdcard/tests/release.rs and tools/release/*.py enforce it.",
+  "files": [
+    "player/stubs/vendor/VERSION",
+    "player/bootstrap_nam_deps.sh",
+    "player/check_nam_deps.sh",
+    "player/bootstrap_nam_toolchain.sh",
+    "player/build_nam_core.sh",
+    "player/build_nam_speex.sh",
+    "player/build_nam_dispatch.sh",
+    "player/nam_build_common.sh",
+    "player/cross_toolchain.sh",
+    "player/check_arm_abi.py",
+    "player/build_dropbear.sh",
+    "player/build_dropbear.py",
+    "player/nam_player.cpp",
+    "player/nam_player.h",
+    "player/nam_loader.h",
+    "player/nam_registry.h",
+    "player/nam_model_config.h",
+    "player/nam_profile.h",
+    "player/nam_sha256.h",
+    "player/stubs/nam_dispatch.cpp",
+    "player/stubs/nam_dispatch_trampoline.c",
+    "player/stubs/nam_dispatch_trampoline.h",
+    "player/patches/model.cpp.patch",
+    "player/toolchains/glibc_macro_cleanup.h",
+    "player/toolchains/messense-v1.1.0.json",
+    "player/toolchains/dropbear-source.json"
+  ],
+  "patterns": [
+    "player/nam_*.h",
+    "player/nam_player.cpp",
+    "player/stubs/nam_dispatch*.cpp",
+    "player/stubs/nam_dispatch*.c",
+    "player/stubs/nam_dispatch*.h",
+    "player/patches/*.patch",
+    "player/toolchains/*.h",
+    "player/toolchains/*.json"
+  ]
+}

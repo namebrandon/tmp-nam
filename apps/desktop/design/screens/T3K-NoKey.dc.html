@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tone3000, no API key</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="tone3000" conn="connected" count="9" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">Tone3000</h1></header>
+    <div class="center">
+      <div class="empty" style="max-width: 480px; gap: 16px">
+        <h2 class="t-title">Install tones from your Tone3000 account</h2>
+        <p class="muted">See your bookmarked tones and the tones you've published, and send them to the unit in one go. This needs your own Tone3000 API key, entered once.</p>
+        <ol class="steps">
+          <li><span>On tone3000.com, open Settings › API and create a key. <a href="https://www.tone3000.com">Open tone3000.com</a></span></li>
+          <li>Paste the key below.</li>
+        </ol>
+        <div class="field" style="align-self: stretch">
+          <label for="k1">API key</label>
+          <div style="display: flex; gap: 8px"><input id="k1" class="input mono is-focus" placeholder="Paste your API key" value=""><button class="btn btn-primary" disabled>Save Key</button></div>
+          <span class="help">Stored in your Mac's Keychain. You can change or remove it in Settings.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<!-- @dsCard group="Inputs" height=210 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>GainControl</title>
+<style>body{margin:0;background:var(--bg-subtle)} #root{padding:16px;width:300px}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(T.GainControl, { value: 4, previous: 1 }));
+</script>
+</body>
+</html>

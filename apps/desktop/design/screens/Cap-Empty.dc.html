@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Captures, none on unit</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="connected" count="0" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1><span class="sub">None on unit</span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>Add Captures…</button>
+    </header>
+    <div class="center">
+      <div class="empty">
+        <h2 class="t-title">No captures on the unit</h2>
+        <p class="muted">Captures you add here show up on the Tone Master Pro as User IRs, ready to use in any preset.</p>
+        <div style="display: flex; gap: 8px"><button class="btn btn-primary">Add .nam Files…</button><button class="btn">Install from Tone3000</button></div>
+        <p class="t-sm muted3">You can also drop .nam files onto this window.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

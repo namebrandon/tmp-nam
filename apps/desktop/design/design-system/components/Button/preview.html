@@ -1,0 +1,20 @@
+<!-- @dsCard group="Actions" height=170 subtitle="secondary · primary · danger · plain, with states" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Button</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:16px;display:grid;grid-template-columns:repeat(5,max-content);gap:10px 14px;align-items:center}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+var rows = [['secondary', 'Choose File…'], ['primary', 'Send 3 Captures'], ['danger', 'Erase and Create'], ['plain', 'Show Log']];
+var cells = [];
+rows.forEach(function (r) {
+  [null, 'hover', 'pressed', 'focus'].forEach(function (s) { cells.push(h(T.Button, { key: r[0] + s, variant: r[0], state: s }, r[1])); });
+  cells.push(h(T.Button, { key: r[0] + 'd', variant: r[0], disabled: true }, r[1]));
+});
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null, cells));
+</script>
+</body>
+</html>

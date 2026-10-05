@@ -1,0 +1,17 @@
+[Unit]
+Description=TMP USB CDC-ACM console (root shell on ttyGS0)
+After=multi-user.target setup-composite-gadget.service create-midi-usb-gadget.service
+
+[Service]
+Type=simple
+ExecStartPre=/usr/local/bin/usb_console_setup.sh
+ExecStart=/bin/sh -c 'exec /bin/sh -i < /dev/ttyGS0 > /dev/ttyGS0 2>&1'
+Restart=always
+RestartSec=5
+# The ttyGS0 shell ignores SIGTERM, hanging 'systemctl reboot' for the full
+# 90 s stop timeout. Kill fast on stop; the Restart policy reaps a new shell.
+TimeoutStopSec=5
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

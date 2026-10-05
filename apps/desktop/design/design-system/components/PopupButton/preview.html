@@ -1,0 +1,15 @@
+<!-- @dsCard group="Actions" height=64 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>PopupButton</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:16px;display:flex;gap:12px;align-items:center}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.PopupButton, null, 'A2 · Feather'), h(T.PopupButton, { marked: true }, 'A2 · Nano'), h(T.PopupButton, { open: true }, 'A1 · Feather'), h(T.PopupButton, { tone: 'warn' }, 'No allowed model')));
+</script>
+</body>
+</html>

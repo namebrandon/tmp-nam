@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings, unit not connected</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="settings" conn="missing" count="" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar"><h1 class="ttl">Settings</h1><span class="spacer"></span><div class="seg" role="tablist" aria-label="Settings sections"><button role="tab">Tone3000</button><button role="tab">Allowed Variants</button><button class="on" role="tab" aria-selected="true">Unit</button></div><span class="spacer"></span></header>
+    <div style="padding: 12px 40px; max-width: 680px">
+      <div class="form-row">
+        <span class="lbl">Connection</span>
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 5px">
+          <div style="display: flex; align-items: center; gap: 8px"><span class="dot off"></span><span>Not connected</span></div>
+          <ol class="steps" style="gap: 8px">
+            <li>Boot the unit from the NAM SD card.</li>
+            <li>Wait for the preset screen.</li>
+            <li>Plug in the USB-C cable.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="form-row">
+        <span class="lbl">SD card build</span>
+        <span class="muted3" style="padding-top: 5px">Shown when the unit is connected</span>
+      </div>
+      <div class="form-row">
+        <span class="lbl">NAM player</span>
+        <span class="muted3" style="padding-top: 5px">Shown when the unit is connected</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

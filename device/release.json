@@ -1,0 +1,312 @@
+{
+  "schema": "tmp-nam-release-v2",
+  "firmware": {
+    "bytes": 564635158,
+    "sha256": "392dd4a2a1109b2ff9590610fa4c0f403c9d702d049692476d7f7b84f41f38ec",
+    "compatible": "tone-master-stomp",
+    "payload": {
+      "name": "fmic-image-manufacturing-tone-master-stomp-hihope-rzg2h.tar.gz",
+      "bytes": 566177742,
+      "sha256": "584ae1b7559ecc66487234d371773d7da184c8604d5d6bb4abec994542a8f4e6"
+    }
+  },
+  "engine_sha256": "e8f09d53662de56771f1cf76bb81835da86673a38bde5cdf9cb8ea82d94f2d38",
+  "boot": {
+    "image": {
+      "rootfs_path": "boot/Image",
+      "fat_name": "Image",
+      "bytes": 15948288,
+      "sha256": "7ea4b5c96a065e24cbba033568068355425ea672e57316d3e325c469014a9605"
+    },
+    "dtb": {
+      "rootfs_path": "boot/fmic-tm-stomp.dtb",
+      "fat_name": "fmic-tm-stomp.dtb",
+      "bytes": 60066,
+      "sha256": "f768ebe2fc97bb00a2c6a7d5afd91e3d94bcc60ece4c16011603b9f5a62bae53"
+    }
+  },
+  "assets": {
+    "nam_dispatch": {
+      "source": "bin/nam_dispatch.so",
+      "target": "usr/local/lib/nam_dispatch.so",
+      "bytes": 2508128,
+      "sha256": "669c317e59fd479fd407762c93ef0d4e463ad34e33c2af13d82b6467a30bf525"
+    },
+    "registry_helper": {
+      "source": "helpers/register_nam_ir.py",
+      "target": "usr/local/bin/register_nam_ir.py",
+      "bytes": 3124,
+      "sha256": "7cd3c013caa83ce4174f3c0bae4c25c6a01cc013b65dfb124342391d62ff1a8c"
+    },
+    "console_service": {
+      "source": "systemd/usb-console.service",
+      "target": "etc/systemd/system/usb-console.service",
+      "bytes": 549,
+      "sha256": "34d4d26118f2f8a82a75e09612d4d66118273c89ded0365aa71a237e183156c5"
+    },
+    "console_setup": {
+      "source": "scripts/usb_console_setup.sh",
+      "target": "usr/local/bin/usb_console_setup.sh",
+      "bytes": 1601,
+      "sha256": "6f2194a50667f0a5bc8507fbfd44b896c984ed38fb64d845b3108de1627c6010"
+    },
+    "dropbear": {
+      "source": "bin/dropbear",
+      "target": "usr/local/share/nam/dropbear",
+      "bytes": 459320,
+      "sha256": "07b12423329c8cf3e1f0be4f4ea1d0b2b5a77115744dae8c666b1b38bb1b7d54"
+    },
+    "dropbearkey": {
+      "source": "bin/dropbearkey",
+      "target": "usr/local/share/nam/dropbearkey",
+      "bytes": 333032,
+      "sha256": "f2c142f1b596f49639cc54fad61ecc1d28069b0806a70c0def219445014b39b0"
+    },
+    "wifi_setup": {
+      "source": "scripts/wifi-always-on.sh",
+      "target": "usr/local/bin/wifi-always-on.sh",
+      "bytes": 766,
+      "sha256": "3b79aab5f3379ef806bbb30b79148784699b4e202d875a89bfa48caa327426bc"
+    },
+    "wifi_service": {
+      "source": "systemd/wifi-always-on.service",
+      "target": "etc/systemd/system/wifi-always-on.service",
+      "bytes": 338,
+      "sha256": "77d514fdcb5bcdffbf21236d4e9bd156aa48ba4f1493436605c96ae2de4ba118"
+    },
+    "dropbear_service": {
+      "source": "systemd/dropbear-nam.service",
+      "target": "etc/systemd/system/dropbear-nam.service",
+      "bytes": 330,
+      "sha256": "68b5f4a3b4c00890f039487834f7decfb066c3aed3fbe6feb99ae796e350a3db"
+    },
+    "t3k": {
+      "source": "helpers/t3k_sync.py",
+      "target": "usr/local/bin/t3k_sync.py",
+      "bytes": 13206,
+      "sha256": "bc9cdf9716c1c1b3a5aa8be2a3f93844752b2ae4ebe46ff859bfe89d10fda920"
+    }
+  },
+  "layout": {
+    "sector_bytes": 512,
+    "partition_1": {
+      "start_sector": 2048,
+      "sector_count": 1000000,
+      "mbr_type": 11,
+      "label": "BOOT",
+      "sectors_per_cluster": 8,
+      "sectors_per_track": 32,
+      "heads": 54,
+      "hidden_sectors": 2048
+    },
+    "partition_2": {
+      "start_sector": 1003520,
+      "mbr_type": 7,
+      "label": "rootfs.1"
+    }
+  },
+  "ext4": {
+    "bytes": 4294967296,
+    "block_bytes": 4096,
+    "inode_count": 262144,
+    "reserved_percent": 0,
+    "features": [
+      "has_journal",
+      "ext_attr",
+      "resize_inode",
+      "dir_index",
+      "filetype",
+      "extent",
+      "64bit",
+      "flex_bg",
+      "metadata_csum_seed",
+      "sparse_super",
+      "large_file",
+      "huge_file",
+      "dir_nlink",
+      "extra_isize",
+      "metadata_csum"
+    ]
+  },
+  "rootfs": {
+    "gadget_script": "usr/local/bin/create-midi-usb-gadget.sh",
+    "gadget_anchor": "modprobe usb_f_midi\n",
+    "gadget_tail_anchor": "ln -s functions/midi.usb0 configs/config.1/\n",
+    "fstab": "etc/fstab",
+    "console_enable_target": "etc/systemd/system/multi-user.target.wants/usb-console.service",
+    "build_marker": "etc/sd-root-build-id",
+    "nam_dropin_target": "etc/systemd/system/tm-stomp-server.service.d/nam.conf",
+    "lan_setup_target": "usr/local/bin/install-tmp-nam-lan.sh",
+    "lan_service_target": "etc/systemd/system/nam-lan-install.service",
+    "audio_priority_script": {
+      "target": "usr/local/bin/increase-priorities.sh",
+      "source": {
+        "bytes": 11985,
+        "sha256": "7383cd653533a667b7318289621e00794fa7ad9035d0253f165459d82acd6b0f"
+      },
+      "patched": {
+        "bytes": 11985,
+        "sha256": "2563af86a443f66e9af702a697d9b8fcb21fabf199c6195a29ab08925af3e931"
+      }
+    }
+  },
+  "source_sha256": {
+    "player/bootstrap_nam_deps.sh": "0b066055b3382ddf6736400c2c0af04835741ee43ae2a65775a971a482e0074a",
+    "player/bootstrap_nam_toolchain.sh": "5a3cbe04bbd5f4269055349a25d6fba8527e578174d50da5885e167d2a9d7c50",
+    "player/build_dropbear.py": "16c7e22ef275d830885d4ec153f190da3f48d8f4954ec418a2fec03485730bc2",
+    "player/build_dropbear.sh": "d463da96604755887d85967743ad510e1101ec91ea38b0f4cf6fd5a3411ef048",
+    "player/build_nam_core.sh": "8fd3a717db2eb71a24a2b66e97915f04e559f180eeb85cffa2b7fab075d5d55f",
+    "player/build_nam_dispatch.sh": "167fdf2f0c8a4858a438b2feded9359b9ef05c59469891a5602789e923978160",
+    "player/build_nam_speex.sh": "199e1cdcae20f5d5d94e53cef9f962dc573b2430f004e29175f4ae5777dcb561",
+    "player/check_arm_abi.py": "9a325af95b854d23f2b816f28350a6ec14d586895cb59aa43ede38a5667f51c6",
+    "player/check_nam_deps.sh": "eb0f6872a045714d8a5510f44b49da6226b36e292a6f3f7bb27f97eaaefcb491",
+    "player/cross_toolchain.sh": "9277da7936b7e5e40f890d1202178879588b0bc696477f98f427c524068e9860",
+    "player/nam_build_common.sh": "252a1450454a873d4f7293bff552a62362ed54c4030d9e16c3e6c6e54fe2cfec",
+    "player/nam_loader.h": "cb1581fdcfe717d9d0e07a3f44644027dbb3daf5af4a91aac756b38898d51abf",
+    "player/nam_model_config.h": "49de377e23ae21bd217c6a02ccf1eae5c30fc6559c2fafe8b9175f61761516c8",
+    "player/nam_player.cpp": "3ff0d737cf05a2fa36b62d87f7ef5c359a01ed1a0307c69ecb928a4e66d22b07",
+    "player/nam_player.h": "71ea0db524da8c1741eeb364a4da56ff4595b6ac41b62b911cfc6386029d2751",
+    "player/nam_profile.h": "37b580a692d3d822f66f8204e38b76d7a962c817b7449040d808bcd43f925da7",
+    "player/nam_registry.h": "64451b554072cd9aaf4e853723197d708aabfb1176661d5e85ca72c4c6edd42a",
+    "player/nam_sha256.h": "028c31ff92dd56a5813be0727a344e009fa9c3c5b2e6ded9e77ffc4e3c3473d9",
+    "player/patches/model.cpp.patch": "e7a6af898fa0a18e05d9e8380fc5067897233dcde30e84497c7dbc904de8bb4f",
+    "player/stubs/nam_dispatch.cpp": "d0d33704f7b0a5c9e8026f685c995463ae767b493c80f6e2206ec0876c3eaf6d",
+    "player/stubs/nam_dispatch_trampoline.c": "d3af2e2bbe2c321c243718914823e6fbdde9061c6c9b6c1aefdf6ff6332c14ab",
+    "player/stubs/nam_dispatch_trampoline.h": "2e752f2ab623de4b2aaa4d1f797382698c31c669ff9dd4bfc8caa37733c65335",
+    "player/stubs/vendor/VERSION": "ff6303885e4f3e8c5d153e4bdaa61bfa5d774f9349a901a0f2e05f4be4b5bdad",
+    "player/toolchains/dropbear-source.json": "dbdf9fd9c51aaf6cd78020b4c3bcb4e5aafc0635d9f252712fa6a20473335ef2",
+    "player/toolchains/glibc_macro_cleanup.h": "c42f98edc68037554a51db166226d37ae31759efdeed67d79b5308ffa349b51a",
+    "player/toolchains/messense-v1.1.0.json": "60a97f7f1e76a30fcd6e1c2aca66e4cb40194b78afdc7546f49e2e6ca77d7866"
+  },
+  "build": {
+    "git_revision": "eb6e7998468912f8655061c0d2ac2b016b206f90",
+    "nam_build_pass": "perf",
+    "source_sha256": {
+      "player/bootstrap_nam_deps.sh": "0b066055b3382ddf6736400c2c0af04835741ee43ae2a65775a971a482e0074a",
+      "player/bootstrap_nam_toolchain.sh": "5a3cbe04bbd5f4269055349a25d6fba8527e578174d50da5885e167d2a9d7c50",
+      "player/build_dropbear.py": "16c7e22ef275d830885d4ec153f190da3f48d8f4954ec418a2fec03485730bc2",
+      "player/build_dropbear.sh": "d463da96604755887d85967743ad510e1101ec91ea38b0f4cf6fd5a3411ef048",
+      "player/build_nam_core.sh": "8fd3a717db2eb71a24a2b66e97915f04e559f180eeb85cffa2b7fab075d5d55f",
+      "player/build_nam_dispatch.sh": "167fdf2f0c8a4858a438b2feded9359b9ef05c59469891a5602789e923978160",
+      "player/build_nam_speex.sh": "199e1cdcae20f5d5d94e53cef9f962dc573b2430f004e29175f4ae5777dcb561",
+      "player/check_arm_abi.py": "9a325af95b854d23f2b816f28350a6ec14d586895cb59aa43ede38a5667f51c6",
+      "player/check_nam_deps.sh": "eb0f6872a045714d8a5510f44b49da6226b36e292a6f3f7bb27f97eaaefcb491",
+      "player/cross_toolchain.sh": "9277da7936b7e5e40f890d1202178879588b0bc696477f98f427c524068e9860",
+      "player/nam_build_common.sh": "252a1450454a873d4f7293bff552a62362ed54c4030d9e16c3e6c6e54fe2cfec",
+      "player/nam_loader.h": "cb1581fdcfe717d9d0e07a3f44644027dbb3daf5af4a91aac756b38898d51abf",
+      "player/nam_model_config.h": "49de377e23ae21bd217c6a02ccf1eae5c30fc6559c2fafe8b9175f61761516c8",
+      "player/nam_player.cpp": "3ff0d737cf05a2fa36b62d87f7ef5c359a01ed1a0307c69ecb928a4e66d22b07",
+      "player/nam_player.h": "71ea0db524da8c1741eeb364a4da56ff4595b6ac41b62b911cfc6386029d2751",
+      "player/nam_profile.h": "37b580a692d3d822f66f8204e38b76d7a962c817b7449040d808bcd43f925da7",
+      "player/nam_registry.h": "64451b554072cd9aaf4e853723197d708aabfb1176661d5e85ca72c4c6edd42a",
+      "player/nam_sha256.h": "028c31ff92dd56a5813be0727a344e009fa9c3c5b2e6ded9e77ffc4e3c3473d9",
+      "player/patches/model.cpp.patch": "e7a6af898fa0a18e05d9e8380fc5067897233dcde30e84497c7dbc904de8bb4f",
+      "player/stubs/nam_dispatch.cpp": "d0d33704f7b0a5c9e8026f685c995463ae767b493c80f6e2206ec0876c3eaf6d",
+      "player/stubs/nam_dispatch_trampoline.c": "d3af2e2bbe2c321c243718914823e6fbdde9061c6c9b6c1aefdf6ff6332c14ab",
+      "player/stubs/nam_dispatch_trampoline.h": "2e752f2ab623de4b2aaa4d1f797382698c31c669ff9dd4bfc8caa37733c65335",
+      "player/stubs/vendor/VERSION": "ff6303885e4f3e8c5d153e4bdaa61bfa5d774f9349a901a0f2e05f4be4b5bdad",
+      "player/toolchains/dropbear-source.json": "dbdf9fd9c51aaf6cd78020b4c3bcb4e5aafc0635d9f252712fa6a20473335ef2",
+      "player/toolchains/glibc_macro_cleanup.h": "c42f98edc68037554a51db166226d37ae31759efdeed67d79b5308ffa349b51a",
+      "player/toolchains/messense-v1.1.0.json": "60a97f7f1e76a30fcd6e1c2aca66e4cb40194b78afdc7546f49e2e6ca77d7866"
+    },
+    "dependencies": "# Pinned vendor sources for the NAM player.  These values are immutable\n# commits; bootstrap_nam_deps.sh verifies every checkout before returning.\n# NeuralAmpModelerCore v0.5.2 resolves to the SHA below; upstream's\n# NAM/version.h still reports 0.5.1 in this tag and is intentionally unchanged.\nNeuralAmpModelerCore_URL=https://github.com/sdatkinson/NeuralAmpModelerCore.git\nNeuralAmpModelerCore=ab72c078cd141be60d963d357bd501d56cc9606b\neigen_URL=https://gitlab.com/libeigen/eigen.git\neigen=87300c93cae6a8afd9a4f8aa8d9d5c5324cf02e1\nSpeexDSP_URL=https://github.com/xiph/speexdsp.git\nSpeexDSP=1b28a0f61bc31162979e1f26f3981fc3637095c8\n",
+    "compiler_manifest": {
+      "release": "v1.1.0",
+      "host": "aarch64-apple-darwin",
+      "target": "aarch64-unknown-linux-gnu",
+      "gcc_version": "10.2.0",
+      "archive_url": "https://github.com/messense/homebrew-macos-cross-toolchains/releases/download/v1.1.0/aarch64-unknown-linux-gnu-aarch64-darwin.zip",
+      "archive_sha256": "e35da4da4330912c5a188e321cf18ef8ef0abb18d0414a339f75b20c2bd7c0a1",
+      "sysroot": "aarch64-unknown-linux-gnu/sysroot",
+      "glibc_symbol_ceiling": "2.28"
+    },
+    "ssh": {
+      "schema": 1,
+      "created_utc": "2026-10-05T17:17:59.592432+00:00",
+      "source": {
+        "url": "https://dropbear.nl/mirror/releases/dropbear-2024.86.tar.bz2",
+        "sha256": "e78936dffc395f2e0db099321d6be659190966b99712b55c530dd0a1822e0a5e",
+        "directory": "dropbear-2024.86",
+        "release_url": "https://github.com/mkj/dropbear/releases/tag/DROPBEAR_2024.86",
+        "signature_url": "https://dropbear.nl/mirror/releases/dropbear-2024.86.tar.bz2.asc",
+        "signing_key_url": "https://dropbear.nl/mirror/releases/dropbear-key-2015.asc",
+        "verified_signing_fingerprint": "F7347EF2EE2E07A267628CA944931494F29C6773"
+      },
+      "compiler": {
+        "url": "https://ziglang.org/download/0.13.0/zig-macos-aarch64-0.13.0.tar.xz",
+        "sha256": "46fae219656545dfaf4dce12fb4e8685cec5b51d721beee9389ab4194d43394c",
+        "directory": "zig-macos-aarch64-0.13.0",
+        "version": "0.13.0"
+      },
+      "target": "aarch64-linux-musl",
+      "host": "aarch64-macos",
+      "configure_args": [
+        "--host=aarch64-linux-musl",
+        "--disable-zlib",
+        "--disable-pam",
+        "--disable-lastlog",
+        "--disable-utmp",
+        "--disable-wtmp"
+      ],
+      "make_args": [
+        "PROGRAMS=dropbear dropbearkey",
+        "STATIC=1"
+      ],
+      "cflags": "-Os",
+      "recipe_sha256": "16c7e22ef275d830885d4ec153f190da3f48d8f4954ec418a2fec03485730bc2",
+      "manifest_sha256": "dbdf9fd9c51aaf6cd78020b4c3bcb4e5aafc0635d9f252712fa6a20473335ef2",
+      "strip": {
+        "tool": "aarch64-unknown-linux-gnu-strip",
+        "sha256": "403f95d1e287b703b1d594d3a2dcdbdcf3b15ee135f6eb32f33f593683daf283"
+      },
+      "build_directory": "run-h0g_i_2a",
+      "outputs": {
+        "dropbear": {
+          "class": "ELF64",
+          "byte_order": "little",
+          "machine": "AArch64",
+          "type": "DYN",
+          "linkage": "static-pie",
+          "interpreter": null,
+          "needed": [],
+          "sha256": "07b12423329c8cf3e1f0be4f4ea1d0b2b5a77115744dae8c666b1b38bb1b7d54",
+          "size": 459320
+        },
+        "dropbearkey": {
+          "class": "ELF64",
+          "byte_order": "little",
+          "machine": "AArch64",
+          "type": "DYN",
+          "linkage": "static-pie",
+          "interpreter": null,
+          "needed": [],
+          "sha256": "f2c142f1b596f49639cc54fad61ecc1d28069b0806a70c0def219445014b39b0",
+          "size": 333032
+        }
+      },
+      "licenses": {
+        "dropbear-LICENSE": "a99ce657d790b761c132ee7e0de18edb437ae6361e536d991c6a12f36e770445",
+        "libtomcrypt-LICENSE": "8f196cb13afd271f5e267fd29543fc454596382ad580e7592709492843996ac8",
+        "libtommath-LICENSE": "2fa64b163659f41965c9815882a8296d3d03ff546b76153e11445f9bdecf955a",
+        "musl-COPYRIGHT": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+        "zig-LICENSE": "5c537d6853e005298a285d508cff9ac7192cea23576c840d485b2b586a7ff177"
+      }
+    }
+  },
+  "licenses_sha256": {
+    "Eigen/COPYING.APACHE": "03379001a7b12a2ec997a25554247d985270b353c10d5bafee9ac8d6519820b7",
+    "Eigen/COPYING.BSD": "51928dce36213c5333ba3172e847d735d4c6e9b7ff2722a326c49067155b82eb",
+    "Eigen/COPYING.MINPACK": "c87b7f8ee88f6195e91743820c00354833583aef091b72e2d4a49c8e28e798a0",
+    "Eigen/COPYING.MPL2": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172",
+    "Eigen/COPYING.README": "db640ff2bd90c6abd6a4d3fbb351e0ee4d555417cf840492054d1cbb2ea85644",
+    "NAM/LICENSE": "ba9624e2138bc70749ccf6742b14ec9fac26b2197ca8de85c4d0bd4eeafa0a21",
+    "SpeexDSP/AUTHORS": "6e5a9d92c5f9ccd28fe0b15ad59443fbf435bfc6ab2221f532006d3717ddf642",
+    "SpeexDSP/COPYING": "2654a4264b2bfe298dedc508748d140111840c315cc8eb646a3a68c13fa75b01",
+    "ssh/dropbear-LICENSE": "a99ce657d790b761c132ee7e0de18edb437ae6361e536d991c6a12f36e770445",
+    "ssh/libtomcrypt-LICENSE": "8f196cb13afd271f5e267fd29543fc454596382ad580e7592709492843996ac8",
+    "ssh/libtommath-LICENSE": "2fa64b163659f41965c9815882a8296d3d03ff546b76153e11445f9bdecf955a",
+    "ssh/musl-COPYRIGHT": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af",
+    "ssh/zig-LICENSE": "5c537d6853e005298a285d508cff9ac7192cea23576c840d485b2b586a7ff177"
+  },
+  "validation": "Performance build provenance, current compiler-input hashes and artifact hashes verified. Physical boot, NAM audio and root access have not been validated by this publisher."
+}

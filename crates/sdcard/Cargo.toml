@@ -1,0 +1,29 @@
+[package]
+name = "tmp-sdcard"
+version = "0.1.0"
+description = "Builds, writes and verifies the Tone Master Pro NAM SD-root card"
+edition.workspace = true
+authors.workspace = true
+
+[lib]
+name = "tmp_sdcard"
+
+[[bin]]
+name = "tmp-sdcard"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+libc.workspace = true
+plist.workspace = true
+# Inventory the firmware's rootfs tarball (ownership, modes, links) before the
+# system tar extracts it.
+tar = "0.4"
+flate2 = "1"
+uuid = { version = "1", features = ["v4"] }
+tempfile = "3"
+
+[dev-dependencies]
+glob = "0.3"

@@ -1,0 +1,19 @@
+<!-- @dsCard group="Status" height=160 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>StageList</title>
+<style>body{margin:0;background:var(--bg-content)} #root{padding:8px 16px;max-width:460px}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(T.StageList, { stages: [
+  { label: 'Building the filesystem', state: 'done', detail: 'done' },
+  { label: 'Writing to the card', state: 'now', detail: 'about 4 min left' },
+  { label: 'Reading back to verify', state: 'todo', detail: 'next' },
+  { label: 'Reading back to verify', state: 'fail', detail: 'failed' }
+] }));
+</script>
+</body>
+</html>

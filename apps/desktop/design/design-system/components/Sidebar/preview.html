@@ -1,0 +1,17 @@
+<!-- @dsCard group="Layout" height=520 subtitle="regular, with activity · compact" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Sidebar</title>
+<style>body{margin:0;background:var(--bg-content)} #root{display:flex;gap:24px;padding:16px;height:520px;box-sizing:border-box} #root > nav{height:100%;border:1px solid var(--sep);border-radius:10px;overflow:hidden}</style>
+</head>
+<body class="tn-root">
+<div id="root"></div>
+<script>
+var T = window.TmpNam, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  h(T.Sidebar, { active: 'captures', captureCount: 9, unit: 'connected', activity: { title: 'Sending captures', detail: '2 of 3 · JC-120 Clean', value: 55 } }),
+  h(T.Sidebar, { active: 'tone3000', unit: 'looking' }),
+  h(T.Sidebar, { active: 'captures', unit: 'connected', compact: true })));
+</script>
+</body>
+</html>

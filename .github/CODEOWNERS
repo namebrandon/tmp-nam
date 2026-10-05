@@ -1,0 +1,4 @@
+# Every change requires review from the repo owner (auto-requests @pcavadas on all
+# PRs). Not a required code-owner review: the "protect main" ruleset counts
+# CodeRabbit's approval, and arm-auto-merge.yml gates external PRs on @pcavadas.
+* @pcavadas

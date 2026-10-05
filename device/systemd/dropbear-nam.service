@@ -1,0 +1,11 @@
+[Unit]
+Description=Dropbear SSH (NAM SD kit)
+After=network.target wifi-always-on.service nam-lan-install.service
+Wants=wifi-always-on.service nam-lan-install.service
+
+[Service]
+ExecStart=/data/nam/bin/dropbear -F -r /data/nam/ssh/ed25519 -B -p 22 -P /data/nam/dropbear.pid
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

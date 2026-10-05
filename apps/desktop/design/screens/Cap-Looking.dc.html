@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Captures, looking for unit</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="screens.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A4BBB}a:hover{color:#153D9A}
+</style>
+</helmet>
+<div class="win {{theme}}" style="width: 960px; height: 700px">
+  <dc-import name="Sidebar" active="captures" conn="looking" count="" theme="{{theme}}" hint-size="200px,700px"></dc-import>
+  <div class="main">
+    <header class="toolbar">
+      <h1 class="ttl">Captures</h1>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" disabled>Add Captures…</button>
+    </header>
+    <div class="center">
+      <div class="empty">
+        <div style="display: flex; align-items: center; gap: 12px"><span class="spinner lg"></span><h2 class="t-title">Looking for the Tone Master Pro…</h2></div>
+        <p class="muted">This takes a few seconds after you plug it in. If the unit isn't connected yet:</p>
+        <ol class="steps">
+          <li>Insert the NAM SD card and power the unit on.</li>
+          <li>Wait for the preset screen.</li>
+          <li>Plug the unit's USB-C cable into this Mac.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":960,"height":700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.appearance === 'Dark' ? 'dark' : 'light' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>TMP NAM cover</title>
+<style>
+body{margin:0;background:var(--bg-content)}
+.cover{position:relative;width:960px;height:288px;overflow:hidden;background:var(--bg-content);font-family:var(--font-sans)}
+.cover svg{position:absolute;inset:0}
+.accent{fill:var(--accent)}
+.surface{fill:var(--bg-control)}
+.side{fill:var(--bg-sidebar)}
+.ok{fill:var(--ok-dot)}
+.warn{fill:var(--warn-dot)}
+.dot{fill:var(--bg-content)}
+.card{rx:var(--radius-card)}
+.ctl{rx:var(--radius-control)}
+.text{position:absolute;left:40px;bottom:36px;max-width:440px;display:flex;flex-direction:column;gap:12px}
+.name{margin:0;font-size:96px;line-height:.92;font-weight:700;letter-spacing:-.02em;color:var(--text)}
+.tag{margin:0;font-size:14px;line-height:20px;color:var(--text-2)}
+</style>
+</head>
+<body>
+<div class="cover">
+<svg viewBox="0 0 960 288" width="960" height="288" aria-hidden="true">
+<!--
+  blocks: accent 176×224 slab (radius-card), bg-control 224×128 bleeding right, bg-sidebar 224×80, ok-dot 80×80, warn-dot 40×40 (radius-control)
+  arrangement: one tall slab bleeding off the top with satellites stepping right and down, like the window's sidebar + panes
+  pattern: dot grid at space-4 (16px) cut into the accent slab; precise, mono, 4px-grid tool for a technical piece of gear
+  steps and radii: 16 / 24 / 32 spacing; radius-card 10, radius-control 6
+-->
+<rect class="accent card" x="544" y="-16" width="176" height="224"/>
+<rect class="surface card" x="736" y="24" width="240" height="128"/>
+<rect class="side card" x="736" y="168" width="128" height="80"/>
+<rect class="ok card" x="880" y="168" width="80" height="80"/>
+<rect class="warn ctl" x="584" y="224" width="40" height="40"/>
+<g class="dot">
+<circle cx="568" cy="128" r="2"/><circle cx="584" cy="128" r="2"/><circle cx="600" cy="128" r="2"/><circle cx="616" cy="128" r="2"/><circle cx="632" cy="128" r="2"/><circle cx="648" cy="128" r="2"/><circle cx="664" cy="128" r="2"/><circle cx="680" cy="128" r="2"/><circle cx="696" cy="128" r="2"/>
+<circle cx="568" cy="144" r="2"/><circle cx="584" cy="144" r="2"/><circle cx="600" cy="144" r="2"/><circle cx="616" cy="144" r="2"/><circle cx="632" cy="144" r="2"/><circle cx="648" cy="144" r="2"/><circle cx="664" cy="144" r="2"/><circle cx="680" cy="144" r="2"/><circle cx="696" cy="144" r="2"/>
+<circle cx="568" cy="160" r="2"/><circle cx="584" cy="160" r="2"/><circle cx="600" cy="160" r="2"/><circle cx="616" cy="160" r="2"/><circle cx="632" cy="160" r="2"/><circle cx="648" cy="160" r="2"/><circle cx="664" cy="160" r="2"/><circle cx="680" cy="160" r="2"/><circle cx="696" cy="160" r="2"/>
+<circle cx="568" cy="176" r="2"/><circle cx="584" cy="176" r="2"/><circle cx="600" cy="176" r="2"/><circle cx="616" cy="176" r="2"/><circle cx="632" cy="176" r="2"/><circle cx="648" cy="176" r="2"/><circle cx="664" cy="176" r="2"/><circle cx="680" cy="176" r="2"/><circle cx="696" cy="176" r="2"/>
+</g>
+</svg>
+<div class="text">
+<h1 class="name">TMP NAM</h1>
+<p class="tag">The Mac companion for a Tone Master Pro running NAM captures.</p>
+</div>
+</div>
+</body>
+</html>

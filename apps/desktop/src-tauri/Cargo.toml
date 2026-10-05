@@ -1,0 +1,43 @@
+[package]
+name = "tmp-nam-companion"
+version = "0.1.0"
+description = "Desktop app for the Tone Master Pro NAM SD card: manage NAM captures, sync Tone3000, build the bootable card"
+authors = ["Pedro CAVADAS"]
+edition.workspace = true
+
+[lib]
+name = "tmp_nam_companion_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde.workspace = true
+serde_json.workspace = true
+# Tone3000 REST + OAuth token exchange (blocking; every call runs on a worker thread).
+ureq = { version = "2", features = ["json"] }
+# PKCE verifier/challenge, model hashes, base64 file push over the console.
+sha2.workspace = true
+base64 = "0.22"
+getrandom = "0.2"
+urlencoding = "2"
+url = "2"
+# Raw termios on the unit's CDC-ACM console (/dev/cu.usbmodem*).
+libc.workspace = true
+# IORegistry lookup of the unit's console port (ioreg -a).
+plist.workspace = true
+# The card builder, also run as this app's elevated helper.
+tmp-sdcard = { path = "../../../crates/sdcard" }
+tempfile = "3"
+# The unit's HID application channel (Pro Control's transport): restart-free adds and
+# removes (`src/hid.rs`). Seizes the device on macOS; pure-Rust hidraw on Linux.
+hidapi = { version = "2.6.7", default-features = false, features = ["linux-native-basic-udev"] }
+log = "0.4"
+tauri-plugin-log = "2"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
