@@ -244,7 +244,7 @@ impl Console {
     fn next_id(&mut self) -> String {
         self.counter += 1;
         let mut r = [0u8; 4];
-        let _ = getrandom::getrandom(&mut r);
+        let _ = getrandom::fill(&mut r);
         format!("{:x}{:08x}", self.counter, u32::from_le_bytes(r))
     }
 

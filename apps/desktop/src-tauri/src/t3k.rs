@@ -76,30 +76,79 @@ fn b64url(bytes: &[u8]) -> String {
 
 fn random(n: usize) -> Vec<u8> {
     let mut v = vec![0u8; n];
-    getrandom::getrandom(&mut v).expect("OS randomness");
+    getrandom::fill(&mut v).expect("OS randomness");
     v
 }
 
-fn http_err(e: ureq::Error) -> String {
+type Response = ureq::http::Response<ureq::Body>;
+
+/// A failed request: an HTTP error status (4xx/5xx, with the response body, read as text
+/// up to 10 MB) or a transport error.
+enum HttpError {
+    Status(u16, String),
+    Transport(ureq::Error),
+}
+
+/// The agent every Tone3000 call goes through: 30 s to connect, `timeout` for the whole
+/// call including the body, at most `max_redirects` redirects followed (then an error;
+/// 0 returns the 3xx response itself), the `Authorization` header dropped on redirects.
+/// HTTP error statuses come back as responses so [`check`] can report their body.
+fn agent(max_redirects: u32, timeout: Option<Duration>) -> ureq::Agent {
+    ureq::Agent::config_builder()
+        .http_status_as_error(false)
+        .max_redirects(max_redirects)
+        .timeout_connect(Some(Duration::from_secs(30)))
+        .timeout_global(timeout)
+        .build()
+        .into()
+}
+
+/// Agent for the JSON API calls: follows up to four redirects.
+fn api_agent(timeout: Option<Duration>) -> ureq::Agent {
+    agent(4, timeout)
+}
+
+/// Split a call's result into a successful (< 400) response or an [`HttpError`].
+fn check(r: Result<Response, ureq::Error>) -> Result<Response, HttpError> {
+    match r {
+        Ok(mut resp) if resp.status().as_u16() >= 400 => {
+            let body = resp.body_mut().read_to_string().unwrap_or_default();
+            Err(HttpError::Status(resp.status().as_u16(), body))
+        }
+        Ok(resp) => Ok(resp),
+        Err(e) => Err(HttpError::Transport(e)),
+    }
+}
+
+fn http_err(e: HttpError) -> String {
     match e {
-        ureq::Error::Status(code, resp) => {
-            let body = resp.into_string().unwrap_or_default();
+        HttpError::Status(code, body) => {
             format!(
                 "Tone3000 returned HTTP {code}: {}",
                 body.chars().take(300).collect::<String>()
             )
         }
-        other => format!("network error: {other}"),
+        HttpError::Transport(other) => format!("network error: {other}"),
     }
 }
 
+/// Parse a response body as JSON, with no size limit.
+fn read_json(mut resp: Response) -> Result<Value, String> {
+    resp.body_mut()
+        .with_config()
+        .limit(u64::MAX)
+        .read_json()
+        .map_err(|e| e.to_string())
+}
+
 fn token_request(form: &[(&str, &str)]) -> Result<Tokens, String> {
-    let v: Value = ureq::post(&format!("{API}/oauth/token"))
-        .timeout(Duration::from_secs(60))
-        .send_form(form)
-        .map_err(http_err)?
-        .into_json()
-        .map_err(|e| e.to_string())?;
+    let resp = check(
+        api_agent(Some(Duration::from_secs(60)))
+            .post(&format!("{API}/oauth/token"))
+            .send_form(form.iter().copied()),
+    )
+    .map_err(http_err)?;
+    let v = read_json(resp)?;
     serde_json::from_value(v.clone()).map_err(|_| format!("token exchange failed: {v}"))
 }
 
@@ -279,18 +328,21 @@ impl<'a> Session<'a> {
         Ok(())
     }
 
-    fn send(&mut self, url: &str) -> Result<ureq::Response, String> {
+    fn send(&mut self, url: &str) -> Result<Response, String> {
+        let agent = api_agent(Some(Duration::from_secs(120)));
         for attempt in 0..2 {
-            let r = ureq::get(url)
-                .timeout(Duration::from_secs(120))
-                .set(
-                    "Authorization",
-                    &format!("Bearer {}", self.tok.access_token),
-                )
-                .call();
+            let r = check(
+                agent
+                    .get(url)
+                    .header(
+                        "Authorization",
+                        &format!("Bearer {}", self.tok.access_token),
+                    )
+                    .call(),
+            );
             match r {
                 Ok(resp) => return Ok(resp),
-                Err(ureq::Error::Status(401, _)) if attempt == 0 => self.refresh()?,
+                Err(HttpError::Status(401, _)) if attempt == 0 => self.refresh()?,
                 Err(e) => return Err(http_err(e)),
             }
         }
@@ -298,19 +350,14 @@ impl<'a> Session<'a> {
     }
 
     pub fn get(&mut self, path: &str) -> Result<Value, String> {
-        self.send(&format!("{API}{path}"))?
-            .into_json()
-            .map_err(|e| e.to_string())
+        read_json(self.send(&format!("{API}{path}"))?)
     }
 
     /// Download a model file. The URL comes from the webview, so the bearer token is
     /// attached only to HTTPS Tone3000 hosts, and redirects are followed by hand so a
     /// hop to any other host (e.g. signed storage) is fetched without it.
     pub fn download(&mut self, url: &str) -> Result<Vec<u8>, String> {
-        let agent = ureq::AgentBuilder::new()
-            .redirects(0)
-            .timeout(Duration::from_secs(120))
-            .build();
+        let agent = agent(0, Some(Duration::from_secs(120)));
         let mut current = url::Url::parse(url).map_err(|e| format!("bad model URL: {e}"))?;
         let mut refreshed = false;
         for _ in 0..6 {
@@ -319,26 +366,27 @@ impl<'a> Session<'a> {
             }
             let mut req = agent.get(current.as_str());
             if is_tone3000_host(current.host_str()) {
-                req = req.set(
+                req = req.header(
                     "Authorization",
                     &format!("Bearer {}", self.tok.access_token),
                 );
             }
-            let resp = match req.call() {
+            let resp = match check(req.call()) {
                 Ok(r) => r,
-                Err(ureq::Error::Status(401, _))
+                Err(HttpError::Status(401, _))
                     if !refreshed && is_tone3000_host(current.host_str()) =>
                 {
                     self.refresh()?;
                     refreshed = true;
                     continue;
                 }
-                Err(ureq::Error::Status(code, r)) if (300..400).contains(&code) => r,
                 Err(e) => return Err(http_err(e)),
             };
-            if (300..400).contains(&resp.status()) {
+            if resp.status().is_redirection() {
                 let location = resp
-                    .header("Location")
+                    .headers()
+                    .get("Location")
+                    .and_then(|v| v.to_str().ok())
                     .ok_or("redirect without a Location header")?
                     .to_string();
                 current = current
@@ -347,7 +395,8 @@ impl<'a> Session<'a> {
                 continue;
             }
             let mut buf = Vec::new();
-            resp.into_reader()
+            resp.into_body()
+                .into_reader()
                 .take(MAX_MODEL_BYTES + 1)
                 .read_to_end(&mut buf)
                 .map_err(|e| format!("download failed: {e}"))?;
@@ -610,13 +659,15 @@ mod tests {
         std::fs::write(&path, serde_json::to_vec(&fresh).unwrap()).unwrap();
         tok = fresh;
         let get = |p: &str| -> Value {
-            ureq::get(&format!("{API}{p}"))
-                .set("Authorization", &format!("Bearer {}", tok.access_token))
-                .call()
-                .map_err(http_err)
-                .unwrap()
-                .into_json()
-                .unwrap()
+            let resp = check(
+                api_agent(None)
+                    .get(&format!("{API}{p}"))
+                    .header("Authorization", &format!("Bearer {}", tok.access_token))
+                    .call(),
+            )
+            .map_err(http_err)
+            .unwrap();
+            read_json(resp).unwrap()
         };
         let mut tones = vec![];
         for p in ["/tones/favorited", "/tones/created"] {
@@ -770,13 +821,15 @@ mod tests {
         std::fs::write(&tok_path, serde_json::to_vec(&tok).unwrap()).unwrap();
 
         let get = |p: &str| -> Value {
-            ureq::get(&format!("{API}{p}"))
-                .set("Authorization", &format!("Bearer {}", tok.access_token))
-                .call()
-                .map_err(http_err)
-                .unwrap()
-                .into_json()
-                .unwrap()
+            let resp = check(
+                api_agent(None)
+                    .get(&format!("{API}{p}"))
+                    .header("Authorization", &format!("Bearer {}", tok.access_token))
+                    .call(),
+            )
+            .map_err(http_err)
+            .unwrap();
+            read_json(resp).unwrap()
         };
         let tone = get(&format!("/tones/{tone_id}"));
         let title = str_of(&tone, "title").unwrap_or_default();
@@ -803,24 +856,27 @@ mod tests {
         );
 
         // Download as Session::download does.
-        let agent = ureq::AgentBuilder::new().redirects(0).build();
+        let agent = agent(0, None);
         let mut url = url::Url::parse(m.model_url.as_deref().unwrap()).unwrap();
         let bytes = loop {
             let mut req = agent.get(url.as_str());
             if is_tone3000_host(url.host_str()) {
-                req = req.set("Authorization", &format!("Bearer {}", tok.access_token));
+                req = req.header("Authorization", &format!("Bearer {}", tok.access_token));
             }
-            let resp = match req.call() {
+            let resp = match check(req.call()) {
                 Ok(r) => r,
-                Err(ureq::Error::Status(c, r)) if (300..400).contains(&c) => r,
                 Err(e) => panic!("{}", http_err(e)),
             };
-            if (300..400).contains(&resp.status()) {
-                url = url.join(resp.header("Location").unwrap()).unwrap();
+            if resp.status().is_redirection() {
+                let location = resp.headers()["Location"].to_str().unwrap();
+                url = url.join(location).unwrap();
                 continue;
             }
             let mut buf = vec![];
-            resp.into_reader().read_to_end(&mut buf).unwrap();
+            resp.into_body()
+                .into_reader()
+                .read_to_end(&mut buf)
+                .unwrap();
             break buf;
         };
         let info = unit::validate_nam(&bytes).expect("a NAM model");
