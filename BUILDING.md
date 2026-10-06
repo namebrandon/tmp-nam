@@ -10,7 +10,7 @@ bun install
 bun run tauri dev                  # real unit over USB
 TMP_NAM_SIM=1 bun run tauri dev    # simulated unit
 bun run dev                        # UI only, in a browser, against the in-page mock (src/lib/mock.ts)
-bun run tauri build                # .app + .dmg (bundles device/ as a resource)
+bun run tauri build                # .app/.dmg on macOS, .deb/.rpm/.AppImage on Linux (bundles device/)
 ```
 
 Frontend checks: `bun run typecheck`, `bun run lint`, `bun run test`. Rust:
@@ -40,7 +40,7 @@ and the end of the log (never the Tone3000 key or tokens).
 Releases are cut by CI (`.github/workflows/release.yml`): on every merge to `main`,
 semantic-release reads the Conventional Commits since the last tag and, when a `feat:`/`fix:`
 is due, tags `v<version>` and creates the GitHub release; `tauri-apps/tauri-action` then adds
-signed and notarized macOS DMGs (Apple Silicon and Intel) and Linux `.deb`/`.AppImage`. Windows is not
+signed and notarized macOS DMGs (Apple Silicon and Intel) and Linux `.deb`/`.rpm`/`.AppImage`. Windows is not
 supported (the unit's console transport is Unix-only, and card building needs e2fsprogs/mtools).
 
 To reproduce a signed build locally, on a Mac with your Developer ID certificate in the login

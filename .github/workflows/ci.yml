@@ -110,11 +110,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: macos-latest
-            bundles: app,dmg
-          - os: ubuntu-22.04 # oldest offered image -> lowest glibc floor for the .deb/AppImage
-            bundles: deb,appimage
+        os: [macos-latest, ubuntu-22.04] # ubuntu-22.04: oldest image -> lowest glibc floor
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
     steps:
@@ -142,7 +138,8 @@ jobs:
         working-directory: apps/desktop
         run: bun install --frozen-lockfile
 
-      # Same action as release.yml, minus the release upload. Ad-hoc signed ("-", Tauri's
+      # Same action and bundle targets (tauri.conf.json "all") as release.yml, minus the
+      # release upload. Ad-hoc signed ("-", Tauri's
       # macOS signing guide) so Apple Silicon doesn't report the artifact as damaged.
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
         env:
@@ -150,5 +147,4 @@ jobs:
         with:
           projectPath: apps/desktop
           tauriScript: bun run tauri
-          args: --bundles ${{ matrix.bundles }}
           uploadWorkflowArtifacts: true

@@ -29,10 +29,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "app",
-      "dmg"
-    ],
+    "targets": "all",
     "category": "Music",
     "shortDescription": "NAM captures, Tone3000 sync and SD-card builder for the Tone Master Pro.",
     "copyright": "Copyright (c) 2026 Pedro Cavadas",

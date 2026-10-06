@@ -164,7 +164,7 @@ are the record.
 - `release.yml`: every merge to `main` runs semantic-release (default plugins); a `feat:`/`fix:`
   since the last tag releases automatically: it tags `v<version>` and creates the GitHub release,
   then tauri-action builds and uploads signed + notarized aarch64/x86_64 DMGs and the Linux
-  `.deb`/`.AppImage`. Versions are never bumped by hand: the job stamps the release version into
+  `.deb`/`.rpm`/`.AppImage`. Versions are never bumped by hand: the job stamps the release version into
   `apps/desktop/package.json` (read by `tauri.conf.json`) at build time only. Apple secrets live
   in the `release` environment.
 
