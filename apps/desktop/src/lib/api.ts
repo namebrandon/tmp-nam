@@ -187,7 +187,9 @@ export interface SdDone {
   ok: boolean;
   code: number;
   message: string;
-  outcome: "ok" | "failed" | "denied";
+  /** `denied`: the administrator prompt was cancelled; `blocked`: macOS refused
+   *  this app Removable Volumes access. Nothing was written in either case. */
+  outcome: "ok" | "failed" | "denied" | "blocked";
   stage?: number | null;
 }
 
@@ -290,6 +292,8 @@ export const api = {
   sdListDisks: () => call<Disk[]>("sd_list_disks"),
   sdWriteCard: (firmware: string, device: string) =>
     call<null>("sd_write_card", { firmware, device }),
+  /** System Settings › Privacy & Security › Files and Folders (macOS). */
+  sdOpenPrivacySettings: () => call<null>("sd_open_privacy_settings"),
   /** Versions, platform, unit and the end of the log, for bug reports. */
   diagnostics: () => call<string>("diagnostics"),
   /** While on, closing the window or quitting asks first. */

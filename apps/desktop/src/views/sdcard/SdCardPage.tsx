@@ -20,8 +20,8 @@ import {
   Toolbar,
   type Stage,
 } from "../../ds";
-import type { Disk } from "../../lib/api";
-import { copyText, formatBytes, plural } from "../../lib/format";
+import { api, type Disk } from "../../lib/api";
+import { copyText, errorText, formatBytes, plural } from "../../lib/format";
 import { useApp } from "../../state/context";
 import { CARD_PLATFORMS, FAILURES, STAGES } from "../../state/sd";
 
@@ -190,6 +190,7 @@ function Form({ onCreate }: { onCreate: () => void }) {
   const fwOk = fw?.matches === true;
   const busy = app.busyReason;
   const disk = sd.disks?.find((d) => d.device === sd.disk) ?? null;
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const hint = toolsHint(
     env?.platform ?? "",
     missing.map((t) => t.name),
@@ -229,11 +230,40 @@ function Form({ onCreate }: { onCreate: () => void }) {
             {sd.error}
           </Banner>
         )}
-        {sd.denied && (
+        {sd.refused === "blocked" && (
+          <Banner
+            tone="error"
+            title="macOS blocked access to the SD card"
+            onDismiss={sd.dismissRefused}
+            actions={[
+              {
+                label: "Open Privacy & Security",
+                variant: "primary",
+                onClick: () => {
+                  setSettingsError(null);
+                  api.sdOpenPrivacySettings().catch((e: unknown) => {
+                    setSettingsError(errorText(e));
+                  });
+                },
+              },
+            ]}
+          >
+            Nothing was written to the card. In System Settings, open Privacy
+            &amp; Security › Files and Folders, turn on Removable Volumes under
+            TMP NAM, then create the card again.
+            {settingsError && (
+              <p className="small">
+                Couldn&apos;t open System Settings ({settingsError}). Open it
+                from the Apple menu instead.
+              </p>
+            )}
+          </Banner>
+        )}
+        {sd.refused === "denied" && (
           <Banner
             tone="error"
             title="Administrator access wasn't given"
-            onDismiss={sd.dismissDenied}
+            onDismiss={sd.dismissRefused}
           >
             Nothing was written to the card. Writing to an SD card needs the
             password of an administrator account on this computer.

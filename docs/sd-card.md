@@ -156,6 +156,10 @@ anything written to internal `/data` stays until you delete it on-device.
   Close screen/serial tools that hold the port (the app needs it exclusively).
 - **Unit won't boot with the card:** power off, remove card, repower for stock.
   Rebuild after re-verifying the firmware hash and card layout.
+- **"macOS blocked access to the SD card":** TMP NAM was refused removable-volume
+  access, and macOS doesn't ask again. Click **Open Privacy & Security** (or open System
+  Settings › Privacy & Security › Files and Folders), turn on **Removable Volumes** under
+  TMP NAM, then create the card again.
 - **Build interrupted:** rerun — it only partitions after you confirm the target.
 - **Shell disappears on reboot:** normal if gadget services were restarted; clean
   power-cycle with the card inserted.

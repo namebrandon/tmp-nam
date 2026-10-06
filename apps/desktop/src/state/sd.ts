@@ -57,7 +57,8 @@ export interface SdStore {
   left: string | null;
   log: string[];
   showLog: boolean;
-  denied: boolean;
+  /** Why the last build stopped before writing: see `SdDone.outcome`. */
+  refused: "denied" | "blocked" | null;
   failure: { stage: number; message: string } | null;
   error: string | null;
   checkEnvironment: () => Promise<void>;
@@ -65,7 +66,7 @@ export interface SdStore {
   pickDisk: (device: string) => void;
   start: () => Promise<void>;
   toggleLog: () => void;
-  dismissDenied: () => void;
+  dismissRefused: () => void;
   /** Back to the form (Done, Back); `keepDisk` false for Make Another. */
   reset: (keepDisk: boolean) => void;
 }
@@ -89,7 +90,7 @@ export function useSdBuild(): SdStore {
   const stageStarted = useRef(0);
   const [log, setLog] = useState<string[]>([]);
   const [showLog, setShowLog] = useState(false);
-  const [denied, setDenied] = useState(false);
+  const [refused, setRefused] = useState<SdStore["refused"]>(null);
   const [failure, setFailure] = useState<SdStore["failure"]>(null);
   const [error, setError] = useState<string | null>(null);
   const stageRef = useRef(-1);
@@ -147,8 +148,8 @@ export function useSdBuild(): SdStore {
       if (d.outcome === "ok") {
         setPercent(100);
         setPhase("success");
-      } else if (d.outcome === "denied") {
-        setDenied(true);
+      } else if (d.outcome === "denied" || d.outcome === "blocked") {
+        setRefused(d.outcome);
         setPhase("setup");
       } else {
         setFailure({
@@ -190,7 +191,7 @@ export function useSdBuild(): SdStore {
     setFraction(0);
     setPercent(0);
     setLog([]);
-    setDenied(false);
+    setRefused(null);
     setFailure(null);
     setShowLog(false);
     setPhase("running");
@@ -215,7 +216,7 @@ export function useSdBuild(): SdStore {
     left,
     log,
     showLog,
-    denied,
+    refused,
     failure,
     error,
     checkEnvironment,
@@ -225,8 +226,8 @@ export function useSdBuild(): SdStore {
     toggleLog: () => {
       setShowLog((s) => !s);
     },
-    dismissDenied: () => {
-      setDenied(false);
+    dismissRefused: () => {
+      setRefused(null);
     },
     reset: (keepDisk) => {
       setPhase("setup");

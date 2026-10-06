@@ -19,6 +19,9 @@ use crate::{card, DeviceDir, Error, Release, Result};
 
 /// Exit status when the administrator prompt was cancelled (the app's "denied").
 pub const DENIED: u8 = 130;
+/// Exit status when macOS refused removable-volume access (the app's "blocked");
+/// sysexits(3) `EX_NOPERM`.
+pub const BLOCKED: u8 = 77;
 
 const USAGE: &str = "usage:
   tmp-sdcard image <firmware.img> <output.img>
@@ -100,6 +103,8 @@ pub fn main(mut args: Vec<String>) -> ExitCode {
             }
             if e.0 == card::ACCESS_DENIED {
                 ExitCode::from(DENIED)
+            } else if e.0.starts_with(card::VOLUMES_BLOCKED) {
+                ExitCode::from(BLOCKED)
             } else {
                 ExitCode::FAILURE
             }

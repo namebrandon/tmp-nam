@@ -147,6 +147,7 @@ Two inputs on one page plus an "About the card" aside:
    - **Success:** "Card ready. Written and verified. The card has been ejected." Next: power off → insert the card → power on. Done / Make Another.
    - **Failure:** "The card couldn't be created", the failing stage in red, the message, log open, Try Again / Back. "Your unit and its firmware are unaffected."
    - **Admin denied:** back to the form with "Administrator access wasn't given. Nothing was written to the card…", button **Try Again…**.
+   - **Removable Volumes blocked (macOS):** back to the form with "macOS blocked access to the SD card", how to turn on Removable Volumes for TMP NAM in Privacy & Security › Files and Folders, button **Open Privacy & Security** (opens that pane).
 
 ### Settings
 

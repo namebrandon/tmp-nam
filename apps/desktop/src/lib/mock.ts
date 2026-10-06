@@ -12,6 +12,7 @@
 //   ?fail=drop           the last file doesn't load
 //   ?fail=verify         the card build fails reading back
 //   ?fail=denied         the administrator prompt is cancelled
+//   ?fail=blocked        macOS refuses Removable Volumes access
 //   ?fail=key            Tone3000 rejects the API key at sign-in
 //   ?flags=1             seed a "file missing" and a "not registered" capture
 //   ?t3k=nokey|signedout|list   starting Tone3000 account state
@@ -484,6 +485,7 @@ export async function mockInvoke(
     }
     case "t3k_open_link_again":
     case "t3k_open_site":
+    case "sd_open_privacy_settings":
       return null;
     case "t3k_cancel_link":
       link.cancelled = true;
@@ -628,6 +630,17 @@ async function buildCard() {
       code: 130,
       message: "Administrator access was not granted; nothing was written",
       outcome: "denied",
+      stage: null,
+    });
+    return;
+  }
+  if (flag("fail") === "blocked") {
+    await sleep(800);
+    emit("sd://done", {
+      ok: false,
+      code: 77,
+      message: "macOS refused access to the SD card; nothing was written",
+      outcome: "blocked",
       stage: null,
     });
     return;

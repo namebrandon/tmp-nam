@@ -62,6 +62,20 @@ pub enum Outcome {
     Failed,
     /// The administrator prompt was cancelled; nothing was written.
     Denied,
+    /// macOS refused this app removable-volume access; nothing was written.
+    Blocked,
+}
+
+impl Outcome {
+    /// The outcome a helper exit status stands for.
+    fn of(code: i32) -> Self {
+        match u8::try_from(code) {
+            Ok(0) => Self::Ok,
+            Ok(tmp_sdcard::cli::DENIED) => Self::Denied,
+            Ok(tmp_sdcard::cli::BLOCKED) => Self::Blocked,
+            _ => Self::Failed,
+        }
+    }
 }
 
 #[derive(Serialize, Clone)]
@@ -280,17 +294,10 @@ fn finish(
     app: &tauri::AppHandle,
     code: i32,
     error: Option<String>,
-    denied: bool,
+    outcome: Outcome,
     at: Option<usize>,
 ) {
-    let ok = code == 0;
-    let outcome = if ok {
-        Outcome::Ok
-    } else if denied {
-        Outcome::Denied
-    } else {
-        Outcome::Failed
-    };
+    let ok = outcome == Outcome::Ok;
     let message = if ok {
         "Done".to_string()
     } else {
@@ -310,7 +317,7 @@ fn finish(
             code,
             message,
             outcome,
-            stage: if ok || denied { None } else { at.or(Some(0)) },
+            stage: (outcome == Outcome::Failed).then(|| at.unwrap_or(0)),
         },
     );
 }
@@ -323,6 +330,23 @@ fn helper_base(app: &tauri::AppHandle) -> Result<(PathBuf, DeviceDir), String> {
 
 fn sh_quote(s: &str) -> String {
     format!("'{}'", s.replace('\'', "'\\''"))
+}
+
+/// System Settings' Files and Folders list under Privacy & Security, where
+/// Removable Volumes access is granted (macOS only).
+const FILES_AND_FOLDERS: &str =
+    "x-apple.systempreferences:com.apple.preference.security?Privacy_FilesAndFolders";
+
+/// Open the settings pane that lifts a `Blocked` outcome.
+pub fn open_privacy_settings() -> Result<(), String> {
+    if !cfg!(target_os = "macos") {
+        return Err("only macOS has removable-volume privacy settings".into());
+    }
+    Command::new("open")
+        .arg(FILES_AND_FOLDERS)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("cannot open System Settings: {e}"))
 }
 
 /// Write a physical card with administrator rights. The caller already showed the
@@ -382,8 +406,7 @@ fn run_streamed(app: tauri::AppHandle, exe: &Path, args: &[String]) -> Result<()
         }
         let _ = errors.join();
         let code = child.wait().ok().and_then(|s| s.code()).unwrap_or(1);
-        let denied = code == i32::from(tmp_sdcard::cli::DENIED);
-        finish(&app, code, error, denied, current);
+        finish(&app, code, error, Outcome::of(code), current);
     });
     Ok(())
 }
@@ -439,7 +462,14 @@ fn run_elevated(app: tauri::AppHandle, exe: &Path, args: &[String]) -> Result<()
         } else {
             error
         };
-        finish(&app, code, message, was_denied, at);
+        let outcome = if was_denied {
+            Outcome::Denied
+        } else if code == 0 {
+            Outcome::Ok
+        } else {
+            Outcome::Failed
+        };
+        finish(&app, code, message, outcome, at);
         let _ = std::fs::remove_dir_all(&work);
     });
     Ok(())
@@ -498,6 +528,15 @@ mod tests {
     }
 
     #[test]
+    fn helper_exit_codes_map_to_outcomes() {
+        assert_eq!(Outcome::of(0), Outcome::Ok);
+        assert_eq!(Outcome::of(1), Outcome::Failed);
+        assert_eq!(Outcome::of(130), Outcome::Denied);
+        assert_eq!(Outcome::of(77), Outcome::Blocked);
+        assert_eq!(Outcome::of(-1), Outcome::Failed);
+    }
+
+    #[test]
     fn builder_labels_map_to_the_eight_stages() {
         let labels = [
             "Validating official firmware",
@@ -529,6 +568,7 @@ mod tests {
         let v = serde_json::to_value(&done).unwrap();
         assert_eq!(v["outcome"], "denied");
         assert!(v["stage"].is_null());
+        assert_eq!(serde_json::to_value(Outcome::Blocked).unwrap(), "blocked");
         let log = LogLine {
             line: "Writing rootfs partition".into(),
             percent: Some(70.0),

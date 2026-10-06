@@ -26,6 +26,10 @@ use crate::util::{
 /// The error when the administrator prompt is cancelled or refused.
 pub const ACCESS_DENIED: &str = "Administrator access was not granted; nothing was written";
 
+/// The start of the error when macOS refuses this app removable-volume access
+/// (System Settings › Privacy & Security › Files and Folders › Removable Volumes).
+pub const VOLUMES_BLOCKED: &str = "macOS refused access to the SD card; nothing was written";
+
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct DeviceInfo {
     pub logical: String,
@@ -436,9 +440,8 @@ fn authopen(raw: &str) -> Result<File> {
     }
     if said.contains("Operation not permitted") {
         return bail(format!(
-            "macOS refused access to the SD card. Allow this app in System Settings › \
-             Privacy & Security › Files and Folders › Removable Volumes, then try again. \
-             ({said})"
+            "{VOLUMES_BLOCKED}. Allow this app in System Settings › Privacy & Security › \
+             Files and Folders › Removable Volumes, then try again. ({said})"
         ));
     }
     bail(format!(

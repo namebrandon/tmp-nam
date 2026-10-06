@@ -666,6 +666,11 @@ async fn sd_write_card(
     blocking(move || sdcard::write_card(app, firmware, device)).await
 }
 
+#[tauri::command]
+fn sd_open_privacy_settings() -> Result<(), String> {
+    sdcard::open_privacy_settings()
+}
+
 /// Text for "Copy Diagnostics": versions, platform, the unit, settings without the
 /// key, and the end of the log.
 #[tauri::command]
@@ -776,6 +781,7 @@ pub fn run() {
             sd_check_firmware,
             sd_list_disks,
             sd_write_card,
+            sd_open_privacy_settings,
             diagnostics,
             set_quit_guard,
             quit_now,
