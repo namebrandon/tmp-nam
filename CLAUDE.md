@@ -63,8 +63,9 @@ Card builder pipeline (`crates/sdcard`): validate firmware → `unsquashfs` RAUC
 rootfs tar (`firmware.rs`) → system `tar -xzpf` → `rootfs.rs` delta (CDC-ACM console in the
 USB gadget, drop `data=journal`, audio IRQs to CPU3, NAM/LAN assets, build marker) →
 `mke2fs -d` + `debugfs` ownership/mode fix-up + `e2fsck` + audit (`ext4.rs`) → image
-(`image.rs`: mformat/mcopy FAT, sfdisk MBR, readback) or card (`card.rs`: diskutil/sfdisk,
-raw write, 4 GiB readback). Generated text files are in `templates.rs` and must stay
+(`image.rs`: mformat/mcopy FAT, sfdisk MBR, readback) or card (`card.rs`: on macOS the image's
+MBR + FAT and the rootfs through one authopen(1) descriptor, on Linux sfdisk + mkfs.vfat; raw
+write, 4 GiB readback). Generated text files are in `templates.rs` and must stay
 byte-identical (the audit compares them).
 
 App ↔ unit: the card's root shell — the CDC-ACM tty under the USB device with the TMP's
@@ -110,8 +111,10 @@ answers `busy` from cache instead of queueing. Tone3000 installs are recorded by
 one long operation at a time (send, install, SD build) in the app store above the page switch.
 
 The app binary doubles as the card builder: `--sdcard-helper image|write|list|verify`
-(`apps/desktop/src-tauri/src/main.rs`), unprivileged for images, via osascript admin prompt
-(pkexec on Linux) for physical cards; it prints JSON progress lines the GUI tails.
+(`apps/desktop/src-tauri/src/main.rs`), unprivileged for images. For physical cards it runs as the
+user on macOS and opens the raw disk through authopen(1) (the admin prompt; a root process from
+`osascript … with administrator privileges` is denied removable volumes by TCC), and as root via
+pkexec on Linux; it prints JSON progress lines the GUI reads.
 
 ## Shell notes
 

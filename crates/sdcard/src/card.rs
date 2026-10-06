@@ -1,22 +1,30 @@
 //! Physical cards: detection, safety checks, partitioning, writing and readback.
 //!
-//! Acceptance rules: a whole, writable, removable, physical
-//! disk on a USB (macOS) or USB/MMC (Linux) bus, never the startup disk and never
-//! Fender-exposed storage. Writing needs root; the desktop app runs this module's
-//! `write_prepared` through an administrator prompt.
+//! Acceptance rules: a whole, writable, removable, physical disk in a USB reader or
+//! the built-in SD slot (macOS) or on a USB/MMC bus (Linux), never the startup disk
+//! and never Fender-exposed storage. On macOS the builder runs as the user and
+//! `open` gets a read/write descriptor on the raw disk from authopen(1) behind an
+//! administrator prompt; on Linux the desktop app runs the whole helper as root
+//! through pkexec.
 
+use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use serde::Serialize;
 
-use crate::image::{boot_files, partition_2_sectors, sfdisk_table, verify_partition_layout};
+use crate::image::{
+    assemble_head, boot_files, check_partition_layout, create_boot_fat, partition_2_sectors,
+    sfdisk_table, verify_partition_layout, write_into,
+};
 use crate::release::Release;
 use crate::run;
 use crate::util::{
-    assert_file, bail, format_bytes, locate_tool, sha256_file, write_all, Reporter, Result,
-    CHUNK_BYTES,
+    assert_file, bail, format_bytes, locate_tool, sha256_file, sha256_reader, Reporter, Result,
 };
+
+/// The error when the administrator prompt is cancelled or refused.
+pub const ACCESS_DENIED: &str = "Administrator access was not granted; nothing was written";
 
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct DeviceInfo {
@@ -60,6 +68,13 @@ pub fn normalize_macos_device(device: &str) -> Result<(String, String)> {
     Ok((format!("/dev/disk{digits}"), format!("/dev/rdisk{digits}")))
 }
 
+/// USB card readers, and the built-in SDXC slot of recent Macs, which reports
+/// `Secure Digital` with an Internal location. The Mac's own drives report other
+/// buses (`Apple Fabric`, `PCI-Express`, `SATA`) and are not removable media.
+fn is_macos_card_bus(protocol: &str) -> bool {
+    matches!(protocol, "USB" | "Secure Digital")
+}
+
 fn macos_device_info(device: &str) -> Result<DeviceInfo> {
     let (logical, raw) = normalize_macos_device(device)?;
     let info = plist(&["info", "-plist", &logical])?;
@@ -70,23 +85,20 @@ fn macos_device_info(device: &str) -> Result<DeviceInfo> {
             .unwrap_or("")
             .to_string()
     };
-    if [
-        "WholeDisk",
-        "Removable",
-        "RemovableMedia",
-        "Writable",
-        "WritableMedia",
-    ]
-    .iter()
-    .any(|k| !flag(k))
+    if ["WholeDisk", "Removable", "RemovableMedia"]
+        .iter()
+        .any(|k| !flag(k))
     {
-        return bail("target is not a writable whole removable disk");
+        return bail("target is not a whole removable disk");
+    }
+    if !flag("Writable") || !flag("WritableMedia") {
+        return bail("SD card is write-protected; slide its lock switch up");
     }
     if flag("SystemImage") || text("VirtualOrPhysical") != "Physical" {
         return bail("target is not physical removable media");
     }
-    if text("BusProtocol") != "USB" {
-        return bail("target protocol is not USB");
+    if !is_macos_card_bus(&text("BusProtocol")) {
+        return bail("target is not on a USB card reader or SD slot");
     }
     let root = plist(&["info", "-plist", "/"])?;
     if root.get("ParentWholeDisk").and_then(|v| v.as_string())
@@ -356,27 +368,8 @@ fn unmount(info: &DeviceInfo) -> Result<()> {
 }
 
 fn write_rootfs_partition(source: &Path, destination: &Path, r: &dyn Reporter) -> Result<()> {
-    use std::io::Read;
-    let total = std::fs::metadata(source)?.len();
-    let mut src = std::fs::File::open(source)?;
     let mut dst = std::fs::OpenOptions::new().write(true).open(destination)?;
-    let mut buf = vec![0u8; CHUNK_BYTES];
-    let mut copied = 0u64;
-    let interval = 256 * 1024 * 1024;
-    let mut next = 0;
-    r.progress("Writing rootfs partition", 0, total);
-    loop {
-        let n = src.read(&mut buf)?;
-        if n == 0 {
-            break;
-        }
-        write_all(&mut dst, &buf[..n])?;
-        copied += n as u64;
-        if copied >= next || copied == total {
-            r.progress("Writing rootfs partition", copied, total);
-            next = copied + interval;
-        }
-    }
+    write_into(source, &mut dst, 0, Some((r, "Writing rootfs partition")))?;
     dst.sync_all()?;
     Ok(())
 }
@@ -408,58 +401,172 @@ fn copy_boot_files(rootfs: &Path, mountpoint: &Path, release: &Release) -> Resul
     Ok(())
 }
 
+/// A read/write descriptor on the whole raw disk, from authopen(1): it asks for the
+/// `sys.openfile.readwrite.<device>` right (the administrator prompt) and sends the
+/// open descriptor back over a socket (`-stdoutpipe`, SCM_RIGHTS), so the builder
+/// never runs as root. macOS checks removable-volume access against the responsible
+/// app, which authopen passes through and a root process from
+/// `do shell script … with administrator privileges` does not have. The card must
+/// be unmounted first: a read/write open of a disk with mounted volumes fails.
+#[cfg(target_os = "macos")]
+fn authopen(raw: &str) -> Result<File> {
+    use std::os::fd::OwnedFd;
+    use std::os::unix::net::UnixStream;
+    use std::process::Stdio;
+    let (ours, theirs) = UnixStream::pair()?;
+    let mut cmd = Command::new("/usr/libexec/authopen");
+    cmd.args(["-stdoutpipe", "-o", &libc::O_RDWR.to_string(), raw])
+        .stdin(Stdio::null())
+        .stdout(Stdio::from(OwnedFd::from(theirs)))
+        .stderr(Stdio::piped());
+    let child = cmd.spawn()?;
+    // The command holds a copy of authopen's end; drop it so a failed authopen
+    // closes the socket instead of leaving `receive_fd` waiting.
+    drop(cmd);
+    let (fd, sent) = receive_fd(&ours);
+    let out = child.wait_with_output()?;
+    if let Some(fd) = fd {
+        return Ok(File::from(fd));
+    }
+    let said = format!("{sent} {}", String::from_utf8_lossy(&out.stderr))
+        .trim()
+        .to_string();
+    if said.contains("AuthorizationCopyRights failed") {
+        return bail(ACCESS_DENIED);
+    }
+    if said.contains("Operation not permitted") {
+        return bail(format!(
+            "macOS refused access to the SD card. Allow this app in System Settings › \
+             Privacy & Security › Files and Folders › Removable Volumes, then try again. \
+             ({said})"
+        ));
+    }
+    bail(format!(
+        "authopen couldn't open {raw} ({}{}{said})",
+        out.status,
+        if said.is_empty() { "" } else { ": " }
+    ))
+}
+
+/// Read authopen's socket until it sends a descriptor (SCM_RIGHTS) or closes it;
+/// returns the descriptor, or the text it wrote instead.
+#[cfg(target_os = "macos")]
+fn receive_fd(socket: &std::os::unix::net::UnixStream) -> (Option<std::os::fd::OwnedFd>, String) {
+    use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+    let mut text = Vec::new();
+    loop {
+        let mut data = [0u8; 256];
+        let mut iov = libc::iovec {
+            iov_base: data.as_mut_ptr().cast(),
+            iov_len: data.len(),
+        };
+        // u64 keeps the control buffer aligned for `cmsghdr`.
+        let mut control = [0u64; 8];
+        // SAFETY: a zeroed msghdr is valid; every pointer set below outlives recvmsg.
+        let mut msg: libc::msghdr = unsafe { std::mem::zeroed() };
+        msg.msg_iov = &mut iov;
+        msg.msg_iovlen = 1;
+        msg.msg_control = control.as_mut_ptr().cast();
+        msg.msg_controllen = std::mem::size_of_val(&control) as libc::socklen_t;
+        // SAFETY: `msg` points at live buffers of the sizes it states.
+        let n = unsafe { libc::recvmsg(socket.as_raw_fd(), &mut msg, 0) };
+        if n < 0 {
+            if std::io::Error::last_os_error().kind() == std::io::ErrorKind::Interrupted {
+                continue;
+            }
+            break;
+        }
+        // SAFETY: the CMSG_* macros walk the control buffer recvmsg filled; an
+        // SCM_RIGHTS message carries a file descriptor now owned by this process.
+        unsafe {
+            let cmsg = libc::CMSG_FIRSTHDR(&msg);
+            if !cmsg.is_null()
+                && (*cmsg).cmsg_level == libc::SOL_SOCKET
+                && (*cmsg).cmsg_type == libc::SCM_RIGHTS
+            {
+                let fd = std::ptr::read_unaligned(libc::CMSG_DATA(cmsg).cast::<libc::c_int>());
+                return (Some(OwnedFd::from_raw_fd(fd)), String::new());
+            }
+        }
+        if n == 0 {
+            break;
+        }
+        text.extend_from_slice(&data[..n as usize]);
+    }
+    (None, String::from_utf8_lossy(&text).trim().to_string())
+}
+
+/// What the card writer needs opened before the build: on macOS the unmounted raw
+/// disk through the administrator prompt, so a refusal costs nothing and the long
+/// build runs unattended. On Linux the helper already runs as root.
+pub fn open(target: &DeviceInfo) -> Result<Option<File>> {
+    #[cfg(target_os = "macos")]
+    {
+        unmount(target)?;
+        authopen(&target.raw).map(Some)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = target;
+        Ok(None)
+    }
+}
+
+/// The whole card through one raw descriptor: the MBR and boot partition as the
+/// portable image lays them out, then the rootfs, each read back.
 fn prepare_macos(
     target: &DeviceInfo,
+    mut disk: File,
     rootfs: &Path,
     image: &Path,
     sha: &str,
     release: &Release,
     r: &dyn Reporter,
 ) -> Result<()> {
-    let label = &release.layout.partition_1.label;
+    let l = &release.layout;
     r.progress("Preparing partitions", 0, 1);
+    let boot_fat = image.with_file_name("boot.fat");
+    create_boot_fat(rootfs, &boot_fat, release)?;
+    let head = image.with_file_name("card-head.img");
+    assemble_head(&head, &boot_fat, target.bytes / l.sector_bytes, release)?;
+    let head_bytes = l.partition_2.start_sector * l.sector_bytes;
+    File::options()
+        .write(true)
+        .open(&head)?
+        .set_len(head_bytes)?;
     unmount(target)?;
-    let diskutil = Path::new("/usr/sbin/diskutil");
-    run!(
-        diskutil,
-        "partitionDisk",
-        target.logical,
-        "MBR",
-        "MS-DOS FAT32",
-        label,
-        "512M",
-        "ExFAT",
-        "ROOTFS",
-        "R"
-    )?;
-    let current = device_info(&target.logical)?;
-    if current.bytes != target.bytes || current.model != target.model {
-        return bail("SD-card identity changed during partitioning");
+    // Raw-disk writes bypass the OS cache, and macOS rejects `sync_all` (F_FULLFSYNC)
+    // on a raw disk; the readbacks read the card and `diskutil eject` flushes it.
+    write_into(&head, &mut disk, 0, None)?;
+    check_partition_layout(&mut disk, release)?;
+    if sha256_reader(&mut disk, Some(head_bytes), 0, None)? != sha256_file(&head, None, 0, None)? {
+        return bail("boot partition readback hash mismatch");
     }
-    verify_partition_layout(Path::new(&current.raw), release)?;
-    let partition = format!("{}s1", current.logical);
-    let mount_point = |p: &str| -> Result<Option<String>> {
-        Ok(plist(&["info", "-plist", p])?
-            .get("MountPoint")
-            .and_then(|v| v.as_string())
-            .filter(|s| !s.is_empty())
-            .map(str::to_string))
-    };
-    let mut mp = mount_point(&partition)?;
-    if mp.is_none() {
-        run!(diskutil, "mount", partition)?;
-        mp = mount_point(&partition)?;
-    }
-    let mp = mp.ok_or_else(|| crate::util::Error::msg("BOOT partition did not mount"))?;
-    copy_boot_files(rootfs, Path::new(&mp), release)?;
-    run!("sync")?;
-    unmount(&current)?;
     r.progress("Preparing partitions", 1, 1);
-    let raw_rootfs = PathBuf::from(format!("{}s2", current.raw));
-    write_rootfs_partition(image, &raw_rootfs, r)?;
-    verify_written_rootfs(&raw_rootfs, image, sha, r)?;
-    run!(diskutil, "eject", current.logical)?;
-    r.status("Card verified and ejected — ready to boot");
+    write_into(
+        image,
+        &mut disk,
+        head_bytes,
+        Some((r, "Writing rootfs partition")),
+    )?;
+    let len = std::fs::metadata(image)?.len();
+    if sha256_reader(
+        &mut disk,
+        Some(len),
+        head_bytes,
+        Some((r, "Verifying rootfs")),
+    )? != sha
+    {
+        return bail("rootfs partition readback hash mismatch");
+    }
+    // Closing the disk brings its partitions back and macOS mounts BOOT, so the
+    // eject can be refused (Spotlight); the card is complete either way.
+    drop(disk);
+    if run!("/usr/sbin/diskutil", "eject", target.logical).is_ok() {
+        r.status("Card verified and ejected — ready to boot");
+    } else {
+        r.status("Card verified — eject it in Finder before removing it");
+    }
     Ok(())
 }
 
@@ -524,17 +631,18 @@ fn prepare_linux(
     Ok(())
 }
 
-/// Write an already-built rootfs to a card (needs root). `expect` is the identity the
-/// user confirmed; the card is re-validated and must still match it.
+/// Write an already-built rootfs to a card, through `disk` from `open` on macOS and
+/// as root on Linux. `expect` is the identity the user confirmed; the card is
+/// re-validated and must still match it.
 pub fn write_prepared(
     device: &str,
     expect: Option<&DeviceInfo>,
-    rootfs: &Path,
-    rootfs_image: &Path,
-    rootfs_sha256: &str,
+    disk: Option<File>,
+    built: &crate::Prepared,
     release: &Release,
     r: &dyn Reporter,
 ) -> Result<()> {
+    let (rootfs, rootfs_image, rootfs_sha256) = (&built.rootfs, &built.image, &built.sha256);
     let target = device_info(device)?;
     if let Some(e) = expect {
         if e.logical != target.logical || e.bytes != target.bytes || e.model != target.model {
@@ -543,7 +651,16 @@ pub fn write_prepared(
     }
     validate_capacity(&target, release)?;
     if cfg!(target_os = "macos") {
-        prepare_macos(&target, rootfs, rootfs_image, rootfs_sha256, release, r)
+        let disk = disk.ok_or_else(|| crate::util::Error::msg("SD card was not opened"))?;
+        prepare_macos(
+            &target,
+            disk,
+            rootfs,
+            rootfs_image,
+            rootfs_sha256,
+            release,
+            r,
+        )
     } else {
         prepare_linux(&target, rootfs, rootfs_image, rootfs_sha256, release, r)
     }
@@ -561,6 +678,61 @@ mod tests {
         );
         assert!(normalize_macos_device("/dev/disk4s1").is_err());
         assert!(normalize_macos_device("disk4").is_err());
+    }
+
+    #[test]
+    fn macos_card_buses() {
+        assert!(is_macos_card_bus("USB"));
+        assert!(is_macos_card_bus("Secure Digital"));
+        for internal in ["Apple Fabric", "PCI-Express", "SATA", "Thunderbolt", ""] {
+            assert!(!is_macos_card_bus(internal), "{internal}");
+        }
+    }
+
+    /// What authopen does with `-stdoutpipe`: one byte carrying the descriptor.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn receives_a_descriptor_or_the_text_sent_instead() {
+        use std::io::{Read, Seek, Write};
+        use std::os::fd::AsRawFd;
+        use std::os::unix::net::UnixStream;
+
+        let mut file = tempfile::tempfile().unwrap();
+        file.write_all(b"card").unwrap();
+        let (ours, theirs) = UnixStream::pair().unwrap();
+        let mut byte = [0u8; 1];
+        let mut iov = libc::iovec {
+            iov_base: byte.as_mut_ptr().cast(),
+            iov_len: 1,
+        };
+        let mut control = [0u64; 8];
+        // SAFETY: test-only sendmsg of one SCM_RIGHTS descriptor over live buffers.
+        unsafe {
+            let mut msg: libc::msghdr = std::mem::zeroed();
+            msg.msg_iov = &mut iov;
+            msg.msg_iovlen = 1;
+            msg.msg_control = control.as_mut_ptr().cast();
+            msg.msg_controllen = libc::CMSG_SPACE(4) as libc::socklen_t;
+            let cmsg = libc::CMSG_FIRSTHDR(&msg);
+            (*cmsg).cmsg_level = libc::SOL_SOCKET;
+            (*cmsg).cmsg_type = libc::SCM_RIGHTS;
+            (*cmsg).cmsg_len = libc::CMSG_LEN(4) as libc::socklen_t;
+            std::ptr::write_unaligned(libc::CMSG_DATA(cmsg).cast(), file.as_raw_fd());
+            assert_eq!(libc::sendmsg(theirs.as_raw_fd(), &msg, 0), 1);
+        }
+        let (fd, text) = receive_fd(&ours);
+        let mut received = File::from(fd.expect("descriptor"));
+        received.rewind().unwrap();
+        let mut back = String::new();
+        received.read_to_string(&mut back).unwrap();
+        assert_eq!((back.as_str(), text.as_str()), ("card", ""));
+
+        let (ours, mut theirs) = UnixStream::pair().unwrap();
+        theirs.write_all(b"couldn't open /dev/rdisk9\n").unwrap();
+        drop(theirs);
+        let (fd, text) = receive_fd(&ours);
+        assert!(fd.is_none());
+        assert_eq!(text, "couldn't open /dev/rdisk9");
     }
 
     #[test]

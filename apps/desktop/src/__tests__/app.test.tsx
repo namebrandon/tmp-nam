@@ -160,7 +160,7 @@ describe("SD Card", () => {
     render(<App />);
     await userEvent.click(screen.getByRole("button", { name: "SD Card" }));
     expect(
-      await screen.findByText("Not a USB reader", {}, wait),
+      await screen.findByText("Not a card reader", {}, wait),
     ).toBeInTheDocument();
     const create = screen.getByRole("button", { name: "Create SD Card…" });
     expect(create).toBeDisabled();

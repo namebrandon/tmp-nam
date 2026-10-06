@@ -1,12 +1,13 @@
 //! Card layout: the FAT32 boot partition, the MBR, and the portable image file.
 
+use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
 use crate::release::Release;
 use crate::rootfs::resolve_inside;
 use crate::run;
-use crate::util::{assert_file, bail, locate_tool, write_all, Result, CHUNK_BYTES};
+use crate::util::{assert_file, bail, locate_tool, write_all, Reporter, Result, CHUNK_BYTES};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MbrEntry {
@@ -34,8 +35,14 @@ pub fn parse_mbr(raw: &[u8]) -> Result<[MbrEntry; 4]> {
 
 /// The partition table the card must carry (partition 2 may run to the card's end).
 pub fn verify_partition_layout(raw_device: &Path, release: &Release) -> Result<()> {
+    check_partition_layout(&mut File::open(raw_device)?, release)
+}
+
+/// `verify_partition_layout` on an open disk or image.
+pub fn check_partition_layout(disk: &mut File, release: &Release) -> Result<()> {
     let mut buf = [0u8; 512];
-    std::fs::File::open(raw_device)?.read_exact(&mut buf)?;
+    disk.seek(SeekFrom::Start(0))?;
+    disk.read_exact(&mut buf)?;
     let e = parse_mbr(&buf)?;
     let (p1, p2) = (&release.layout.partition_1, &release.layout.partition_2);
     if e[0].kind != p1.mbr_type || e[0].start != p1.start_sector || e[0].count != p1.sector_count {
@@ -90,7 +97,7 @@ pub fn boot_files(rootfs: &Path, release: &Release) -> Result<Vec<(std::path::Pa
 pub fn create_boot_fat(rootfs: &Path, output: &Path, release: &Release) -> Result<()> {
     let p1 = &release.layout.partition_1;
     let files = boot_files(rootfs, release)?;
-    let f = std::fs::File::create(output)?;
+    let f = File::create(output)?;
     f.set_len(p1.sector_count * release.layout.sector_bytes)?;
     drop(f);
     let mformat = locate_tool("mformat")?;
@@ -118,18 +125,67 @@ pub fn create_boot_fat(rootfs: &Path, output: &Path, release: &Release) -> Resul
     Ok(())
 }
 
-fn copy_into(source: &Path, destination: &Path, offset: u64) -> Result<()> {
-    let mut src = std::fs::File::open(source)?;
-    let mut dst = std::fs::OpenOptions::new().write(true).open(destination)?;
-    dst.seek(SeekFrom::Start(offset))?;
+/// Copy `source` into `destination` at `offset`, reporting progress under `label`.
+pub fn write_into(
+    source: &Path,
+    destination: &mut File,
+    offset: u64,
+    progress: Option<(&dyn Reporter, &str)>,
+) -> Result<()> {
+    let total = std::fs::metadata(source)?.len();
+    let mut src = File::open(source)?;
+    destination.seek(SeekFrom::Start(offset))?;
     let mut buf = vec![0u8; CHUNK_BYTES];
+    let mut copied = 0u64;
+    let interval = 256 * 1024 * 1024;
+    let mut next = 0;
+    if let Some((r, label)) = progress {
+        r.progress(label, 0, total);
+    }
     loop {
         let n = src.read(&mut buf)?;
         if n == 0 {
             return Ok(());
         }
-        write_all(&mut dst, &buf[..n])?;
+        write_all(destination, &buf[..n])?;
+        copied += n as u64;
+        if copied >= next || copied == total {
+            if let Some((r, label)) = progress {
+                r.progress(label, copied, total);
+            }
+            next = copied + interval;
+        }
     }
+}
+
+fn copy_into(source: &Path, destination: &Path, offset: u64) -> Result<()> {
+    let mut dst = std::fs::OpenOptions::new().write(true).open(destination)?;
+    write_into(source, &mut dst, offset, None)
+}
+
+/// The start of a card of `card_sectors` up to partition 2: the MBR and the boot
+/// partition. `output` is sparse at the card's full size.
+pub fn assemble_head(
+    output: &Path,
+    boot_fat: &Path,
+    card_sectors: u64,
+    release: &Release,
+) -> Result<()> {
+    let l = &release.layout;
+    let p2 = partition_2_sectors(card_sectors, release)?;
+    if let Some(parent) = output.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let f = File::create(output)?;
+    f.set_len(card_sectors * l.sector_bytes)?;
+    drop(f);
+    let sfdisk = locate_tool("sfdisk")?;
+    run!(Some(sfdisk_table(release, p2).as_str()); sfdisk, "--quiet", output)?;
+    copy_into(
+        boot_fat,
+        output,
+        l.partition_1.start_sector * l.sector_bytes,
+    )
 }
 
 pub fn assemble(
@@ -140,20 +196,7 @@ pub fn assemble(
     release: &Release,
 ) -> Result<()> {
     let l = &release.layout;
-    let p2 = partition_2_sectors(card_sectors, release)?;
-    if let Some(parent) = output.parent() {
-        std::fs::create_dir_all(parent)?;
-    }
-    let f = std::fs::File::create(output)?;
-    f.set_len(card_sectors * l.sector_bytes)?;
-    drop(f);
-    let sfdisk = locate_tool("sfdisk")?;
-    run!(Some(sfdisk_table(release, p2).as_str()); sfdisk, "--quiet", output)?;
-    copy_into(
-        boot_fat,
-        output,
-        l.partition_1.start_sector * l.sector_bytes,
-    )?;
+    assemble_head(output, boot_fat, card_sectors, release)?;
     copy_into(
         rootfs_image,
         output,

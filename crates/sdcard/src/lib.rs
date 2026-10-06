@@ -7,7 +7,8 @@
 //!
 //! Pipeline: validate firmware → unpack RAUC → inventory + extract rootfs → apply
 //! delta → mke2fs/debugfs/e2fsck + audit → (image) FAT + MBR + readback, or
-//! (card) partition + copy boot + raw write + readback.
+//! (card) the same MBR + FAT written raw (macOS) or partition + copy boot (Linux),
+//! then raw rootfs write + readback.
 
 pub mod card;
 pub mod cli;

@@ -1,16 +1,17 @@
 //! Bootable SD card, backed by the `tmp-sdcard` crate.
 //!
 //! The card is written by a child process — this same executable in
-//! `--sdcard-helper write` mode — run as root through `osascript … with
-//! administrator privileges` (macOS) or `pkexec` (Linux). osascript doesn't
-//! stream, so the helper writes to a log file that is tailed. (Portable image files
+//! `--sdcard-helper write` mode. On macOS it runs as the user and its output is
+//! read directly; it asks for the raw disk itself through authopen(1) (the
+//! administrator prompt, see `tmp_sdcard::card::open`). On Linux it runs as root
+//! through `pkexec` and writes to a log file that is tailed. (Portable image files
 //! are a `tmp-sdcard image` CLI feature; the app only writes cards.)
 //!
 //! The helper prints one JSON object per line (`tmp_sdcard::util::JsonReporter`).
 
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::time::Duration;
 
 use serde::Serialize;
@@ -331,6 +332,65 @@ pub fn write_card(app: tauri::AppHandle, firmware: String, device: String) -> Re
     let target = card::device_info(&device).map_err(|e| e.0)?;
     card::validate_capacity(&target, &Release::embedded()).map_err(|e| e.0)?;
     let (exe, dir) = helper_base(&app)?;
+    let args: Vec<String> = vec![
+        "--sdcard-helper".into(),
+        "write".into(),
+        firmware,
+        "--device".into(),
+        target.logical,
+        "--yes".into(),
+        "--json".into(),
+        "--expect-bytes".into(),
+        target.bytes.to_string(),
+        "--expect-model".into(),
+        target.model,
+        "--device-dir".into(),
+        dir.0.to_string_lossy().into_owned(),
+    ];
+    if cfg!(target_os = "macos") {
+        run_streamed(app, &exe, &args)
+    } else {
+        run_elevated(app, &exe, &args)
+    }
+}
+
+/// macOS: run the helper as the user and read its output as it comes.
+fn run_streamed(app: tauri::AppHandle, exe: &Path, args: &[String]) -> Result<(), String> {
+    let mut child = Command::new(exe)
+        .args(args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    let (Some(stdout), Some(stderr)) = (child.stdout.take(), child.stderr.take()) else {
+        return Err("card helper has no output pipes".into());
+    };
+    std::thread::spawn(move || {
+        let err_app = app.clone();
+        let errors = std::thread::spawn(move || {
+            for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+                handle_line(&err_app, &line, &mut None);
+            }
+        });
+        let mut error = None;
+        let mut current = None;
+        for line in BufReader::new(stdout).lines().map_while(Result::ok) {
+            if let Some(e) = handle_line(&app, &line, &mut current) {
+                error = Some(e);
+            }
+        }
+        let _ = errors.join();
+        let code = child.wait().ok().and_then(|s| s.code()).unwrap_or(1);
+        let denied = code == i32::from(tmp_sdcard::cli::DENIED);
+        finish(&app, code, error, denied, current);
+    });
+    Ok(())
+}
+
+/// Linux: run the helper as root through pkexec, which doesn't stream, so the
+/// helper writes to a log file that is tailed.
+fn run_elevated(app: tauri::AppHandle, exe: &Path, args: &[String]) -> Result<(), String> {
     // Private, randomly named 0700 directory for the log/status files. The
     // elevated command is passed inline (no script file) so nothing in a shared
     // location can be swapped between this point and the administrator prompt.
@@ -342,39 +402,18 @@ pub fn write_card(app: tauri::AppHandle, firmware: String, device: String) -> Re
     let log = work.join("build.log");
     let status_file = work.join("status");
     std::fs::write(&log, b"").map_err(|e| e.to_string())?;
-    let cmd = [
-        sh_quote(&exe.to_string_lossy()),
-        "--sdcard-helper write".into(),
-        sh_quote(&firmware),
-        "--device".into(),
-        sh_quote(&target.logical),
-        "--yes --json --expect-bytes".into(),
-        target.bytes.to_string(),
-        "--expect-model".into(),
-        sh_quote(&target.model),
-        "--device-dir".into(),
-        sh_quote(&dir.0.to_string_lossy()),
-    ]
-    .join(" ");
+    let cmd = std::iter::once(exe.to_string_lossy().into_owned())
+        .chain(args.iter().cloned())
+        .map(|a| sh_quote(&a))
+        .collect::<Vec<_>>()
+        .join(" ");
     let shell = format!(
         "{cmd} > {log} 2>&1; echo $? > {status}",
         log = sh_quote(&log.to_string_lossy()),
         status = sh_quote(&status_file.to_string_lossy()),
     );
-
-    let mut elevate = if cfg!(target_os = "macos") {
-        let apple = format!(
-            "do shell script \"{}\" with administrator privileges",
-            shell.replace('\\', "\\\\").replace('"', "\\\"")
-        );
-        let mut c = Command::new("osascript");
-        c.arg("-e").arg(apple);
-        c
-    } else {
-        let mut c = Command::new("pkexec");
-        c.args(["/bin/sh", "-c", &shell]);
-        c
-    };
+    let mut elevate = Command::new("pkexec");
+    elevate.args(["/bin/sh", "-c", &shell]);
     std::thread::spawn(move || {
         let tail_app = app.clone();
         let (tail_log, tail_status) = (log.clone(), status_file.clone());
@@ -396,7 +435,7 @@ pub fn write_card(app: tauri::AppHandle, firmware: String, device: String) -> Re
             .unwrap_or(1);
         let was_denied = code == 130 && denied.is_some();
         let message = if was_denied {
-            Some("Administrator access was not granted; nothing was written".to_string())
+            Some(card::ACCESS_DENIED.to_string())
         } else {
             error
         };

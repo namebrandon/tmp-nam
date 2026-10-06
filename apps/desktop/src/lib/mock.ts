@@ -580,7 +580,14 @@ export async function mockInvoke(
           name: "Built-in SD Card Reader",
           bytes: 63_864_569_856,
           protocol: "Secure Digital",
-          rejected: "target protocol is not USB",
+          rejected: null,
+        },
+        {
+          device: "/dev/disk7",
+          name: "Samsung PSSD T7",
+          bytes: 1_000_204_886_016,
+          protocol: "PCI-Express",
+          rejected: "target is not on a USB card reader or SD slot",
         },
       ];
       return disks;

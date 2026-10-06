@@ -17,6 +17,9 @@ use std::process::ExitCode;
 use crate::util::{format_bytes, JsonReporter, PrintReporter, Reporter};
 use crate::{card, DeviceDir, Error, Release, Result};
 
+/// Exit status when the administrator prompt was cancelled (the app's "denied").
+pub const DENIED: u8 = 130;
+
 const USAGE: &str = "usage:
   tmp-sdcard image <firmware.img> <output.img>
   tmp-sdcard write <firmware.img> --device /dev/diskN [--yes]
@@ -95,7 +98,11 @@ pub fn main(mut args: Vec<String>) -> ExitCode {
             } else {
                 eprintln!("ERROR: {e}");
             }
-            ExitCode::FAILURE
+            if e.0 == card::ACCESS_DENIED {
+                ExitCode::from(DENIED)
+            } else {
+                ExitCode::FAILURE
+            }
         }
     }
 }
@@ -133,14 +140,7 @@ fn write(
             return Err(Error::msg("cancelled; no write performed"));
         }
     }
+    let disk = card::open(&target)?;
     let p = crate::build_rootfs(release, device_dir, firmware.as_ref(), r)?;
-    card::write_prepared(
-        device,
-        Some(&target),
-        &p.rootfs,
-        &p.image,
-        &p.sha256,
-        release,
-        r,
-    )
+    card::write_prepared(device, Some(&target), disk, &p, release, r)
 }

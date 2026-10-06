@@ -300,9 +300,9 @@ sudo apt-get install squashfs-tools e2fsprogs dosfstools fdisk parted udev mtool
 ## Build a physical card on macOS
 
 Use the **TMP NAM** desktop app → **SD Card**: choose the official firmware,
-pick the detected USB card reader, and confirm. The app accepts only a writable
-removable whole disk on a USB reader, rejects the startup disk and
-Fender-exposed storage, checks capacity, shows device/model/size, and asks for
+pick the detected card, and confirm. The app accepts only a writable removable
+whole disk in a USB card reader or the built-in SD slot, rejects the startup
+disk and Fender-exposed storage, checks capacity, shows device/model/size, and asks for
 an explicit erase confirmation plus the macOS administrator password before
 writing.
 

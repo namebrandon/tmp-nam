@@ -32,7 +32,7 @@ else (exact size + `sha256:392dd4a2…f41f38ec` enforced before it touches a car
 ## 1. Prerequisites
 
 - macOS (Intel or Apple Silicon). A blank SD card, **8 GB minimum** (16–32 GB
-  recommended), in a **USB** card reader (built-in SD slots are refused).
+  recommended), in the Mac's built-in SD slot or a USB card reader.
 - `brew install squashfs e2fsprogs mtools util-linux` (`unsquashfs`, `mke2fs`/`debugfs`/`e2fsck`, `mformat`/`mcopy`, `sfdisk`). The app's SD Card page lists anything missing.
 - Linux: use the `tmp-sdcard` CLI (`squashfs-tools e2fsprogs mtools util-linux dosfstools parted udev`).
 
@@ -42,7 +42,7 @@ In **TMP NAM → SD Card**:
 
 1. **Firmware** — *Choose file…* and pick `ToneMasterPro_v1_8_58.img`. It must show *verified 1.8.58*.
 2. **SD card** — insert the card; it appears in the list within a few seconds (refused disks show why). Select it.
-3. **Create card** — confirm the erase (device, model and size are shown), then enter the macOS administrator password. The app verifies every pinned input, extracts the firmware, builds the 4 GiB rootfs, partitions the card, copies the official boot files, writes the rootfs and hashes all 4 GiB back from the card, then ejects it.
+3. **Create card** — confirm the erase (device, model and size are shown), then enter the macOS administrator password (macOS may first ask to allow TMP NAM access to removable volumes). The app verifies every pinned input, extracts the firmware, builds the 4 GiB rootfs, writes the partition table and the boot partition with the official boot files, writes the rootfs and hashes all 4 GiB back from the card, then ejects it.
 
 Use an identifiable blank spare and keep the currently working card for recovery.
 

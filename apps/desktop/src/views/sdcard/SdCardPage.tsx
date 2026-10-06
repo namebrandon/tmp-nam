@@ -32,7 +32,9 @@ const IS_MAC = navigator.userAgent.includes("Mac");
 function refusal(reason: string): string {
   const r = reason.toLowerCase();
   if (r.includes("too small")) return "Too small for the card";
-  if (r.includes("not usb") || r.includes("usb/mmc")) return "Not a USB reader";
+  if (r.includes("write-protected")) return "Locked: slide the lock switch up";
+  if (r.includes("card reader") || r.includes("usb/mmc"))
+    return "Not a card reader";
   if (r.includes("startup disk")) return "This computer's startup disk";
   if (r.includes("fender")) return "The Tone Master Pro's own storage";
   if (r.includes("removable") || r.includes("physical"))
@@ -41,7 +43,8 @@ function refusal(reason: string): string {
 }
 
 function diskDetail(d: Disk): string {
-  const bus = d.protocol === "USB" ? "USB" : d.protocol || "Unknown bus";
+  const bus =
+    d.protocol === "Secure Digital" ? "SD slot" : d.protocol || "Unknown bus";
   return `${formatBytes(d.bytes)} · ${bus}`;
 }
 
@@ -399,8 +402,8 @@ function Form({ onCreate }: { onCreate: () => void }) {
           ) : (
             <div className="card-b">
               <p className="small muted">
-                Insert the SD card into a USB card reader connected to this
-                computer. It appears here on its own.
+                Insert the SD card into this computer&rsquo;s SD slot or a USB
+                card reader. It appears here on its own.
               </p>
             </div>
           )}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Merged into the bundle's Info.plist by Tauri
+     (https://v2.tauri.app/distribute/macos-application-bundle/#native-configuration).
+     macOS checks the raw-disk open that authopen(1) does for the card writer against
+     this app's Removable Volumes access, and prompts with this text. -->
+<plist version="1.0">
+<dict>
+  <key>NSRemovableVolumesUsageDescription</key>
+  <string>TMP NAM writes the bootable SD card for your Tone Master Pro.</string>
+</dict>
+</plist>

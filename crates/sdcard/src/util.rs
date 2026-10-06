@@ -96,16 +96,25 @@ pub fn sha256_file(
     offset: u64,
     report: Option<(&dyn Reporter, &str)>,
 ) -> Result<String> {
-    use std::io::Seek;
     let mut f =
         std::fs::File::open(path).map_err(|e| Error::msg(format!("{}: {e}", path.display())))?;
+    sha256_reader(&mut f, length, offset, report)
+        .map_err(|e| Error::msg(format!("{}: {e}", path.display())))
+}
+
+/// SHA-256 of `length` bytes at `offset` of an open file or device.
+pub fn sha256_reader(
+    f: &mut std::fs::File,
+    length: Option<u64>,
+    offset: u64,
+    report: Option<(&dyn Reporter, &str)>,
+) -> Result<String> {
+    use std::io::Seek;
     let total = match length {
         Some(l) => l,
         None => f.metadata()?.len().saturating_sub(offset),
     };
-    if offset > 0 {
-        f.seek(std::io::SeekFrom::Start(offset))?;
-    }
+    f.seek(std::io::SeekFrom::Start(offset))?;
     let mut hasher = Sha256::new();
     let mut buf = vec![0u8; CHUNK_BYTES];
     let mut remaining = length;
@@ -138,7 +147,7 @@ pub fn sha256_file(
         }
     }
     if matches!(remaining, Some(r) if r != 0) {
-        return bail(format!("short read from {}", path.display()));
+        return bail("short read");
     }
     Ok(hex(&hasher.finalize()))
 }
