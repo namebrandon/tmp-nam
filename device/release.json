@@ -29,8 +29,8 @@
     "nam_dispatch": {
       "source": "bin/nam_dispatch.so",
       "target": "usr/local/lib/nam_dispatch.so",
-      "bytes": 2508128,
-      "sha256": "669c317e59fd479fd407762c93ef0d4e463ad34e33c2af13d82b6467a30bf525"
+      "bytes": 2668208,
+      "sha256": "dd3cbc90e2292baf882da4011bc290dd0086dedd38eab679493f87f594d19f21"
     },
     "registry_helper": {
       "source": "helpers/register_nam_ir.py",
@@ -161,16 +161,16 @@
     "player/check_arm_abi.py": "9a325af95b854d23f2b816f28350a6ec14d586895cb59aa43ede38a5667f51c6",
     "player/check_nam_deps.sh": "eb0f6872a045714d8a5510f44b49da6226b36e292a6f3f7bb27f97eaaefcb491",
     "player/cross_toolchain.sh": "9277da7936b7e5e40f890d1202178879588b0bc696477f98f427c524068e9860",
-    "player/nam_build_common.sh": "252a1450454a873d4f7293bff552a62362ed54c4030d9e16c3e6c6e54fe2cfec",
+    "player/nam_build_common.sh": "35c0c9d9614d173da4ca4e908850305ea16b0e55c51aef4b4f94567344a81329",
     "player/nam_loader.h": "cb1581fdcfe717d9d0e07a3f44644027dbb3daf5af4a91aac756b38898d51abf",
     "player/nam_model_config.h": "49de377e23ae21bd217c6a02ccf1eae5c30fc6559c2fafe8b9175f61761516c8",
-    "player/nam_player.cpp": "3ff0d737cf05a2fa36b62d87f7ef5c359a01ed1a0307c69ecb928a4e66d22b07",
-    "player/nam_player.h": "71ea0db524da8c1741eeb364a4da56ff4595b6ac41b62b911cfc6386029d2751",
+    "player/nam_player.cpp": "224f77db4041082f2421177de08bcd265a38e77c5311f2342c0cd9870f176797",
+    "player/nam_player.h": "5c62780b0a124432e440f54b6c34842734854599ac8368aa361931b9d095e3f2",
     "player/nam_profile.h": "37b580a692d3d822f66f8204e38b76d7a962c817b7449040d808bcd43f925da7",
     "player/nam_registry.h": "64451b554072cd9aaf4e853723197d708aabfb1176661d5e85ca72c4c6edd42a",
     "player/nam_sha256.h": "028c31ff92dd56a5813be0727a344e009fa9c3c5b2e6ded9e77ffc4e3c3473d9",
-    "player/patches/model.cpp.patch": "e7a6af898fa0a18e05d9e8380fc5067897233dcde30e84497c7dbc904de8bb4f",
-    "player/stubs/nam_dispatch.cpp": "d0d33704f7b0a5c9e8026f685c995463ae767b493c80f6e2206ec0876c3eaf6d",
+    "player/patches/model.cpp.patch": "ada70ac1380c367babe5e973528b4de776433b8899b40e4d14d8a7e09125347d",
+    "player/stubs/nam_dispatch.cpp": "428a710d0e6bb18e3e80d03049546800e09fa1c00bf1bbff7e58e51b1c2d6e3d",
     "player/stubs/nam_dispatch_trampoline.c": "d3af2e2bbe2c321c243718914823e6fbdde9061c6c9b6c1aefdf6ff6332c14ab",
     "player/stubs/nam_dispatch_trampoline.h": "2e752f2ab623de4b2aaa4d1f797382698c31c669ff9dd4bfc8caa37733c65335",
     "player/stubs/vendor/VERSION": "ff6303885e4f3e8c5d153e4bdaa61bfa5d774f9349a901a0f2e05f4be4b5bdad",
@@ -179,7 +179,7 @@
     "player/toolchains/messense-v1.1.0.json": "60a97f7f1e76a30fcd6e1c2aca66e4cb40194b78afdc7546f49e2e6ca77d7866"
   },
   "build": {
-    "git_revision": "eb6e7998468912f8655061c0d2ac2b016b206f90",
+    "git_revision": "d5f775b915aeab1e88f7a8079f52e6b704acedf8",
     "nam_build_pass": "perf",
     "source_sha256": {
       "player/bootstrap_nam_deps.sh": "0b066055b3382ddf6736400c2c0af04835741ee43ae2a65775a971a482e0074a",
@@ -192,16 +192,16 @@
       "player/check_arm_abi.py": "9a325af95b854d23f2b816f28350a6ec14d586895cb59aa43ede38a5667f51c6",
       "player/check_nam_deps.sh": "eb0f6872a045714d8a5510f44b49da6226b36e292a6f3f7bb27f97eaaefcb491",
       "player/cross_toolchain.sh": "9277da7936b7e5e40f890d1202178879588b0bc696477f98f427c524068e9860",
-      "player/nam_build_common.sh": "252a1450454a873d4f7293bff552a62362ed54c4030d9e16c3e6c6e54fe2cfec",
+      "player/nam_build_common.sh": "35c0c9d9614d173da4ca4e908850305ea16b0e55c51aef4b4f94567344a81329",
       "player/nam_loader.h": "cb1581fdcfe717d9d0e07a3f44644027dbb3daf5af4a91aac756b38898d51abf",
       "player/nam_model_config.h": "49de377e23ae21bd217c6a02ccf1eae5c30fc6559c2fafe8b9175f61761516c8",
-      "player/nam_player.cpp": "3ff0d737cf05a2fa36b62d87f7ef5c359a01ed1a0307c69ecb928a4e66d22b07",
-      "player/nam_player.h": "71ea0db524da8c1741eeb364a4da56ff4595b6ac41b62b911cfc6386029d2751",
+      "player/nam_player.cpp": "224f77db4041082f2421177de08bcd265a38e77c5311f2342c0cd9870f176797",
+      "player/nam_player.h": "5c62780b0a124432e440f54b6c34842734854599ac8368aa361931b9d095e3f2",
       "player/nam_profile.h": "37b580a692d3d822f66f8204e38b76d7a962c817b7449040d808bcd43f925da7",
       "player/nam_registry.h": "64451b554072cd9aaf4e853723197d708aabfb1176661d5e85ca72c4c6edd42a",
       "player/nam_sha256.h": "028c31ff92dd56a5813be0727a344e009fa9c3c5b2e6ded9e77ffc4e3c3473d9",
-      "player/patches/model.cpp.patch": "e7a6af898fa0a18e05d9e8380fc5067897233dcde30e84497c7dbc904de8bb4f",
-      "player/stubs/nam_dispatch.cpp": "d0d33704f7b0a5c9e8026f685c995463ae767b493c80f6e2206ec0876c3eaf6d",
+      "player/patches/model.cpp.patch": "ada70ac1380c367babe5e973528b4de776433b8899b40e4d14d8a7e09125347d",
+      "player/stubs/nam_dispatch.cpp": "428a710d0e6bb18e3e80d03049546800e09fa1c00bf1bbff7e58e51b1c2d6e3d",
       "player/stubs/nam_dispatch_trampoline.c": "d3af2e2bbe2c321c243718914823e6fbdde9061c6c9b6c1aefdf6ff6332c14ab",
       "player/stubs/nam_dispatch_trampoline.h": "2e752f2ab623de4b2aaa4d1f797382698c31c669ff9dd4bfc8caa37733c65335",
       "player/stubs/vendor/VERSION": "ff6303885e4f3e8c5d153e4bdaa61bfa5d774f9349a901a0f2e05f4be4b5bdad",
@@ -222,7 +222,7 @@
     },
     "ssh": {
       "schema": 1,
-      "created_utc": "2026-10-05T17:17:59.592432+00:00",
+      "created_utc": "2026-10-06T20:21:56.176327+00:00",
       "source": {
         "url": "https://dropbear.nl/mirror/releases/dropbear-2024.86.tar.bz2",
         "sha256": "e78936dffc395f2e0db099321d6be659190966b99712b55c530dd0a1822e0a5e",
@@ -259,7 +259,7 @@
         "tool": "aarch64-unknown-linux-gnu-strip",
         "sha256": "403f95d1e287b703b1d594d3a2dcdbdcf3b15ee135f6eb32f33f593683daf283"
       },
-      "build_directory": "run-h0g_i_2a",
+      "build_directory": "run-vs5dg2ca",
       "outputs": {
         "dropbear": {
           "class": "ELF64",

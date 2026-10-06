@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -183,6 +184,13 @@ void Player::prepare() {
     latency_frames_ = static_cast<std::size_t>(std::ceil(frames));
   }
 
+  // Margin over the receptive field: twice the settle length plus one full block.
+  const long settle = dsp_->ZeroInputSettleSamples();
+  zero_skip_after_ = settle >= 0 ? 2 * settle + static_cast<long>(model_capacity_) : -1;
+  zero_run_ = 0;
+  zero_skipping_ = false;
+  zero_output_ = 0.0f;
+
   reset_fifo();
   counters_ = {};
   prepared_ = true;
@@ -217,13 +225,35 @@ std::size_t Player::pop_output(float* data, std::size_t frames) noexcept {
   return count;
 }
 
+void Player::run_model(float* input, float* output, std::size_t frames) {
+  bool silent = zero_skip_after_ >= 0;
+  for (std::size_t i = 0; silent && i < frames; ++i) silent = input[i] == 0.0f;
+  if (!silent) {
+    zero_run_ = 0;
+    zero_skipping_ = false;
+  } else if (zero_skipping_) {
+    std::fill_n(output, frames, zero_output_);
+    counters_.skipped_model_frames += frames;
+    return;
+  }
+  float* in_channels[1] = {input};
+  float* out_channels[1] = {output};
+  dsp_->process(in_channels, out_channels, static_cast<int>(frames));
+  if (!silent) return;
+  zero_run_ += static_cast<long>(frames);
+  if (zero_run_ < zero_skip_after_ || frames == 0) return;
+  // Engage only once a whole block has settled to one bit-identical value.
+  for (std::size_t i = 1; i < frames; ++i)
+    if (std::memcmp(&output[i], &output[0], sizeof(float)) != 0) return;
+  zero_output_ = output[0];
+  zero_skipping_ = true;
+}
+
 void Player::process_chunk(const float* input, float* output, std::size_t frames) {
   std::copy_n(input, frames, engine_input_.get());
 
   if (!input_resampler_) {
-    float* in_channels[1] = {engine_input_.get()};
-    float* out_channels[1] = {model_output_.get()};
-    dsp_->process(in_channels, out_channels, static_cast<int>(frames));
+    run_model(engine_input_.get(), model_output_.get(), frames);
     std::copy_n(model_output_.get(), frames, output);
     counters_.model_frames += frames;
     return;
@@ -245,9 +275,7 @@ void Player::process_chunk(const float* input, float* output, std::size_t frames
     std::size_t model_offset = 0;
     while (model_offset < model_count) {
       const std::size_t n = std::min(model_count - model_offset, model_capacity_);
-      float* in_channels[1] = {model_input_.get() + model_offset};
-      float* out_channels[1] = {model_output_.get()};
-      dsp_->process(in_channels, out_channels, static_cast<int>(n));
+      run_model(model_input_.get() + model_offset, model_output_.get(), n);
       counters_.model_frames += n;
 
       std::size_t out_offset = 0;

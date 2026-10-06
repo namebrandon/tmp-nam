@@ -176,6 +176,7 @@ static nlohmann::json info(const tmp_nam::ModelFile& file, const tmp_nam::Player
           {"size", file.options.size}, {"resampler_quality", file.options.resampler_quality},
           {"prepared_max_block", file.options.max_block},
           {"conversion_latency_frames", player.latency_frames()},
+          {"implementation", player.implementation()},
           {"host_machine", host.machine}, {"host_system", host.sysname}};
 }
 static void emit(const nlohmann::json& data) {
@@ -265,6 +266,7 @@ static int cmd_process(int argc, char** argv) {
   data["block_sequence"] = blocks;
   data["in_place"] = in_place;
   data["processed_frames"] = output.size();
+  data["skipped_model_frames"] = player->skipped_model_frames();
   data["load_time_seconds"] = std::chrono::duration<double>(t1-t0).count();
   data["inference_time_seconds"] = std::chrono::duration<double>(t3-t2).count();
 #if defined(NAM_DENSE8X8_DIAGNOSTICS) && defined(__aarch64__)

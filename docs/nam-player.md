@@ -14,19 +14,34 @@ models bypass conversion.
 File-format support does not imply that every network fits the TMP callback
 budget: 32 frames at 44.1 kHz, a 725.6-microsecond period. A capture fits when,
 with one active instance, p99.9 stays below 75% of that period with zero
-deadline misses, processing errors and conversion underflows. Known results:
+deadline misses, processing errors and conversion underflows. Measured in the
+engine on the unit, one active NAM with the other IR bank on an ordinary IR
+(per NAM call; p99.9 as a share of the period):
 
-| Network | Fits |
-| --- | --- |
-| A1 WaveNet 8/4 | Yes |
-| A1 WaveNet 16/8 (Matchless DC30) | No |
-| A2 three-channel child (Matchless DC30, size `0.0`) | Yes, also with a 4x12 cabinet IR |
-| A2 eight-channel child (Matchless DC30, size `0.5` or `1.0`) | No |
-| A2 eight-channel child (Marshall JCM800, 48 kHz, resampled) | Yes (avg 335 µs, max 614 µs) |
+| Network | Path (`impl=`) | Average | p99.9 |
+| --- | --- | --- | --- |
+| A1 WaveNet 16/8 (Matchless DC30) | `a1_fast<16,8>` | 280 µs | 49% |
+| A1 WaveNet 12/6 (Soldano SLO) | `a1_fast<12,6>` | 189 µs | 36% |
+| A1 WaveNet 8/4 (Bugera 6262) | `a1_fast<8,4>` | 105 µs | 20% |
+| A1 WaveNet 4/2 (Marshall Plexi) | `a1_fast<4,2>` | 77 µs | 15% |
+| A2 eight-channel child (Matchless DC30, size `1.0`) | `a2_fast<8>` | 223 µs | 42% |
+| A2 three-channel child (Matchless DC30, size `0.0`) | `a2_fast<3>` | 108 µs | 21% |
 
+The firmware budgets whole-thread load and caps presets at about 76.5%; with the
+Matchless A1 active, the `AudioProc` thread runs at about 53%. Other WaveNet
+layouts and LSTM run on the generic path (`impl=generic`), which is slower.
 “A1,” “A2,” or “Lite” is therefore insufficient as a general admission rule;
-check each capture and configuration on the unit before relying on it. Dense
-presets, two instances and sustained thermal load are not covered.
+check each capture and configuration on the unit (`TMP_NAM_PROFILE=1`) before
+relying on it. Dense presets and two instances are not covered.
+
+The firmware keeps processing the previous preset's capture in its inactive IR
+bank. On CPU1 that bank receives exact zeros, and a settled feed-forward model
+repeats its constant output instead of running (about 26 µs per callback for an
+inactive Matchless A1). On CPU2 it receives the input at about -123 dB and runs
+in full; it is not gated by level because an active capture's input can sit
+that low too. Neither bank adds load to the active one: the CPU2 bank runs on its own
+thread in parallel with CPU1, and it costs no more than that preset did while
+it was active.
 
 The player keeps the full network as the default and never changes a capture
 silently. Optional `/data/nam/player.json` selects a size by model hash on the
@@ -111,31 +126,46 @@ inventory ownership and mode are preserved and checked after ext4 creation.
 Card-writing and restoration instructions are in
 [the SD console guide](device/usb-console.md).
 
-The checked-in dispatcher (2,508,128 bytes, SHA-256
-`669c317e59fd479fd407762c93ef0d4e463ad34e33c2af13d82b6467a30bf525`) is built
+The checked-in dispatcher (2,668,208 bytes, SHA-256
+`dd3cbc90e2292baf882da4011bc290dd0086dedd38eab679493f87f594d19f21`) is built
 from the revisions pinned in `player/stubs/vendor/VERSION`, for ARMv8-A tuned
-for Cortex-A57. It uses the generic model path with the retained AArch64
-Dense8x8 NEON optimization, C++17, and no fast-math or `NAM_ENABLE_A2_FAST`
-specialization. `player/build_nam_dispatch.sh` first rebuilds Core from
+for Cortex-A57, C++17, no fast-math. `NAM_FEATURES` (`player/nam_build_common.sh`)
+and the Core patch add:
+
+- the upstream A2 fast path (`NAM_ENABLE_A2_FAST`) for 3- and 8-channel A2
+  children, with the shape detector accepting trained `head_scale` values, a
+  fused NEON layer for 8 channels and a written-only ring mirror;
+- a fused AArch64 A1 path for the plain A1 layout at 16/8, 12/6, 8/4 and 4/2
+  channels (vectorized `fast_tanh`, same formula);
+- the zero-input skip above, bit-exact: output equals running the model;
+- constant-time ring buffers for long lookbacks in the generic WaveNet;
+- `impl=` in the dispatcher's load log, and `TMP_NAM_PROFILE=2` per-capture
+  input/output levels, skipped frames and thread/CPU.
+
+The fast paths differ from the generic WaveNet at rounding level (largest on
+the unit 2.7e-5, 88 dB below peak); other networks use the generic path with
+the retained AArch64 Dense8x8 NEON optimization. `player/build_nam_dispatch.sh` first rebuilds Core from
 canonical sources, then performs the release strip and verifies ELF64
 AArch64, allowed dynamic dependencies, and GLIBC no newer than 2.28.
 
 Native dispatcher coverage always runs five hash-pinned upstream example
 models from the pinned NeuralAmpModelerCore checkout (including the full-size
 `wavenet_a2_max.nam`); no NAM capture is tracked in this
-repository.
+repository. The fast-path, zero-skip and ring-buffer tests use synthetic models
+with the trainer architectures and seeded random weights
+(`player/tests/nam_test_models.h`).
 
 ## Device use
 
 1. Boot with a non-NAM preset and wait for `NAM dispatch ARMED` in
    `/tmp/nam_dispatch.log`.
 2. Verify `/usr/local/lib/nam_dispatch.so` is
-   `669c317e59fd479fd407762c93ef0d4e463ad34e33c2af13d82b6467a30bf525`.
+   `dd3cbc90e2292baf882da4011bc290dd0086dedd38eab679493f87f594d19f21`.
 3. Add a capture from the app and load it through the normal User IR
    picker. If it needs a smaller A2 size, set it in `player.json` before
    loading it.
 4. Confirm `NAM ready before load return` reports the intended hash, model
-   rate, latency, and generation, then confirm increasing block counts with zero
+   rate, latency, generation and `impl=` path, then confirm increasing block counts with zero
    errors and underflows.
 5. Enable `TMP_NAM_PROFILE=1` only for measurements. Compare p99.9 against the
    budget above and keep the profiler setting identical between captures.

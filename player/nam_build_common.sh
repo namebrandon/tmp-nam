@@ -13,11 +13,16 @@ case "$PASS" in
   *) echo "NAM_BUILD_PASS must be parity or perf (got $PASS)" >&2; return 2 ;;
 esac
 NAM_CPU=(-march=armv8-a -mtune=cortex-a57)
+# Upstream Core's specialized A2 WaveNet (3/8 channels; our patch adds the
+# NEON 8-channel layer) and our fused AArch64 A1 WaveNet (16/8, 12/6, 8/4, 4/2).
+# NAM_USE_INLINE_GEMM stays off: it measured ~2% slower for A1 standard (16/8)
+# on the unit's Cortex-A57.
+NAM_FEATURES=(-DNAM_ENABLE_A2_FAST -DNAM_ENABLE_A1_FAST)
 
 nam_cross_config() {
   source "$NAM_PLAYER_DIR/cross_toolchain.sh"
   tmp_cross_init
-  NAM_COMMON=(-std=c++17 -fPIC "${NAM_OPT[@]}" -DNAM_SAMPLE_FLOAT
+  NAM_COMMON=(-std=c++17 -fPIC "${NAM_OPT[@]}" -DNAM_SAMPLE_FLOAT "${NAM_FEATURES[@]}"
     -DRANDOM_PREFIX=tmp_nam_speex -DOUTSIDE_SPEEX -Wall -Wextra "${NAM_CPU[@]}"
     -isystem "$NAM_DIR/Dependencies/eigen" -I"$NAM_DIR/Dependencies/nlohmann"
     -I"$NAM_DIR" -I"$NAM_PLAYER_DIR/stubs" -I"$NAM_PLAYER_DIR"

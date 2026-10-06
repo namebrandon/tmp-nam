@@ -40,7 +40,23 @@ cargo run --release -p tmp-sdcard -- image <ToneMasterPro_v1_8_58.img> <new.img>
 - Frontend lint is strict type-aware eslint with `noInlineConfig` (no disable comments) and
   `react-hooks/set-state-in-effect`: kick async loaders from effects with `defer()`
   (`src/lib/format.ts`), not a direct call.
-- `player/run_nam_native_tests.sh` runs the host NAM tests (not part of check.sh).
+- `player/run_nam_native_tests.sh` runs the host NAM tests (not part of check.sh; needs
+  `bootstrap_nam_deps.sh`). Fast-path changes must keep `test_nam_fast_paths` (rounding-level
+  vs the generic WaveNet), `test_nam_zero_skip` and `test_nam_ring_buffer` (bit-exact) green.
+- Core fast paths (patch, `NAM_FEATURES` in `player/nam_build_common.sh`): `a2_fast` (A2 3/8
+  channels) and `a1_fast` (plain A1 16/8, 12/6, 8/4, 4/2; AArch64 only). Anything else stays on
+  the generic WaveNet; the dispatcher logs `impl=` per capture. Measure on the unit's Cortex-A57
+  before keeping a speedup: Apple Silicon results don't carry over (`NAM_USE_INLINE_GEMM` and
+  smaller A1 frame tiles are slower on the A57).
+- On the unit, `TMP_NAM_PROFILE=1` profiles the NAM call; `=2` adds per-capture input/output
+  levels, skipped frames and thread/CPU. The firmware keeps two IR banks (CPU1/AudioProc and
+  CPU2/ThAudSysNdB) and keeps processing the previous preset's capture after a switch: the CPU1
+  bank gets exact zeros (Player skips it), the CPU2 bank the input at about -123 dB. Don't gate
+  that bank by level: an active capture's input also lingers under -120 dBFS (up to -61 dBFS of
+  high-gain output).
+- Re-amp latches the preset at engage, so switching tests need a loopback (instrument input)
+  capture; `player/analyze_gapless.py` analyzes one. Send each loadPreset on its own HID
+  connection: the unit ignores most loads sent inside a held session.
 
 ## Architecture: the release pins
 

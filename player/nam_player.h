@@ -31,6 +31,8 @@ class Player final {
     uint64_t model_frames = 0;
     uint64_t underflow_frames = 0;
     uint64_t late_underflow_frames = 0;
+    // Model frames answered from the settled zero-input output instead of the network.
+    uint64_t skipped_model_frames = 0;
   };
 
   explicit Player(std::unique_ptr<nam::DSP> dsp);
@@ -53,6 +55,9 @@ class Player final {
   void process(const float* input, float* output, std::size_t frames);
 
   int model_rate() const noexcept { return model_rate_; }
+  // Which Core implementation runs the network ("generic", "a2_fast<8>", ...).
+  // Control/worker thread only, like prepare().
+  const char* implementation() const { return dsp_->ImplementationName(); }
   std::size_t latency_frames() const noexcept { return latency_frames_; }
   double latency_seconds() const noexcept;
   const Counters& counters() const noexcept { return counters_; }
@@ -63,6 +68,7 @@ class Player final {
   uint64_t late_underflow_frames() const noexcept {
     return counters_.late_underflow_frames;
   }
+  uint64_t skipped_model_frames() const noexcept { return counters_.skipped_model_frames; }
 
  private:
   struct Resampler;
@@ -92,10 +98,21 @@ class Player final {
   std::size_t fifo_count_ = 0;
   Counters counters_;
 
+  // Zero-input steady state. A feed-forward model that has seen at least
+  // zero_skip_after_ consecutive zero-valued input frames outputs one exact constant
+  // until its input changes, so run_model() repeats that constant instead of running
+  // the network. The firmware feeds exact zeros to the inactive bank on one core.
+  // -1 disables the skip (recurrent or unknown models).
+  long zero_skip_after_ = -1;
+  long zero_run_ = 0;
+  bool zero_skipping_ = false;
+  float zero_output_ = 0.0f;
+
   void reset_fifo() noexcept;
   void push_output(const float* data, std::size_t frames);
   std::size_t pop_output(float* data, std::size_t frames) noexcept;
   void process_chunk(const float* input, float* output, std::size_t frames);
+  void run_model(float* input, float* output, std::size_t frames);
 };
 
 // Kept at namespace scope so registry/configuration code can construct an
