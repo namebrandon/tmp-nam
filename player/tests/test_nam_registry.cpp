@@ -60,6 +60,18 @@ int main() {
   assert(registry.publish(distinct, make(5)));
   assert(registry.read(&a).get() != registry.read(&b).get());
 
+  // clear_if_current drops a ready owner for its own generation only.
+  int failed_key;
+  auto failed_first = registry.begin(&failed_key);
+  assert(registry.publish(failed_first, make(7)));
+  auto failed = registry.begin(&failed_key);
+  auto newer = registry.begin(&failed_key);
+  assert(!registry.clear_if_current(failed));  // a newer load is never disturbed
+  assert(registry.read(&failed_key).get()->value == 7);
+  assert(registry.clear_if_current(newer));
+  assert(!registry.read(&failed_key).bound());
+  assert(!registry.publish(newer, make(8)));
+
   int empty_key;
   auto empty = registry.begin(&empty_key);
   assert(!empty.had_ready);

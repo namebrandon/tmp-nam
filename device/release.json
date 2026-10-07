@@ -29,8 +29,8 @@
     "nam_dispatch": {
       "source": "bin/nam_dispatch.so",
       "target": "usr/local/lib/nam_dispatch.so",
-      "bytes": 2668208,
-      "sha256": "dd3cbc90e2292baf882da4011bc290dd0086dedd38eab679493f87f594d19f21"
+      "bytes": 2668224,
+      "sha256": "7f805f534ff9cfac55a0c8a9219377bb3da712733f4b92c6c8f1c0cd91e2a0ba"
     },
     "registry_helper": {
       "source": "helpers/register_nam_ir.py",
@@ -167,10 +167,10 @@
     "player/nam_player.cpp": "224f77db4041082f2421177de08bcd265a38e77c5311f2342c0cd9870f176797",
     "player/nam_player.h": "5c62780b0a124432e440f54b6c34842734854599ac8368aa361931b9d095e3f2",
     "player/nam_profile.h": "37b580a692d3d822f66f8204e38b76d7a962c817b7449040d808bcd43f925da7",
-    "player/nam_registry.h": "64451b554072cd9aaf4e853723197d708aabfb1176661d5e85ca72c4c6edd42a",
+    "player/nam_registry.h": "43358bc872ecc06034fc245ac956fbe9162e915c943c2f63c1c5d300c0254c8c",
     "player/nam_sha256.h": "028c31ff92dd56a5813be0727a344e009fa9c3c5b2e6ded9e77ffc4e3c3473d9",
     "player/patches/model.cpp.patch": "ada70ac1380c367babe5e973528b4de776433b8899b40e4d14d8a7e09125347d",
-    "player/stubs/nam_dispatch.cpp": "428a710d0e6bb18e3e80d03049546800e09fa1c00bf1bbff7e58e51b1c2d6e3d",
+    "player/stubs/nam_dispatch.cpp": "358030601f14078402c4b89ecbb834056b611eaefafc7f79ccb6c4ebba9c7241",
     "player/stubs/nam_dispatch_trampoline.c": "d3af2e2bbe2c321c243718914823e6fbdde9061c6c9b6c1aefdf6ff6332c14ab",
     "player/stubs/nam_dispatch_trampoline.h": "2e752f2ab623de4b2aaa4d1f797382698c31c669ff9dd4bfc8caa37733c65335",
     "player/stubs/vendor/VERSION": "ff6303885e4f3e8c5d153e4bdaa61bfa5d774f9349a901a0f2e05f4be4b5bdad",
@@ -179,7 +179,7 @@
     "player/toolchains/messense-v1.1.0.json": "60a97f7f1e76a30fcd6e1c2aca66e4cb40194b78afdc7546f49e2e6ca77d7866"
   },
   "build": {
-    "git_revision": "d5f775b915aeab1e88f7a8079f52e6b704acedf8",
+    "git_revision": "40c28d1beafe107fe4a7bf040fb850710be4e5fa",
     "nam_build_pass": "perf",
     "source_sha256": {
       "player/bootstrap_nam_deps.sh": "0b066055b3382ddf6736400c2c0af04835741ee43ae2a65775a971a482e0074a",
@@ -198,10 +198,10 @@
       "player/nam_player.cpp": "224f77db4041082f2421177de08bcd265a38e77c5311f2342c0cd9870f176797",
       "player/nam_player.h": "5c62780b0a124432e440f54b6c34842734854599ac8368aa361931b9d095e3f2",
       "player/nam_profile.h": "37b580a692d3d822f66f8204e38b76d7a962c817b7449040d808bcd43f925da7",
-      "player/nam_registry.h": "64451b554072cd9aaf4e853723197d708aabfb1176661d5e85ca72c4c6edd42a",
+      "player/nam_registry.h": "43358bc872ecc06034fc245ac956fbe9162e915c943c2f63c1c5d300c0254c8c",
       "player/nam_sha256.h": "028c31ff92dd56a5813be0727a344e009fa9c3c5b2e6ded9e77ffc4e3c3473d9",
       "player/patches/model.cpp.patch": "ada70ac1380c367babe5e973528b4de776433b8899b40e4d14d8a7e09125347d",
-      "player/stubs/nam_dispatch.cpp": "428a710d0e6bb18e3e80d03049546800e09fa1c00bf1bbff7e58e51b1c2d6e3d",
+      "player/stubs/nam_dispatch.cpp": "358030601f14078402c4b89ecbb834056b611eaefafc7f79ccb6c4ebba9c7241",
       "player/stubs/nam_dispatch_trampoline.c": "d3af2e2bbe2c321c243718914823e6fbdde9061c6c9b6c1aefdf6ff6332c14ab",
       "player/stubs/nam_dispatch_trampoline.h": "2e752f2ab623de4b2aaa4d1f797382698c31c669ff9dd4bfc8caa37733c65335",
       "player/stubs/vendor/VERSION": "ff6303885e4f3e8c5d153e4bdaa61bfa5d774f9349a901a0f2e05f4be4b5bdad",
@@ -222,7 +222,7 @@
     },
     "ssh": {
       "schema": 1,
-      "created_utc": "2026-10-06T20:21:56.176327+00:00",
+      "created_utc": "2026-10-06T23:42:47.647560+00:00",
       "source": {
         "url": "https://dropbear.nl/mirror/releases/dropbear-2024.86.tar.bz2",
         "sha256": "e78936dffc395f2e0db099321d6be659190966b99712b55c530dd0a1822e0a5e",
@@ -259,7 +259,7 @@
         "tool": "aarch64-unknown-linux-gnu-strip",
         "sha256": "403f95d1e287b703b1d594d3a2dcdbdcf3b15ee135f6eb32f33f593683daf283"
       },
-      "build_directory": "run-vs5dg2ca",
+      "build_directory": "run-_l6ozweg",
       "outputs": {
         "dropbear": {
           "class": "ELF64",

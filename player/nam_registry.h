@@ -110,6 +110,19 @@ template <class T, size_t Capacity = 64> class Registry {
     return true;
   }
 
+  // Unbind the exact generation a failed load started, including a previously
+  // ready owner, so the processor falls back to Fender's path. A newer
+  // generation (a later load or an ordinary clear) is never disturbed.
+  bool clear_if_current(Ticket ticket) {
+    std::lock_guard<std::mutex> lock(control_);
+    Slot& slot = slots_.at(ticket.index);
+    if (!slot.key.load() || slot.generation != ticket.generation) return false;
+    replace(slot, {});
+    slot.key.store(nullptr);
+    ++slot.generation;
+    return true;
+  }
+
   ClearResult clear_details(void* key) {
     std::lock_guard<std::mutex> lock(control_);
     for (size_t index = 0; index < Capacity; ++index) {

@@ -29,10 +29,14 @@ thread_local bool g_original_throws = false;
 thread_local std::string g_redirected_path;
 std::atomic<unsigned> g_original_calls{0};
 
-loadfile_result_t fake_original_loadfile(void*, void* str_ref) {
+// Runs inside the stock call, after the redirect (a concurrent newer load).
+void (*g_during_original)(void*) = nullptr;
+
+loadfile_result_t fake_original_loadfile(void* self, void* str_ref) {
   const auto& path = *static_cast<const std::string*>(str_ref);
   g_original_calls.fetch_add(1);
   g_redirected_path = classify_and_redirect(path.c_str());
+  if (g_during_original) g_during_original(self);
   if (g_original_throws) throw OriginalLoadFailure{};
   return g_original_result;
 }
@@ -45,14 +49,18 @@ loadfile_result_t invoke(void* self, const std::string& path,
   return loadfile_handler(self, const_cast<std::string*>(&path));
 }
 
-template <class Fn> void expect_runtime_error(Fn&& fn) {
-  bool caught = false;
-  try {
-    fn();
-  } catch (const std::runtime_error&) {
-    caught = true;
-  }
-  assert(caught);
+// Stock IRProcessor::process stand-in: records each call and writes a marker
+// into the output it was given, which must never be the NAM's output.
+std::atomic<unsigned> g_stock_process_calls{0};
+float* g_stock_process_last_out = nullptr;
+
+void fake_original_process(void*, void* in, void* out, void* frames, void*,
+                           void*, void*, void*) {
+  g_stock_process_calls.fetch_add(1);
+  g_stock_process_last_out = static_cast<float*>(out);
+  const auto n = reinterpret_cast<uintptr_t>(frames);
+  for (uintptr_t i = 0; i < n; ++i)
+    static_cast<float*>(out)[i] = static_cast<const float*>(in)[i] + 1000.0f;
 }
 
 class Gate {
@@ -126,17 +134,6 @@ void record_submission(void* self, Registry::Ticket ticket) {
   g_submission_tracker->record(self, ticket);
 }
 
-bool is_runtime_error(const std::exception_ptr& error) {
-  if (!error) return false;
-  try {
-    std::rethrow_exception(error);
-  } catch (const std::runtime_error&) {
-    return true;
-  } catch (...) {
-    return false;
-  }
-}
-
 std::shared_ptr<NamEntry> g_injected_newer;
 
 void publish_newer_generation(void* self, Registry::Ticket) {
@@ -145,6 +142,10 @@ void publish_newer_generation(void* self, Registry::Ticket) {
   g_injected_newer->slot = newer.index;
   g_injected_newer->generation = newer.generation;
   assert(g_players.publish(newer, g_injected_newer));
+}
+
+void publish_newer_during_original(void* self) {
+  publish_newer_generation(self, {});
 }
 
 void bind_fresh(void* self, const std::string& path) {
@@ -236,14 +237,12 @@ void test_recognized_nam_failures(const std::string& valid_nam,
   int disabled_instance = 0;
   int stock_failure_instance = 0;
   int invalid_instance = 0;
-  int retained_instance = 0;
+  int retained_instance = 0;  // a ready capture whose replacement fails
 
   g_process_hook_enabled = false;
   g_armed.store(true, std::memory_order_release);
   g_original_calls.store(0);
-  expect_runtime_error([&] {
-    (void)invoke(&disabled_instance, valid_nam, loadfile_result_t{0xa5});
-  });
+  assert(invoke(&disabled_instance, valid_nam, loadfile_result_t{0xa5}) == 0xa5);
   assert(g_original_calls.load() == 1);
   assert(g_redirected_path == valid_nam);
   assert(!g_armed.load(std::memory_order_acquire));
@@ -251,25 +250,20 @@ void test_recognized_nam_failures(const std::string& valid_nam,
 
   g_process_hook_enabled = true;
   g_armed.store(true, std::memory_order_release);
-  expect_runtime_error([&] {
-    (void)invoke(&stock_failure_instance, valid_nam, 0);
-  });
+  assert(invoke(&stock_failure_instance, valid_nam, 0) == 0);
   assert(g_redirected_path == g_stub_wav_path);
   assert(!g_players.read(&stock_failure_instance).bound());
 
-  expect_runtime_error([&] {
-    (void)invoke(&invalid_instance, invalid_nam, 1);
-  });
+  assert(invoke(&invalid_instance, invalid_nam, 1) == 1);
   assert(g_redirected_path == g_stub_wav_path);
   assert(!g_players.read(&invalid_instance).bound());
 
+  // A failed replacement unbinds the previous capture too: the block then runs
+  // Fender's placeholder instead of the old capture under the new name.
   bind_fresh(&retained_instance, valid_nam);
-  NamEntry* previous = bound_entry(&retained_instance);
-  expect_runtime_error([&] {
-    (void)invoke(&retained_instance, invalid_nam, 1);
-  });
-  assert(bound_entry(&retained_instance) == previous);
-  clear_and_collect(&retained_instance);
+  assert(invoke(&retained_instance, invalid_nam, 1) == 1);
+  assert(!g_players.read(&retained_instance).bound());
+  (void)g_players.collect();
   assert(g_live_entries.load() == 0);
 }
 
@@ -338,12 +332,17 @@ void test_synchronous_ready_and_reader_grace(
 
     std::vector<float> input(32, 0.1f);
     std::vector<float> output(32, 0.0f);
+    const unsigned stock_calls = g_stock_process_calls.load();
     process_handler(&instance, input.data(), output.data(),
                     reinterpret_cast<void*>(uintptr_t{32}), nullptr, nullptr,
                     nullptr, nullptr);
     assert(old_entry->player.get() == old_player);
     assert(old_entry->blocks.load() == 1);
-    for (float sample : output) assert(std::isfinite(sample));
+    // The stock process ran underneath into its own scratch; the output is the
+    // NAM's, never the stock marker.
+    assert(g_stock_process_calls.load() == stock_calls + 1);
+    assert(g_stock_process_last_out != output.data());
+    for (float sample : output) assert(std::isfinite(sample) && sample < 100.0f);
 
     gate.release();
     control.join();
@@ -418,10 +417,11 @@ void test_rapid_abc_supersession(
     }
   });
   submissions.wait_for(3);
-  // C coalesces the queued B; B must finish with failure before A is released.
+  // C coalesces the queued B; B must finish (unbound, stock result) before A
+  // is released, without disturbing C's pending generation.
   middle.join();
-  assert(!middle_succeeded);
-  assert(is_runtime_error(middle_error));
+  assert(middle_succeeded);
+  assert(!middle_error);
   gate.release();
   older.join();
   newer.join();
@@ -430,8 +430,8 @@ void test_rapid_abc_supersession(
   g_after_submit = nullptr;
   g_submission_tracker = nullptr;
 
-  assert(!older_succeeded);
-  assert(is_runtime_error(older_error));
+  assert(older_succeeded);
+  assert(!older_error);
   assert(newer_succeeded);
   assert(!newer_error);
   assert(bound_entry(&instance)->path == newer_path);
@@ -465,8 +465,8 @@ void test_ordinary_clear_cannot_be_resurrected(
   g_prepare_gate = nullptr;
   g_active_prepare_gate = nullptr;
 
-  assert(!older_succeeded);
-  assert(is_runtime_error(older_error));
+  assert(older_succeeded);
+  assert(!older_error);
   assert(!g_players.read(&instance).bound());
   (void)g_players.collect();
   assert(g_live_entries.load() == 0);
@@ -510,8 +510,8 @@ void test_queued_cancellation_releases_waiter_and_worker_recovers(
 
   assert(invoke(&queued_instance, ordinary, loadfile_result_t{0xa5}) == 0xa5);
   queued.join();
-  assert(!queued_succeeded);
-  assert(is_runtime_error(queued_error));
+  assert(queued_succeeded);
+  assert(!queued_error);
   assert(!g_players.read(&queued_instance).bound());
 
   gate.release();
@@ -524,7 +524,8 @@ void test_queued_cancellation_releases_waiter_and_worker_recovers(
   assert(!held_error);
 
   // Destroying the queued packaged task produced a broken-promise failure for
-  // its waiter; the single existing worker remains available afterwards.
+  // its waiter (returned as the stock result); the single existing worker
+  // remains available afterwards.
   assert(invoke(&queued_instance, recovery_path, 1) == 1);
   assert(bound_entry(&queued_instance)->path == recovery_path);
   clear_and_collect(&held_instance);
@@ -535,7 +536,7 @@ void test_queued_cancellation_releases_waiter_and_worker_recovers(
 void test_preparation_exception_leaves_worker_usable(
     const std::string& invalid_path, const std::string& valid_path) {
   int instance = 0;
-  expect_runtime_error([&] { (void)invoke(&instance, invalid_path, 1); });
+  assert(invoke(&instance, invalid_path, 1) == 1);
   assert(!g_players.read(&instance).bound());
   assert(invoke(&instance, valid_path, 1) == 1);
   assert(bound_entry(&instance)->path == valid_path);
@@ -582,12 +583,28 @@ void test_held_invalid_cleanup_preserves_newer(
   g_after_submit = nullptr;
   g_submission_tracker = nullptr;
 
-  assert(!older_succeeded);
-  assert(is_runtime_error(older_error));
+  assert(older_succeeded);
+  assert(!older_error);
   assert(newer_succeeded);
   assert(!newer_error);
   assert(bound_entry(&instance)->path == newer_path);
   clear_and_collect(&instance);
+  assert(g_live_entries.load() == 0);
+}
+
+// An older NAM request whose stock placeholder load fails after a newer capture
+// was published on the same processor must not clear that newer binding.
+void test_early_failure_cannot_erase_newer(const std::string& candidate,
+                                           const std::string& newer_path) {
+  int instance = 0;
+  g_injected_newer = prepare_instance(newer_path);
+  g_during_original = publish_newer_during_original;
+  assert(invoke(&instance, candidate, 0) == 0);
+  g_during_original = nullptr;
+  assert(bound_entry(&instance) == g_injected_newer.get());
+  clear_and_collect(&instance);
+  g_injected_newer.reset();
+  (void)g_players.collect();
   assert(g_live_entries.load() == 0);
 }
 
@@ -628,7 +645,7 @@ void test_stale_publication_cannot_erase_newer(
   int instance = 0;
   g_injected_newer = prepare_instance(newer_path);
   g_before_publish = publish_newer_generation;
-  expect_runtime_error([&] { (void)invoke(&instance, candidate, 1); });
+  assert(invoke(&instance, candidate, 1) == 1);
   g_before_publish = nullptr;
   assert(bound_entry(&instance) == g_injected_newer.get());
   assert(bound_entry(&instance)->path == newer_path);
@@ -676,6 +693,7 @@ int main(int argc, char** argv) {
   // availability bookkeeping remains the production code's real path.
   std::call_once(g_process_install_once, [] {});
   g_process_tramp.target_addr = reinterpret_cast<void*>(uintptr_t{1});
+  g_process_tramp.exec_buffer = reinterpret_cast<void*>(fake_original_process);
   g_hook_degraded.store(false, std::memory_order_release);
   g_process_hook_enabled = true;
   g_loader = new NamLoader([](NamLoader::Request request) {
@@ -700,11 +718,12 @@ int main(int argc, char** argv) {
   test_fresh_sequences_and_identical_captures(
       valid_a.string(), valid_b.string(), valid_c.string());
   test_stale_publication_cannot_erase_newer(valid_a.string(), valid_c.string());
+  test_early_failure_cannot_erase_newer(valid_a.string(), valid_c.string());
 
   g_armed.store(false, std::memory_order_release);
   delete g_loader;
   g_loader = nullptr;
   fs::remove_all(work);
   std::cout << "NAM worker preparation, synchronous completion, cancellation, "
-               "reader grace, and return ABI: PASS\n";
+               "no-throw failures, stock shadow, reader grace, and return ABI: PASS\n";
 }

@@ -579,6 +579,16 @@ void irproc_dtor_handler(void* self) {
   reinterpret_cast<void (*)(void*)>(g_dtor_tramp.exec_buffer)(self);
 }
 
+using NamTicket = tmp_nam::Registry<NamEntry, kInstanceCapacity>::Ticket;
+
+// A failed NAM request: drop the binding its own generation owns, so Fender's
+// path (the unity placeholder) runs instead. A newer load or an ordinary clear
+// on the same processor is never disturbed.
+bool unbind_failed_nam(NamTicket ticket) {
+  if (g_loader) g_loader->cancel(ticket.index, ticket.generation);
+  return g_players.clear_if_current(ticket);
+}
+
 loadfile_result_t loadfile_handler(void* self, void* str_ref) {
   // The pinned engine passes its C++11 std::string object at this boundary.
   // Inspect the request itself so a failed redirect cannot be misclassified as
@@ -589,6 +599,19 @@ loadfile_result_t loadfile_handler(void* self, void* str_ref) {
           ? static_cast<const std::string*>(str_ref)
           : nullptr;
   const bool requested_nam = requested && is_nam_path(requested->c_str());
+  // A NAM request reserves its generation before the stock call, so whatever it
+  // later clears on failure is its own binding, never a newer one.
+  NamTicket ticket{0, 0, false};
+  bool ticket_started = false;
+  const char* reservation_failure = nullptr;
+  if (requested_nam) {
+    try {
+      ticket = g_players.begin(self);
+      ticket_started = true;
+    } catch (const std::exception& error) {
+      reservation_failure = error.what();
+    }
+  }
   t_loadfile_redirected_nam = false;
   t_in_loadfile = true;
   loadfile_result_t original_result;
@@ -604,6 +627,10 @@ loadfile_result_t loadfile_handler(void* self, void* str_ref) {
       const auto cleared = g_players.clear_details(self);
       if (cleared.cleared && g_loader)
         g_loader->cancel(cleared.index, cleared.generation);
+    }
+    if (ticket_started) {
+      if (g_loader) g_loader->cancel(ticket.index, ticket.generation);
+      (void)g_players.cancel(ticket);
     }
     throw;  // preserve Fender's original exception behavior
   }
@@ -622,27 +649,33 @@ loadfile_result_t loadfile_handler(void* self, void* str_ref) {
     return original_result;
   }
 
-  // A recognized NAM request is successful only when the stock wrapper used
-  // the placeholder, the process hook is available, and a fresh Player is
-  // already published. Returning placeholder success on any partial outcome
-  // would recreate the late-swap bug this path removes. The graph-load visitor
-  // converts these runtime_errors to failure; the stock live string-edit path
-  // only logs them and reports success, an inherited limitation of that path.
-  if (!redirected_nam || !g_armed.load(std::memory_order_acquire) ||
-      !ensure_process_trampoline())
-    throw std::runtime_error("NAM process dispatch is unavailable");
-  if (original_result == 0)
-    throw std::runtime_error("stock NAM placeholder load failed");
-
+  // A recognized NAM request binds a Player only when the stock wrapper used the
+  // placeholder, the process hook is available, and a fresh Player is published
+  // before this returns, so the inactive bank can never go live with a late swap.
+  // Any other outcome unbinds this processor (Fender's path then runs the unity
+  // placeholder: an audible bypass) and returns the stock result. It never throws:
+  // the firmware builds the IR unit around this call, and an exception there
+  // leaves the unit half-built, so its pooled IRProcessor is never released.
   const std::string requested_path = *requested;
-  tmp_nam::Registry<NamEntry, kInstanceCapacity>::Ticket ticket{0, 0, false};
-  bool ticket_started = false;
+  const char* early_failure =
+      reservation_failure                                      ? reservation_failure
+      : !redirected_nam || !g_armed.load(std::memory_order_acquire) ||
+              !ensure_process_trampoline()                     ? "NAM process dispatch is unavailable"
+      : original_result == 0                                   ? "stock NAM placeholder load failed"
+                                                               : nullptr;
+  if (early_failure) {
+    const bool unbound = ticket_started && unbind_failed_nam(ticket);
+    logf("NAM load failed path=%s self=%p unbound=%d: %s", requested_path.c_str(),
+         self, unbound ? 1 : 0, early_failure);
+    return original_result;
+  }
+
+  std::string failure;
   try {
-    ticket = g_players.begin(self);
-    ticket_started = true;
     // The generation covers the entire preparation interval. If a newer NAM
     // load or an ordinary clear wins while this work is in progress, publish
-    // rejects this exact ticket and cancel() cannot disturb the newer state.
+    // rejects this exact ticket and the failure cleanup cannot disturb the
+    // newer state.
 #ifdef TMP_NAM_DISPATCH_TEST
     const auto control_thread_id = std::this_thread::get_id();
     PrepareTask task([path = requested_path, control_thread_id]() {
@@ -674,39 +707,41 @@ loadfile_result_t loadfile_handler(void* self, void* str_ref) {
 #endif
     if (!g_players.publish(ticket, entry))
       throw std::runtime_error("stale NAM publication rejected");
-    ticket_started = false;
     logf("NAM ready before load return path=%s sha256=%s engine_rate=%d "
          "model_rate=%d latency_frames=%zu slot=%zu generation=%lu impl=%s",
          entry->path.c_str(), entry->hash.c_str(), kEngineRate,
          entry->player->model_rate(),
          static_cast<size_t>(entry->player->latency_frames()), entry->slot,
          (unsigned long)entry->generation, entry->player->implementation());
+    return original_result;
   } catch (const std::exception& error) {
-    if (ticket_started) {
-      if (g_loader) g_loader->cancel(ticket.index, ticket.generation);
-      (void)g_players.cancel(ticket);
-    }
-    logf("NAM load failed path=%s slot=%zu generation=%lu: %s",
-         requested_path.c_str(), ticket.index,
-         (unsigned long)ticket.generation, error.what());
-    throw std::runtime_error(std::string("NAM preparation failed: ") +
-                             error.what());
+    failure = error.what();
   } catch (...) {
-    if (ticket_started) {
-      if (g_loader) g_loader->cancel(ticket.index, ticket.generation);
-      (void)g_players.cancel(ticket);
-    }
-    logf("NAM load failed path=%s slot=%zu generation=%lu: unknown error",
-         requested_path.c_str(), ticket.index,
-         (unsigned long)ticket.generation);
-    throw std::runtime_error("NAM preparation failed: unknown error");
+    failure = "unknown error";
   }
+  const bool unbound = unbind_failed_nam(ticket);
+  logf("NAM load failed path=%s slot=%zu generation=%lu unbound=%d: %s",
+       requested_path.c_str(), ticket.index, (unsigned long)ticket.generation,
+       unbound ? 1 : 0, failure.c_str());
   return original_result;
 }
 
 inline void chain_original_process(void* self, void* a1, void* a2, void* a3,
                                    void* a4, void* a5, void* a6, void* a7) {
   reinterpret_cast<process_t>(g_process_tramp.exec_buffer)(self, a1, a2, a3, a4, a5, a6, a7);
+}
+
+// The stock process on this processor's own input into a per-thread scratch
+// output (the firmware calls with 32-frame blocks; longer calls are chunked).
+void run_stock_shadow(void* self, float* in, size_t frames) {
+  constexpr size_t kShadowFrames = 1024;
+  thread_local float scratch[kShadowFrames];
+  for (size_t offset = 0; offset < frames; offset += kShadowFrames) {
+    const size_t n = std::min(kShadowFrames, frames - offset);
+    chain_original_process(self, in + offset, scratch,
+                           reinterpret_cast<void*>(static_cast<uintptr_t>(n)),
+                           nullptr, nullptr, nullptr, nullptr);
+  }
 }
 
 // TMP_NAM_PROFILE=2 helpers: sum of squares, peak, "every sample is +0.0" and
@@ -780,6 +815,11 @@ void process_handler(void* self, void* a1, void* a2, void* a3,
   auto* out = static_cast<float*>(a2);
   const size_t frames = reinterpret_cast<uintptr_t>(a3);
   if (!in || !out || !frames) return;
+  // Fender's IR processing keeps running on the unity placeholder underneath the
+  // NAM, output discarded. Its output ring is never cleared by loadIR, so a
+  // processor frozen while a NAM played would replay the previous IR's pending
+  // tail when an ordinary IR takes over. Runs first: the NAM may process in place.
+  run_stock_shadow(self, in, frames);
   NamEntry* entry = state.get();
   // Explicit bypass during initial loading/failure. Never process a silent or
   // stale stock IR merely because a registry lock happens to be contended.

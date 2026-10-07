@@ -83,6 +83,12 @@ NAM hook does not add another fade. By holding the stock IR load until the
 selected NAM is reset, prewarmed, activated, and published, the inactive bank
 cannot report success with a late NAM swap still pending.
 
+While a capture plays, Fender's own IR processing keeps running underneath it
+on the unity placeholder, output discarded. The firmware's IR load does not
+clear the processor's output ring, so a processor frozen during a capture would
+replay the previous IR's tail (a burst about 5 dB below playing level) when an
+ordinary IR replaces the capture.
+
 The player backports upstream Core lifecycle behavior from
 `d65cf2114e4a9e083292b235af1a24789d6fe128`,
 `e49c93e678549230d09efbb0beeb50511e387874`, and
@@ -126,8 +132,8 @@ inventory ownership and mode are preserved and checked after ext4 creation.
 Card-writing and restoration instructions are in
 [the SD console guide](device/usb-console.md).
 
-The checked-in dispatcher (2,668,208 bytes, SHA-256
-`dd3cbc90e2292baf882da4011bc290dd0086dedd38eab679493f87f594d19f21`) is built
+The checked-in dispatcher (2,668,224 bytes, SHA-256
+`7f805f534ff9cfac55a0c8a9219377bb3da712733f4b92c6c8f1c0cd91e2a0ba`) is built
 from the revisions pinned in `player/stubs/vendor/VERSION`, for ARMv8-A tuned
 for Cortex-A57, C++17, no fast-math. `NAM_FEATURES` (`player/nam_build_common.sh`)
 and the Core patch add:
@@ -160,7 +166,7 @@ with the trainer architectures and seeded random weights
 1. Boot with a non-NAM preset and wait for `NAM dispatch ARMED` in
    `/tmp/nam_dispatch.log`.
 2. Verify `/usr/local/lib/nam_dispatch.so` is
-   `dd3cbc90e2292baf882da4011bc290dd0086dedd38eab679493f87f594d19f21`.
+   `7f805f534ff9cfac55a0c8a9219377bb3da712733f4b92c6c8f1c0cd91e2a0ba`.
 3. Add a capture from the app and load it through the normal User IR
    picker. If it needs a smaller A2 size, set it in `player.json` before
    loading it.
@@ -170,12 +176,14 @@ with the trainer architectures and seeded random weights
 5. Enable `TMP_NAM_PROFILE=1` only for measurements. Compare p99.9 against the
    budget above and keep the profiler setting identical between captures.
 
-Failed replacements retain the prior ready player. A failed initial NAM load
-removes its empty registry slot and leaves the unity placeholder on Fender's
-path, producing explicit bypass rather than silence. The graph-load visitor
-converts the dispatcher's runtime error to load failure; the stock live
-string-edit path may only log the error and report success, an inherited
-firmware limitation. Ordinary WAV selection cancels pending NAM work and
+A failed NAM load (unreadable model, rejected `player.json` value, unavailable
+hook) unbinds that processor, including a capture it played before, and returns
+the stock placeholder result: the block runs the unity placeholder, an explicit
+bypass rather than silence, and the preset load itself succeeds. The dispatcher
+never throws from the IR load: the firmware builds the IR unit around that call,
+and an exception there leaves the unit half-built, so its pooled `IRProcessor`
+(four are shared by both preset banks) is never returned. `NAM load failed …
+unbound=1` in the log marks it. Ordinary WAV selection cancels pending NAM work and
 restores Fender IR processing. Stop using a capture if
 it produces a deadline miss, processing error, conversion underflow, corrupted
 audio, crash, or hang.
