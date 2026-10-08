@@ -4,16 +4,10 @@
 # request_changes_workflow it submits a formal Approve / Request-changes review, which
 # counts toward the "protect main" ruleset's required approval; auto-merge.yml then lets
 # GitHub merge the owner's PRs. External PRs additionally need @pcavadas to merge.
-language: en-US
-
+# Only non-default settings are listed (https://docs.coderabbit.ai/reference/configuration).
 reviews:
   profile: assertive
   request_changes_workflow: true
-  auto_review:
-    enabled: true
-    drafts: false
-    base_branches:
-      - main
 
   pre_merge_checks:
     docstrings:
@@ -67,6 +61,26 @@ reviews:
       instructions: |
         Generated files must stay byte-identical: the ext4 audit compares them. Flag whitespace or
         line-ending changes.
+    - path: "crates/sdcard/src/{rootfs,ext4}.rs"
+      instructions: |
+        rootfs.rs is the only delta applied to the stock rootfs: every stock file it patches is checked
+        against its release.json source hash before and its patched hash after, with anchors that must
+        match exactly once. ext4.rs fixes ownership/modes with debugfs and then audits the image. Flag
+        a patch without both hash checks, a loosened anchor, or a new file, mode or owner the audit
+        does not verify.
+    - path: "player/**"
+      instructions: |
+        - Fast paths (`NAM_FEATURES` in player/nam_build_common.sh: `a2_fast`, `a1_fast`) must match the
+          generic WaveNet to rounding level (`test_nam_fast_paths`); `test_nam_zero_skip` and
+          `test_nam_ring_buffer` must stay bit-exact. Flag a fast-path change without matching tests.
+        - Speedups are measured on the unit's Cortex-A57; Apple Silicon timings do not carry over.
+          Flag performance claims backed only by host benchmarks.
+        - The dispatcher logs `impl=` per capture; keep it accurate for any new dispatch branch.
+        - The firmware keeps feeding the previous preset's capture after a switch (exact zeros on the
+          CPU1 bank, about -123 dB on the CPU2 bank). Flag level-based gating of that bank: an active
+          capture's input also drops below -120 dBFS.
+        - A changed compiled input changes `source_sha256`; the ARM binaries and their pins are
+          regenerated only via tools/release/build_player.py -> publish_release.py.
     - path: "crates/sdcard/src/card.rs"
       instructions: |
         Writes raw block devices. Flag any path that could select the system disk, skip the
@@ -86,12 +100,7 @@ reviews:
 
 knowledge_base:
   code_guidelines:
-    enabled: true
+    # CLAUDE.md is detected by default; these add the repo's other guideline documents.
     filePatterns:
-      - "CLAUDE.md"
       - "CONTRIBUTING.md"
       - "BUILDING.md"
-
-chat:
-  auto_reply: true
-  allow_non_org_members: false
