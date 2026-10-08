@@ -114,6 +114,8 @@ restart, reselect, read `NAM stats … avg_us max_us deadline_misses` in
 `/tmp/nam_dispatch.log`, then `unset-environment` + restart (volatile; no unit files).
 A2 sizes and output gain go in
 `/data/nam/player.json` keyed by the SHA-256 of the installed bytes.
+Option writes initialize a missing settings file but reject unreadable or malformed
+existing settings without replacing them; restore a valid file before retrying.
 
 Sends and installs never fail as a whole: `Unit::add` returns an `AddOutcome` (added, not
 loaded, interrupted, not sent, stop reason, `needs_restart` when the fallback ran) and streams

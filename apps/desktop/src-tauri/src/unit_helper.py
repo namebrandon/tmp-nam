@@ -268,15 +268,23 @@ def cmd_install(args):
 def cmd_opts(args):
     # opts <sha256> <size|-> <gain|->
     sha, size, gain = args[0], args[1], args[2]
-    data = read_json(PLAYER, {})
-    if not isinstance(data, dict):
-        data = {}
-    models = data.get("models")
-    if not isinstance(models, dict):
-        models = {}
-    entry = models.get(sha)
+    # read_json's default is useful for listing, but must not erase settings
+    # when an existing file cannot be read. Only a missing file is first use.
+    try:
+        with open(PLAYER) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        if os.path.lexists(PLAYER):
+            raise SystemExit("cannot read %s; settings were not changed" % PLAYER)
+        data = {"models": {}}
+    except (OSError, ValueError):
+        raise SystemExit("cannot read %s; settings were not changed" % PLAYER)
+    if not isinstance(data, dict) or not isinstance(data.get("models"), dict):
+        raise SystemExit("invalid %s: expected a models object" % PLAYER)
+    models = data["models"]
+    entry = models.get(sha, {})
     if not isinstance(entry, dict):
-        entry = {}
+        raise SystemExit("invalid %s: model settings must be an object" % PLAYER)
     for key, value in (("size", size), ("output_gain", gain)):
         if value == "-":
             entry.pop(key, None)

@@ -46,6 +46,12 @@ while IFS= read -r f; do
   report $? "python parse $f"
 done < <(git ls-files '*.py' | grep -v '^player/stubs/vendor/')
 
+echo "--- Device helper tests ---"
+# Standard unittest discovery (docs.python.org/3/library/unittest.html#test-discovery),
+# scoped to the app's host-side tests; no device connection is required.
+step "device helper settings preservation" \
+  python3 -m unittest discover -s apps/desktop/src-tauri/tests
+
 echo "--- Release pins ---"
 step "device/ assets + player sources match device/release.json" \
   cargo test -q -p tmp-sdcard --test release
