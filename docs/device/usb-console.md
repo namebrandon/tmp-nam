@@ -60,7 +60,7 @@ It verifies every boot-critical input before building:
 | Rootfs tar payload | 566,177,742 | `584ae1b7559ecc66487234d371773d7da184c8604d5d6bb4abec994542a8f4e6` |
 | `Image` | 15,948,288 | `7ea4b5c96a065e24cbba033568068355425ea672e57316d3e325c469014a9605` |
 | `fmic-tm-stomp.dtb` | 60,066 | `f768ebe2fc97bb00a2c6a7d5afd91e3d94bcc60ece4c16011603b9f5a62bae53` |
-| `nam_dispatch.so` | 2,668,224 | `7f805f534ff9cfac55a0c8a9219377bb3da712733f4b92c6c8f1c0cd91e2a0ba` |
+| `nam_dispatch.so` | 1,971,296 | `efcc31677743a42fcda1b9732b7c4abfb31f0937178a89f285b61e49885a76e1` |
 
 The build transformation is:
 
@@ -419,7 +419,7 @@ tr '\000' '\n' < /proc/$pid/environ | grep -E 'LD_PRELOAD|TMP_NAM_DISPATCH'
 grep -E 'MATCH 1.8.58|ARMED|NAM ready|NAM stats' /tmp/nam_dispatch.log
 ```
 
-The library hash must be `7f805f534ff9cfac55a0c8a9219377bb3da712733f4b92c6c8f1c0cd91e2a0ba`.
+The library hash must be `efcc31677743a42fcda1b9732b7c4abfb31f0937178a89f285b61e49885a76e1`.
 Add a capture from the app, then select it only after the device has reached the
 preset screen and the log reports `NAM dispatch ARMED`. Loading should then
 show `NAM ready` with the expected model hash and size, followed by `NAM stats`

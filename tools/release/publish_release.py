@@ -2,7 +2,8 @@
 """Publish a verified player build into device/ and device/release.json.
 
 Replaces device/bin/{nam_dispatch.so,dropbear,dropbearkey} and device/licenses,
-and rewrites the release pins, atomically with rollback. It never builds code,
+and rewrites the release pins, atomically with rollback. With --check it writes
+nothing and fails unless the build reproduces the checked-in binaries and licenses. It never builds code,
 mounts an image, contacts a device, or claims physical boot/audio validation.
 The desktop app and `tmp-sdcard` embed release.json at compile time: rebuild them
 after publishing, and run `cargo test -p tmp-sdcard` to confirm the pins.
@@ -140,10 +141,25 @@ def publish(build_dir):
             raise
 
 
+def check(build_dir):
+    """Fail unless the build's binaries and licenses equal the checked-in device/ files."""
+    writes, _ = plan(build_dir)
+    differ = [str(name) for name, (data, _) in writes.items() if name != Path("release.json")
+              and (not (DEVICE / name).is_file() or (DEVICE / name).read_bytes() != data)]
+    if differ:
+        raise RuntimeError("Build differs from the checked-in device/: " + ", ".join(differ))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--build", type=Path, required=True, help="output directory of build_player.py")
+    parser.add_argument("--check", action="store_true",
+                        help="write nothing; fail unless the build reproduces the checked-in binaries")
     args = parser.parse_args()
+    if args.check:
+        check(args.build.expanduser())
+        print("Build reproduces the checked-in device/ binaries and licenses.")
+        return
     publish(args.build.expanduser())
     print(f"Published: {RELEASE}")
     print("Rebuild the app/CLI (release.json is compiled in) and run: cargo test -p tmp-sdcard")

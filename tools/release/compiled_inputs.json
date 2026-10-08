@@ -23,6 +23,7 @@
     "player/stubs/nam_dispatch.cpp",
     "player/stubs/nam_dispatch_trampoline.c",
     "player/stubs/nam_dispatch_trampoline.h",
+    "player/stubs/nam_dispatch.map",
     "player/patches/model.cpp.patch",
     "player/toolchains/glibc_macro_cleanup.h",
     "player/toolchains/messense-v1.1.0.json",

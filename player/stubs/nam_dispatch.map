@@ -1,0 +1,22 @@
+/* Dynamic exports of nam_dispatch.so (ld version script).
+ *
+ * The library is LD_PRELOADed into tm-stomp-server, so every exported symbol
+ * interposes the same name in the server and all of its libraries. Only the
+ * deliberate hooks and our own C API are global; everything else is local,
+ * above all the statically linked GCC 10 libstdc++/libgcc (C++ ABI, std::,
+ * operator new/delete, typeinfos), which must not replace the system's GCC 7
+ * libstdc++ for the rest of the process. */
+{
+  global:
+    /* Path hooks: nam_dispatch.cpp "Hook 1" and the C-API open hooks. */
+    _ZNSt13basic_filebufIcSt11char_traitsIcEE4openEPKcSt13_Ios_Openmode;
+    fopen;
+    fopen64;
+    open;
+    open64;
+    /* Trampoline runtime (nam_dispatch_trampoline.h) and prefixed SpeexDSP. */
+    tramp_*;
+    tmp_nam_*;
+  local:
+    *;
+};

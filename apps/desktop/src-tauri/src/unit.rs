@@ -999,7 +999,7 @@ impl Unit for SimUnit {
         UnitInfo {
             port: "simulator".into(),
             build_id: Some("sim-0000".into()),
-            dispatch_sha256: Some("7f805f53…".into()),
+            dispatch_sha256: Some("efcc3167…".into()),
             python: Some("3.5.6".into()),
             simulated: true,
             busy: false,

@@ -132,8 +132,8 @@ inventory ownership and mode are preserved and checked after ext4 creation.
 Card-writing and restoration instructions are in
 [the SD console guide](device/usb-console.md).
 
-The checked-in dispatcher (2,668,224 bytes, SHA-256
-`7f805f534ff9cfac55a0c8a9219377bb3da712733f4b92c6c8f1c0cd91e2a0ba`) is built
+The checked-in dispatcher (1,971,296 bytes, SHA-256
+`efcc31677743a42fcda1b9732b7c4abfb31f0937178a89f285b61e49885a76e1`) is built
 from the revisions pinned in `player/stubs/vendor/VERSION`, for ARMv8-A tuned
 for Cortex-A57, C++17, no fast-math. `NAM_FEATURES` (`player/nam_build_common.sh`)
 and the Core patch add:
@@ -153,6 +153,12 @@ the unit 2.7e-5, 88 dB below peak); other networks use the generic path with
 the retained AArch64 Dense8x8 NEON optimization. `player/build_nam_dispatch.sh` first rebuilds Core from
 canonical sources, then performs the release strip and verifies ELF64
 AArch64, allowed dynamic dependencies, and GLIBC no newer than 2.28.
+libstdc++ and libgcc are linked statically, and the version script
+`player/stubs/nam_dispatch.map` exports only the path hooks (`open`, `open64`,
+`fopen`, `fopen64`, `basic_filebuf<char>::open(const char*, openmode)`),
+`tramp_*` and `tmp_nam_*`. The preloaded library therefore never interposes the
+engine's GCC 7 C++ runtime (`__cxa_*`, `std::terminate`, `std::thread`,
+`operator new`, typeinfos).
 
 Native dispatcher coverage always runs five hash-pinned upstream example
 models from the pinned NeuralAmpModelerCore checkout (including the full-size
@@ -166,7 +172,7 @@ with the trainer architectures and seeded random weights
 1. Boot with a non-NAM preset and wait for `NAM dispatch ARMED` in
    `/tmp/nam_dispatch.log`.
 2. Verify `/usr/local/lib/nam_dispatch.so` is
-   `7f805f534ff9cfac55a0c8a9219377bb3da712733f4b92c6c8f1c0cd91e2a0ba`.
+   `efcc31677743a42fcda1b9732b7c4abfb31f0937178a89f285b61e49885a76e1`.
 3. Add a capture from the app and load it through the normal User IR
    picker. If it needs a smaller A2 size, set it in `player.json` before
    loading it.

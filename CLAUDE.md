@@ -170,6 +170,9 @@ are the record.
   checks `checks`, `rust (macos-latest|ubuntu-22.04)`, `frontend`,
   `bundle (macos-latest|ubuntu-22.04)` (`ci.yml`) and `commitlint` (`commitlint.yml`).
   Renaming a job means updating the ruleset.
+- `player.yml` (not required; path-filtered to `player/`, `tools/release/` and the published
+  files) rebuilds the ARM binaries on macOS and fails unless they are byte-identical to
+  `device/` (`publish_release.py --check`). Publishing stays manual.
 - Every commit is a Conventional Commit (commitlint); the squashed title drives the version.
 - Dependabot (`.github/dependabot.yml`) opens weekly grouped updates with a 7-day cooldown;
   `dependabot-auto-approve.yml` approves them. It cannot parse Bun 1.4's `bun.lock` v2 yet

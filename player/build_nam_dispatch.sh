@@ -13,7 +13,9 @@ mkdir -p "$OUT_DIR"
   -c "$SCRIPT_DIR/stubs/nam_dispatch_trampoline.c" -o "$OUT_DIR/nam_dispatch_trampoline.o"
 "$TMP_CROSS_CXX" "${NAM_COMMON[@]}" -c "$SCRIPT_DIR/stubs/nam_dispatch.cpp" -o "$OUT_DIR/nam_dispatch.o"
 "$TMP_CROSS_CXX" "${NAM_COMMON[@]}" -c "$SCRIPT_DIR/nam_player.cpp" -o "$OUT_DIR/nam_player.o"
+# The version script keeps the static C++ runtime out of the preloaded exports.
 "$TMP_CROSS_CXX" -shared -fPIC "${NAM_CPU[@]}" -o "$OUT" \
+  -Wl,--version-script="$SCRIPT_DIR/stubs/nam_dispatch.map" \
   "$OUT_DIR/nam_dispatch.o" "$OUT_DIR/nam_dispatch_trampoline.o" "$OUT_DIR/nam_player.o" "${NAM_LINK[@]}"
 "$TMP_CROSS_STRIP" --strip-unneeded "$OUT"
 tmp_cross_check --kind shared --allow libc.so.6 --allow libm.so.6 \

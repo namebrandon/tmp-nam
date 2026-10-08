@@ -121,9 +121,16 @@ cargo test -p tmp-sdcard            # confirms the new pins
 `nam_dispatch.so` (`NAM_BUILD_PASS=perf`, Cortex-A57) and static musl Dropbear
 2024.86 with pinned Zig, and records provenance. Output and work directories must be
 new/empty. `publish_release.py` copies the binaries and licenses into `device/` and
-rewrites `release.json` atomically. This is source reconstruction, not
-byte-reproducibility: new binaries get new hashes and need a fresh owner check on
-the unit (boot, audio, switching) before they are trusted.
+rewrites `release.json` atomically. The build is byte-reproducible: the same
+sources and pins give the same binaries, and the `player` workflow
+(`.github/workflows/player.yml`) rebuilds them on every change to `player/`,
+`tools/release/` or the published files and runs `publish_release.py --check` to
+compare them with `device/`. Changed sources give new hashes, and new binaries need
+a fresh owner check on the unit (boot, audio, switching) before they are trusted.
+
+```sh
+python3 tools/release/publish_release.py --check --build build/player   # writes nothing
+```
 
 Individual player builds (all honor `TMP_NAM_VENDOR_DIR`; use one per worktree):
 
