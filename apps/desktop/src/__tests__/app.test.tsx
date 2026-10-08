@@ -1,7 +1,8 @@
 // Flows against the in-page mock backend (src/lib/mock.ts), one per page.
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { api } from "../lib/api";
 import App from "../App";
 
 const wait = { timeout: 4000 };
@@ -40,6 +41,54 @@ describe("Captures", () => {
     expect(screen.queryByText("Output gain")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("radio", { name: /Lite/ }));
     expect(await screen.findByText("Saved to the unit")).toBeInTheDocument();
+  });
+
+  it("shows the recovery warning and backup location after saving options", async () => {
+    const warning =
+      "Invalid player settings were reset. Backup: /data/nam/player.json.invalid.example. Reselect the capture on the unit.";
+    const save = vi.spyOn(api, "unitSetOptions").mockResolvedValue(warning);
+    try {
+      render(<App />);
+      await screen.findByRole(
+        "heading",
+        { name: "Fender Deluxe Reverb '65 Vibrato" },
+        wait,
+      );
+      await userEvent.click(screen.getByRole("radio", { name: /Full/ }));
+      expect(
+        await screen.findByText("Player settings recovered"),
+      ).toBeInTheDocument();
+      expect(screen.getByText(warning)).toBeInTheDocument();
+      expect(screen.getByText("Saved to the unit")).toBeInTheDocument();
+    } finally {
+      save.mockRestore();
+    }
+  });
+
+  it("does not report a save or recovery when settings remain unreadable", async () => {
+    const save = vi
+      .spyOn(api, "unitSetOptions")
+      .mockRejectedValue(
+        new Error("cannot read player.json; settings were not changed"),
+      );
+    try {
+      render(<App />);
+      await screen.findByRole(
+        "heading",
+        { name: "Fender Deluxe Reverb '65 Vibrato" },
+        wait,
+      );
+      await userEvent.click(screen.getByRole("radio", { name: /Full/ }));
+      expect(
+        await screen.findByText(/cannot read player.json/),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("Player settings recovered"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Saved to the unit")).not.toBeInTheDocument();
+    } finally {
+      save.mockRestore();
+    }
   });
 
   it("checks files, sends the valid ones and reports the result", async () => {

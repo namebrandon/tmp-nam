@@ -1,6 +1,6 @@
 #!/bin/bash
 # Repository checks. Usage: scripts/check.sh [quick|all]
-#   quick  syntax checks + release-pin integrity (no toolchains beyond cargo/python)
+#   quick  syntax + helper tests + release pins + no-exploit grep (cargo/python)
 #   all    quick + Rust tests/clippy + desktop typecheck/lint/tests
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -45,6 +45,12 @@ while IFS= read -r f; do
   python3 -c "import ast, sys; ast.parse(open(sys.argv[1]).read())" "$f" 2>/dev/null
   report $? "python parse $f"
 done < <(git ls-files '*.py' | grep -v '^player/stubs/vendor/')
+
+echo "--- Device helper tests ---"
+# Standard unittest discovery (docs.python.org/3/library/unittest.html#test-discovery),
+# scoped to the app's host-side tests; no device connection is required.
+step "device helper settings preservation" \
+  python3 -m unittest discover -s apps/desktop/tests
 
 echo "--- Release pins ---"
 step "device/ assets + player sources match device/release.json" \

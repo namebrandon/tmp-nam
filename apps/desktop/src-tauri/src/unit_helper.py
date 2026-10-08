@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import sys
+import tempfile
 import time
 
 IR_DIR = "/data/userIRs"
@@ -265,30 +266,80 @@ def cmd_install(args):
     emit({"installed": name, "bytes": len(raw)})
 
 
+def backup_player(raw):
+    # Exclusive creation keeps earlier backups intact. Copy before replacing:
+    # a failed backup or atomic save must leave the original file in place.
+    fd, path = tempfile.mkstemp(prefix="player.json.invalid.",
+                                dir=os.path.dirname(PLAYER))
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(raw)
+            f.flush()
+            os.fsync(f.fileno())
+    except OSError:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        raise
+    return path
+
+
 def cmd_opts(args):
     # opts <sha256> <size|-> <gain|->
     sha, size, gain = args[0], args[1], args[2]
-    data = read_json(PLAYER, {})
-    if not isinstance(data, dict):
-        data = {}
-    models = data.get("models")
-    if not isinstance(models, dict):
-        models = {}
-    entry = models.get(sha)
+    values = [(key, None if value == "-" else float(value))
+              for key, value in (("size", size), ("output_gain", gain))]
+    raw = None
+    try:
+        with open(PLAYER, "rb") as f:
+            raw = f.read()
+    except FileNotFoundError:
+        if os.path.lexists(PLAYER):
+            raise SystemExit("cannot read %s; settings were not changed" % PLAYER)
+    except OSError:
+        raise SystemExit("cannot read %s; settings were not changed" % PLAYER)
+    recovery = None
+    if raw is None:
+        data = {"models": {}}
+    else:
+        try:
+            data = json.loads(raw.decode("utf-8"))
+        except ValueError:
+            data = None
+        if not isinstance(data, dict) or not isinstance(data.get("models"), dict):
+            data = {"models": {}}
+            recovery = "Invalid player settings were reset; other captures use defaults."
+    models = data["models"]
+    entry = models.get(sha, {})
     if not isinstance(entry, dict):
         entry = {}
-    for key, value in (("size", size), ("output_gain", gain)):
-        if value == "-":
+        recovery = "Invalid settings for this capture were reset."
+    for key, value in values:
+        if value is None:
             entry.pop(key, None)
         else:
-            entry[key] = float(value)
+            entry[key] = value
     if entry:
         models[sha] = entry
     else:
         models.pop(sha, None)
-    data["models"] = models
-    write_json(PLAYER, data, indent=2)
-    emit({"options": entry})
+    backup = None
+    if recovery:
+        try:
+            backup = backup_player(raw)
+        except OSError:
+            raise SystemExit("cannot back up %s; settings were not changed" % PLAYER)
+    try:
+        write_json(PLAYER, data, indent=2)
+    except OSError:
+        if backup:
+            raise SystemExit("cannot save settings; original retained; backup: %s" % backup)
+        raise
+    result = {"options": entry}
+    if backup:
+        result["warning"] = "%s Backup: %s. Reselect the capture on the unit." % (recovery, backup)
+    emit(result)
 
 
 COMMANDS = {

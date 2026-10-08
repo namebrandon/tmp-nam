@@ -270,7 +270,7 @@ export const api = {
   unitRegister: (names: string[]) => call<boolean>("unit_register", { names }),
   unitReload: () => call<null>("unit_reload"),
   unitSetOptions: (sha256: string, options: PlayerOptions) =>
-    call<null>("unit_set_options", { sha256, options }),
+    call<string | null>("unit_set_options", { sha256, options }),
 
   settingsGet: () => call<Settings>("settings_get"),
   settingsSet: (settings: Settings) => call<null>("settings_set", { settings }),
