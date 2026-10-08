@@ -52,7 +52,7 @@ Sidebar: **Captures** (with count) · **Tone3000** · **SD Card** · (bottom) **
 
 Toolbar: title, subtitle "N on unit · size", primary **Add Captures…**.
 
-Body: a table (Name with a gear caption line "Make · Model · Type", Type tag, file Size, Gain) plus a 300 px inspector for the selected row. Footer: "N captures need attention · select one to fix it" when flags exist.
+Body: a table (Name with a gear caption line "Make · Model · Type", Type tag, file Size) plus a 300 px inspector for the selected row. Footer: "N captures need attention · select one to fix it" when flags exist.
 
 Type tag:
 - A2 → `A2 · <number of sizes>` (inspector: `A2 · 3 sizes`)
@@ -62,8 +62,9 @@ Inspector, normal capture:
 - Header: name, gear line, tags (architecture, sample rate, file size).
 - **Size** (A2 only): segmented picker, smallest → largest, labels taken from the container ("Feather … Full"; some containers have 3+ sizes). Help: "Larger sizes sound closer to the amp but use more of the unit's processing. If it crackles, go smaller."
 - **Size** (A1): "This file is the Feather size. An A1 file holds only one size, so to try another, install that variant from Tone3000." + **Show in Tone3000** (opens the tone with its model menu). When the size is unknown: "An A1 file holds only one size. To use another size, add that variant's .nam file."
-- **Output gain:** 0× to 8× in 0.5 steps; stepper + slider + presets 1× ("as captured") and 4×. Shows dB = 20·log10(×), e.g. 4× = +12.0 dB; 0× = "Muted". After a change: "was 1×". Help: "NAM captures play about 12 dB quieter than the stock amp blocks. 4× makes up for it."
-- After any size or gain change: blue note "Saved to the unit. Size and gain apply the next time you select this capture on the unit. If it's selected now, pick another capture and come back." The row's gain shows a blue dot.
+- Output gain is configured on the unit, not edited in the desktop. A size change preserves the gain read from the unit when saving, including changes made since the last list refresh. Full removes only the size override.
+- After a size change: blue note "Saved to the unit. The size applies the next time you select this capture on the unit. If it's selected now, pick another capture and come back." The row shows a blue dot.
+- If player settings cannot be read or listed options are invalid, Captures shows **Player settings unavailable** with **Refresh settings**. No A2 size is selected until a reliable refresh. An absent settings file uses defaults without a warning. A size change may recover malformed settings with a backup and a separate **Player settings recovered** warning; see [nam-player.md](../../../docs/nam-player.md).
 - **Remove from Unit…** → sheet: "Remove “<name>” from the unit?" / "Presets that use this capture will lose it. On the unit, you'll need to pick another IR in those presets." / Cancel (default focus) · **Remove** (red).
 
 Flags:
@@ -162,9 +163,10 @@ Segmented: Tone3000 · Allowed Variants · Unit.
 - **Unit:** `state` (looking | connected | missing | busy), `cardBuildId`, `namPlayerHash`.
 - **Capture:**
   - `id`, `name`, `gear {make, model, type}?`, `sampleRate` (44.1 | 48 kHz), `fileSize`
-  - `architecture` (A1 | A2), `sizes[]` (A2, smallest → largest), `selectedSize` (A2)
-  - `a1Size?` (A1, when known), `gain` (0–8, step 0.5)
+  - `architecture` (A1 | A2), `sizes[]` (A2, smallest → largest), `selectedSize` (A2; unknown when settings cannot be read reliably)
+  - `a1Size?` (A1, when known); gain is preserved on the unit, not edited in the UI
   - `flags` (registeredButMissing | presentButUnregistered | failedAfterRestart), `source` (file | tone3000 + toneId)
+- **Capture list:** optional `settings_error`, independent of whether captures are present.
 - **Tone:** `id`, `title`, `author`, `source` (bookmark | own), `models[]` ("A2 Feather"…), `override?`, `onUnit`.
 - **AllowedVariants:** `{A2: [...], A1: [...]}`.
 - **Operation** (singleton): kind (send | install | sdBuild), phase, items with per-item state and bytes, overall progress.
@@ -179,7 +181,7 @@ These are design assumptions, not known facts. Confirm them while building:
 3. **API key storage:** the Keychain is assumed.
 4. **Interrupted transfer:** the copy says the partial file isn't kept. The app must guarantee it, or the copy changes.
 5. **Not registered → Register:** the Register action is a design assumption. Confirm the unit supports it.
-6. **New captures start at 1× gain** (as captured).
+6. **Gain defaults to 1×** when the model hash has no stored override; adding a capture or changing its size does not reset an existing override.
 7. **Refused disks:** only "Not a USB reader" was specified. Other refusal reasons need copy.
 8. **Stopping a card build** mid-write isn't designed (the static screen shows a Stop… button, the prototype leaves it out). Decide whether it's allowed.
 9. **Sample data:** all names, sizes, hashes, IDs and usernames are made up.

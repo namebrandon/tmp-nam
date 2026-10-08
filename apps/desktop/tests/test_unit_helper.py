@@ -104,6 +104,41 @@ class PlayerOptionsTests(unittest.TestCase):
         self.assertNotIn("settings_error", listed)
         self.assertEqual(listed["models"][0]["options"], {"output_gain": 4.0})
 
+    def test_invalid_listed_numbers_warn_without_hiding_captures_or_writing(self):
+        for key, values in (("size", ["0.5", None, True, [], {}, -1, 2,
+                                      float("nan"), float("inf")]),
+                            ("output_gain", ["4", None, False, [], {}, -1, 9,
+                                             float("nan"), float("inf")])):
+            for value in values:
+                with self.subTest(key=key, value=value):
+                    self.save({"models": {"new-hash": {key: value}}})
+                    before = self.path.read_bytes()
+                    listed = self.listed()
+                    self.assertIn("settings_error", listed)
+                    self.assertEqual(len(listed["models"]), 1)
+                    self.assertEqual(listed["models"][0]["options"], {})
+                    # The reply must be strict JSON, including non-finite inputs.
+                    json.dumps(listed, allow_nan=False)
+                    self.assertEqual(self.path.read_bytes(), before)
+
+    def test_list_accepts_zero_and_boundary_options(self):
+        for size, gain in ((0, 0), (1, 8), (0.5, 4.0)):
+            self.save({"models": {"new-hash": {"size": size, "output_gain": gain}}})
+            listed = self.listed()
+            self.assertNotIn("settings_error", listed)
+            self.assertEqual(listed["models"][0]["options"],
+                             {"size": size, "output_gain": gain})
+
+    def test_empty_patch_does_not_read_write_or_recover_settings(self):
+        for raw in (None, b"invalid", b'{"models":{"new-hash":{"output_gain":4}}}'):
+            with self.subTest(raw=raw):
+                if raw is not None:
+                    self.path.write_bytes(raw)
+                with mock.patch.object(self.helper, "open", side_effect=AssertionError("unexpected read"), create=True):
+                    self.assertEqual(self.options(size="=", gain="="), {"unchanged": True})
+                self.assertEqual(self.path.read_bytes() if self.path.exists() else None, raw)
+                self.assertEqual(list(self.path.parent.glob("player.json.invalid.*")), [])
+
     def test_missing_settings_are_initialized(self):
         self.assertEqual(self.options(), {"options": {"size": 0.5}})
         self.assertEqual(json.loads(self.path.read_text(encoding="utf-8")),

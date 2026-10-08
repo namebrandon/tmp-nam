@@ -189,6 +189,12 @@ export function Inspector({
                   disabled={disabled}
                   onChange={setSize}
                 />
+                {app.settingsError && (
+                  <span className="small muted">
+                    Current size is unknown because player settings could not be
+                    read reliably.
+                  </span>
+                )}
                 <span className="small muted3">
                   Larger sizes sound closer to the amp but use more of the
                   unit&apos;s processing. If it crackles, go smaller.

@@ -87,6 +87,7 @@ describe("Captures", () => {
       expect(
         await screen.findByText("Player settings unavailable", {}, wait),
       ).toBeInTheDocument();
+      expect(screen.getByText(/Current size is unknown/)).toBeInTheDocument();
       const sizes = screen.getAllByRole("radio");
       expect(sizes.length).toBeGreaterThan(0);
       for (const size of sizes)
@@ -105,6 +106,25 @@ describe("Captures", () => {
           .getAllByRole("radio")
           .some((size) => size.getAttribute("aria-checked") === "true"),
       ).toBe(true);
+    } finally {
+      list.mockRestore();
+    }
+  });
+
+  it("shows settings errors even when no captures are installed", async () => {
+    const list = vi.spyOn(api, "unitList").mockResolvedValue({
+      models: [],
+      settings_error: "Invalid player settings in /data/nam/player.json.",
+    });
+    try {
+      render(<App />);
+      expect(
+        await screen.findByText("Player settings unavailable", {}, wait),
+      ).toBeInTheDocument();
+      expect(screen.getByText("No captures on the unit")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Refresh settings" }),
+      ).toBeEnabled();
     } finally {
       list.mockRestore();
     }

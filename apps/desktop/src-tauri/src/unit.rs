@@ -138,6 +138,12 @@ pub struct PlayerOptionsPatch {
     pub output_gain: OptionChange,
 }
 
+impl PlayerOptionsPatch {
+    fn is_empty(&self) -> bool {
+        self.size == OptionChange::Keep && self.output_gain == OptionChange::Keep
+    }
+}
+
 #[derive(Debug, Default, PartialEq)]
 pub enum OptionChange {
     #[default]
@@ -896,6 +902,9 @@ impl Unit for ConsoleUnit {
         sha256: &str,
         opts: &PlayerOptionsPatch,
     ) -> Result<Option<String>, String> {
+        if opts.is_empty() {
+            return Ok(None);
+        }
         let result = self.helper(
             "opts",
             &[
@@ -1243,6 +1252,10 @@ mod tests {
     #[test]
     fn option_patch_distinguishes_keep_remove_and_set() {
         let patch: PlayerOptionsPatch = serde_json::from_str(r#"{"size":0.0}"#).unwrap();
+        assert!(!patch.is_empty());
+        assert!(serde_json::from_str::<PlayerOptionsPatch>("{}")
+            .unwrap()
+            .is_empty());
         assert_eq!(patch.size.helper_arg(), "0");
         assert_eq!(patch.output_gain.helper_arg(), "=");
         let full: PlayerOptionsPatch = serde_json::from_str(r#"{"size":null}"#).unwrap();
@@ -1252,6 +1265,20 @@ mod tests {
         assert_eq!(gain.size, OptionChange::Keep);
         assert_eq!(gain.output_gain.helper_arg(), "-");
         assert!(serde_json::from_str::<PlayerOptionsPatch>(r#"{"size":"0"}"#).is_err());
+    }
+
+    #[test]
+    fn list_settings_warning_survives_decoding_without_models() {
+        let reply =
+            parse_last_json(r#"{"models":[],"settings_error":"cannot read settings"}"#).unwrap();
+        let listed: ModelList<UnitModel> = serde_json::from_value(reply).unwrap();
+        assert!(listed.models.is_empty());
+        assert_eq!(
+            listed.settings_error.as_deref(),
+            Some("cannot read settings")
+        );
+        let valid: ModelList<UnitModel> = serde_json::from_str(r#"{"models":[]}"#).unwrap();
+        assert!(valid.settings_error.is_none());
     }
 
     #[test]

@@ -120,7 +120,9 @@ the Inspector displays the returned warning. An invalid selected entry is reset
 without changing other entries. Option patches omit fields to keep them, use null
 to remove overrides, and numbers to set them (`opts` helper: `=`, `-`, number).
 The Inspector patches only size, never a cached gain. Lists return models plus an
-optional `settings_error`, shown on Captures without repairing the file.
+optional `settings_error`, shown on Captures without repairing the file. Invalid
+listed size/gain values are omitted with a warning so they cannot break list
+decoding. An empty option patch is a no-op, including on malformed settings.
 See `docs/nam-player.md` for recovery details.
 
 Sends and installs never fail as a whole: `Unit::add` returns an `AddOutcome` (added, not

@@ -138,6 +138,22 @@ def registered_names():
                if isinstance(e, dict) and e.get("name"))
 
 
+def listed_options(entry):
+    # Only expose the numeric options the desktop understands. Invalid values
+    # must not make the entire list undecodable by the Rust backend.
+    if not isinstance(entry, dict):
+        raise ValueError("expected a capture settings object")
+    options = {}
+    for key, maximum in (("size", 1), ("output_gain", 8)):
+        if key in entry:
+            value = entry[key]
+            if (isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not 0 <= value <= maximum):
+                raise ValueError("invalid " + key)
+            options[key] = value
+    return options
+
+
 def cmd_list(_args):
     names = registered_names()
     settings_error = None
@@ -192,8 +208,12 @@ def cmd_list(_args):
             "present": True,
         }
         row.update(cached)
-        sel = opts.get(cached.get("sha256"))
-        row["options"] = sel if isinstance(sel, dict) else {}
+        sel = opts.get(cached.get("sha256"), {})
+        try:
+            row["options"] = listed_options(sel)
+        except ValueError:
+            row["options"] = {}
+            settings_error = "Invalid capture settings in %s." % PLAYER
         rows.append(row)
     for name in sorted(names):
         if name.endswith(".nam") and not os.path.isfile(
@@ -309,6 +329,9 @@ def cmd_opts(args):
     values = [(key, None if value == "-" else float(value))
               for key, value in (("size", size), ("output_gain", gain))
               if value != "="]
+    if not values:
+        emit({"unchanged": True})
+        return
     raw = None
     try:
         with open(PLAYER, "rb") as f:

@@ -85,10 +85,12 @@ stored on the unit, including edits made over SSH since the last refresh. Select
 Full removes the size override without removing gain or other fields.
 
 Listing captures does not repair settings; recovery happens on an option write.
-If existing settings cannot be read or parsed, or have an invalid object structure,
-the Captures page warns that listed options are unreliable and leaves the size
-picker without a selected value. A missing settings file uses defaults without a
-warning. Refresh after correcting the file to show the current options.
+If existing settings cannot be read or parsed, have an invalid object structure,
+or a listed capture has an invalid size/gain value, the Captures page warns that
+listed options are unreliable and leaves the size picker without a selected value. A missing settings file uses defaults without a
+warning. Use **Refresh settings** after correcting the file to show the current
+options. Listing does not validate every player setting; a warning is not an
+automatic repair of invalid numeric values. Correct these via the console or SSH.
 
 For a `SlimmableContainer`, upstream uses exclusive `max_value` thresholds;
 size is a selector rather than a percentage. Missing rate metadata requires an

@@ -23,7 +23,7 @@ The card builder needs `squashfs e2fsprogs mtools util-linux` (Homebrew) or
 `squashfs-tools e2fsprogs mtools util-linux dosfstools parted udev` (Linux).
 
 ```bash
-scripts/check.sh quick     # syntax, release-pin integrity, no-exploit grep
+scripts/check.sh quick     # syntax, helper tests, release-pin integrity, no-exploit grep
 scripts/check.sh all       # + cargo test/clippy -D warnings + typecheck/lint/vitest
 cd apps/desktop && TMP_NAM_SIM=1 bun run tauri dev   # simulated unit, no hardware
 ```
