@@ -60,6 +60,28 @@ a silent alteration — an absent key is bit-identical to the model:
 ```
 
 Provisioning preserves an existing `player.json` and does not create one.
+The desktop creates it on the first option change if it is missing. If it cannot
+read the file (for example, a permissions or I/O error), it refuses the change
+without replacing the file. Correct the storage/access problem before retrying.
+
+When an option change encounters malformed JSON or an invalid top-level/models
+structure, the desktop first saves the exact old bytes in a uniquely named
+`/data/nam/player.json.invalid.*` backup, then atomically saves a fresh settings
+file containing the requested options. Other captures revert to defaults. If
+only the selected capture's entry is not an object, it resets that entry while
+preserving other entries and top-level fields. The Inspector warns that recovery
+occurred and shows the backup path. Earlier backups are never overwritten; a
+failed backup or save leaves the original settings in place and reports an error.
+Reselect the capture on the unit to load the saved options.
+
+To recover custom settings, use the [USB console](device/usb-console.md) or
+[SSH](device/lan-access.md) to copy the named backup to your computer, repair its
+JSON, and restore the desired entries to `/data/nam/player.json`. Do not copy an
+unrepaired backup over the active file. Reapply sizes in the desktop; gain and
+`sample_rate_hz` overrides require editing the file. Captures needing an explicit
+sample-rate override may remain unloadable until that override is restored.
+Listing captures does not repair settings; recovery happens on an option write.
+
 For a `SlimmableContainer`, upstream uses exclusive `max_value` thresholds;
 size is a selector rather than a percentage. Missing rate metadata requires an
 explicit `sample_rate_hz` of 44100 or 48000, and conflicting known rates are

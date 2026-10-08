@@ -436,7 +436,7 @@ async fn unit_set_options(
     state: State<'_, AppState>,
     sha256: String,
     options: PlayerOptions,
-) -> Result<(), String> {
+) -> Result<Option<String>, String> {
     if let Some(s) = options.size {
         if !(0.0..=1.0).contains(&s) {
             return Err("size must be between 0 and 1".into());

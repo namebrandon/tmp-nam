@@ -236,7 +236,9 @@ pub trait Unit: Send {
     /// Drop what an interrupted batch left registered without its real file (no file,
     /// or the add's placeholder), and the partial upload.
     fn discard_unsent(&mut self, names: &[String]) -> Result<(), String>;
-    fn set_options(&mut self, sha256: &str, opts: &PlayerOptions) -> Result<(), String>;
+    /// Save options, returning a user-visible warning if invalid settings were recovered.
+    fn set_options(&mut self, sha256: &str, opts: &PlayerOptions)
+        -> Result<Option<String>, String>;
     /// Cheap liveness check; false means the transport is gone.
     fn alive(&mut self) -> bool;
 }
@@ -837,14 +839,21 @@ impl Unit for ConsoleUnit {
         Ok(())
     }
 
-    fn set_options(&mut self, sha256: &str, opts: &PlayerOptions) -> Result<(), String> {
+    fn set_options(
+        &mut self,
+        sha256: &str,
+        opts: &PlayerOptions,
+    ) -> Result<Option<String>, String> {
         let fmt = |v: Option<f64>| v.map(|x| x.to_string()).unwrap_or_else(|| "-".into());
-        self.helper(
+        let result = self.helper(
             "opts",
             &[sha256.to_string(), fmt(opts.size), fmt(opts.output_gain)],
             30,
         )?;
-        Ok(())
+        Ok(result
+            .get("warning")
+            .and_then(Value::as_str)
+            .map(str::to_string))
     }
 
     fn alive(&mut self) -> bool {
@@ -1148,7 +1157,11 @@ impl Unit for SimUnit {
         Ok(())
     }
 
-    fn set_options(&mut self, sha256: &str, opts: &PlayerOptions) -> Result<(), String> {
+    fn set_options(
+        &mut self,
+        sha256: &str,
+        opts: &PlayerOptions,
+    ) -> Result<Option<String>, String> {
         Self::with(|s| {
             if opts.size.is_none() && opts.output_gain.is_none() {
                 s.options.remove(sha256);
@@ -1156,7 +1169,7 @@ impl Unit for SimUnit {
                 s.options.insert(sha256.to_string(), opts.clone());
             }
         });
-        Ok(())
+        Ok(None)
     }
 
     fn alive(&mut self) -> bool {

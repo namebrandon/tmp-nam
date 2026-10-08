@@ -19,7 +19,7 @@ concurrency:
 # renaming a job or a matrix entry needs the ruleset updated in the same change.
 jobs:
   checks:
-    # Syntax, device/ assets + player sources vs device/release.json, no-exploit grep.
+    # Syntax, helper tests, device/ assets + player sources vs device/release.json, no-exploit grep.
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:

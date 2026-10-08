@@ -27,7 +27,7 @@ or binary-analysis code here; `scripts/check.sh` enforces that with a grep.
 ## Commands
 
 ```bash
-scripts/check.sh quick                     # syntax + release-pin integrity + no-exploit grep
+scripts/check.sh quick                     # syntax + helper tests + release-pin integrity + no-exploit grep
 scripts/check.sh all                       # + cargo test/clippy -D warnings + desktop typecheck/lint/vitest
 cargo test --workspace                     # Rust (crates/sdcard + app backend, incl. pty console tests)
 cargo test -p tmp-sdcard --test release    # device/ assets, player sources, licenses vs release.json
@@ -114,8 +114,10 @@ restart, reselect, read `NAM stats … avg_us max_us deadline_misses` in
 `/tmp/nam_dispatch.log`, then `unset-environment` + restart (volatile; no unit files).
 A2 sizes and output gain go in
 `/data/nam/player.json` keyed by the SHA-256 of the installed bytes.
-Option writes initialize a missing settings file but reject unreadable or malformed
-existing settings without replacing them; restore a valid file before retrying.
+Option writes initialize a missing file and refuse unreadable settings. Malformed
+JSON/structure is backed up to a unique `player.json.invalid.*` file before recovery;
+the Inspector displays the returned warning. An invalid selected entry is reset
+without changing other entries. See `docs/nam-player.md` for recovery details.
 
 Sends and installs never fail as a whole: `Unit::add` returns an `AddOutcome` (added, not
 loaded, interrupted, not sent, stop reason, `needs_restart` when the fallback ran) and streams

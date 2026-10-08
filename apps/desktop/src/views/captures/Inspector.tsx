@@ -38,6 +38,7 @@ export function Inspector({
     !app.connected || app.busyReason !== null || app.unit === "busy";
   const mark = app.marks[name] ?? {};
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const sha = c?.sha256 ?? null;
   const options = c?.options ?? {};
@@ -45,9 +46,11 @@ export function Inspector({
   const save = async (next: { size?: number; output_gain?: number }) => {
     if (!sha) return;
     try {
-      await api.unitSetOptions(sha, next);
-      await app.refreshCaptures();
+      const warning = await api.unitSetOptions(sha, next);
+      setWarning(warning);
       setError(null);
+      app.mark(name, { changed: true });
+      await app.refreshCaptures();
     } catch (e) {
       setError(errorText(e));
     }
@@ -57,7 +60,6 @@ export function Inspector({
   const setSize = (label: string) => {
     const step = steps.find((s) => s.label === label);
     if (!step) return;
-    app.mark(name, { changed: true });
     // Keep any output gain already on the unit; the app doesn't set it.
     void save({ size: step.size, output_gain: options.output_gain });
   };
@@ -230,6 +232,17 @@ export function Inspector({
                   unit.
                 </span>
               ))}
+            {warning && (
+              <Banner
+                tone="warn"
+                title="Player settings recovered"
+                onDismiss={() => {
+                  setWarning(null);
+                }}
+              >
+                {warning}
+              </Banner>
+            )}
             {error && (
               <span className="small" style={{ color: "var(--danger)" }}>
                 {error}
