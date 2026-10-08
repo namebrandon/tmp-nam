@@ -903,6 +903,7 @@ mod tests {
         let listed = u
             .list()
             .unwrap()
+            .models
             .into_iter()
             .find(|x| x.name == name)
             .expect("listed");

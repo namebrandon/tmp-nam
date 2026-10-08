@@ -42,6 +42,68 @@ class PlayerOptionsTests(unittest.TestCase):
         self.assertEqual(self.path.read_bytes(), before)
         self.assertEqual(output.getvalue(), "")
 
+    def listed(self):
+        self.helper.IR_DIR = str(self.path.parent)
+        self.helper.INDEX = str(self.path.parent / "index.json")
+        capture = self.path.parent / "test.nam.wav"
+        capture.write_bytes(b"fixture")
+        output = io.StringIO()
+        with mock.patch.object(self.helper, "registered_names", return_value=[]), \
+                mock.patch.object(self.helper, "sha256_path", return_value="new-hash"), \
+                mock.patch.object(self.helper, "describe", return_value={}), \
+                contextlib.redirect_stdout(output):
+            self.helper.cmd_list([])
+        return json.loads(output.getvalue())
+
+    def test_size_change_preserves_gain_after_failed_list_read(self):
+        self.save({"models": {"new-hash": {"size": 0.5, "output_gain": 4.0}}})
+        real_open = open
+        def fail_settings_read(path, *args, **kwargs):
+            if path == str(self.path):
+                raise OSError(errno.EIO, "read failed")
+            return real_open(path, *args, **kwargs)
+        with mock.patch.object(self.helper, "open", fail_settings_read, create=True):
+            listed = self.listed()
+        self.assertEqual(listed["models"][0]["options"], {})
+        result = self.options(size="0", gain="=")
+        self.assertEqual(result, {"options": {"size": 0.0, "output_gain": 4.0}})
+        self.assertIn("settings_error", listed)
+
+    def test_size_change_preserves_gain_changed_since_listing(self):
+        self.save({"models": {"new-hash": {"output_gain": 2.0}}})
+        self.assertEqual(self.listed()["models"][0]["options"]["output_gain"], 2.0)
+        self.save({"models": {"new-hash": {"output_gain": 4.0, "sample_rate_hz": 48000},
+                              "other": {"output_gain": 3.0}}})
+        self.assertEqual(self.options(size="0", gain="=")["options"],
+                         {"size": 0.0, "output_gain": 4.0, "sample_rate_hz": 48000})
+        self.assertEqual(self.options(size="-", gain="=")["options"],
+                         {"output_gain": 4.0, "sample_rate_hz": 48000})
+        self.assertEqual(self.options(size="=", gain="-")["options"],
+                         {"sample_rate_hz": 48000})
+        self.assertEqual(json.loads(self.path.read_text(encoding="utf-8"))["models"]["other"],
+                         {"output_gain": 3.0})
+
+    def test_list_reports_invalid_settings_without_repairing_them(self):
+        for raw in (b"invalid", b"\xff", b'[]', b'{}', b'{"models":[]}',
+                    b'{"models":{"new-hash":null}}'):
+            with self.subTest(raw=raw):
+                self.path.write_bytes(raw)
+                self.assertIn("settings_error", self.listed())
+                self.assertEqual(self.path.read_bytes(), raw)
+                self.assertEqual(list(self.path.parent.glob("player.json.invalid.*")), [])
+
+    def test_list_missing_settings_are_defaults_but_dangling_link_is_error(self):
+        self.assertNotIn("settings_error", self.listed())
+        self.path.symlink_to(self.path.parent / "missing.json")
+        self.assertIn("settings_error", self.listed())
+        self.assertTrue(self.path.is_symlink())
+
+    def test_list_valid_settings_has_no_warning(self):
+        self.save({"models": {"new-hash": {"output_gain": 4.0}}})
+        listed = self.listed()
+        self.assertNotIn("settings_error", listed)
+        self.assertEqual(listed["models"][0]["options"], {"output_gain": 4.0})
+
     def test_missing_settings_are_initialized(self):
         self.assertEqual(self.options(), {"options": {"size": 0.5}})
         self.assertEqual(json.loads(self.path.read_text(encoding="utf-8")),

@@ -1,5 +1,5 @@
 // Flows against the in-page mock backend (src/lib/mock.ts), one per page.
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { api } from "../lib/api";
@@ -41,6 +41,73 @@ describe("Captures", () => {
     expect(screen.queryByText("Output gain")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("radio", { name: /Lite/ }));
     expect(await screen.findByText("Saved to the unit")).toBeInTheDocument();
+  });
+
+  it("changes size without resending gain and explicitly clears Full", async () => {
+    const save = vi.spyOn(api, "unitSetOptions");
+    try {
+      render(<App />);
+      await screen.findByRole(
+        "heading",
+        { name: "Fender Deluxe Reverb '65 Vibrato" },
+        wait,
+      );
+      const before = (await api.unitList()).models[0];
+      if (!before) throw new Error("missing mock capture");
+      expect(before.options.output_gain).toBeDefined();
+      await userEvent.click(screen.getByRole("radio", { name: /Lite/ }));
+      await screen.findByText("Saved to the unit");
+      expect(save).toHaveBeenLastCalledWith(before.sha256, { size: 0 });
+      expect((await api.unitList()).models[0]?.options.output_gain).toBe(
+        before.options.output_gain,
+      );
+      await userEvent.click(screen.getByRole("radio", { name: /Full/ }));
+      await waitFor(() => {
+        expect(save).toHaveBeenLastCalledWith(before.sha256, { size: null });
+      });
+      await waitFor(async () => {
+        const after = (await api.unitList()).models[0];
+        if (!after) throw new Error("missing mock capture");
+        expect(after.options.size).toBeUndefined();
+        expect(after.options.output_gain).toBe(before.options.output_gain);
+      });
+    } finally {
+      save.mockRestore();
+    }
+  });
+
+  it("warns about unreliable settings until a successful refresh", async () => {
+    const original = await api.unitList();
+    const list = vi.spyOn(api, "unitList").mockResolvedValue({
+      models: original.models.map((m) => ({ ...m, options: {} })),
+      settings_error: "Cannot read /data/nam/player.json.",
+    });
+    try {
+      render(<App />);
+      expect(
+        await screen.findByText("Player settings unavailable", {}, wait),
+      ).toBeInTheDocument();
+      const sizes = screen.getAllByRole("radio");
+      expect(sizes.length).toBeGreaterThan(0);
+      for (const size of sizes)
+        expect(size).toHaveAttribute("aria-checked", "false");
+      list.mockResolvedValue(original);
+      await userEvent.click(
+        screen.getByRole("button", { name: "Refresh settings" }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByText("Player settings unavailable"),
+        ).not.toBeInTheDocument(),
+      );
+      expect(
+        screen
+          .getAllByRole("radio")
+          .some((size) => size.getAttribute("aria-checked") === "true"),
+      ).toBe(true);
+    } finally {
+      list.mockRestore();
+    }
   });
 
   it("shows the recovery warning and backup location after saving options", async () => {

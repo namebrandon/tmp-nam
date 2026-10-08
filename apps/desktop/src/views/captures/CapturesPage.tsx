@@ -199,6 +199,25 @@ export function CapturesPage({ narrow }: { narrow: boolean }) {
           </Banner>
         </div>
       )}
+      {app.settingsError && (
+        <div className="bwrap">
+          <Banner
+            tone="warn"
+            title="Player settings unavailable"
+            actions={[
+              {
+                label: "Refresh settings",
+                onClick: () => void app.refreshCaptures(),
+                disabled: !canAdd,
+              },
+            ]}
+          >
+            {app.settingsError} Listed options may be unavailable or invalid.
+            Refresh after checking the settings file. Size changes preserve any
+            gain that can be read when saving.
+          </Banner>
+        </div>
+      )}
       {removeError && (
         <div className="bwrap">
           <Banner

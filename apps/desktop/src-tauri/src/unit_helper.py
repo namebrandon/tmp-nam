@@ -140,10 +140,25 @@ def registered_names():
 
 def cmd_list(_args):
     names = registered_names()
-    player = read_json(PLAYER, {})
-    opts = player.get("models") if isinstance(player, dict) else None
-    if not isinstance(opts, dict):
+    settings_error = None
+    try:
+        with open(PLAYER, "rb") as f:
+            player = json.loads(f.read().decode("utf-8"))
+        if not isinstance(player, dict) or not isinstance(player.get("models"), dict):
+            raise ValueError("expected a models object")
+        opts = player["models"]
+        if any(not isinstance(entry, dict) for entry in opts.values()):
+            settings_error = "Invalid capture settings in %s." % PLAYER
+    except FileNotFoundError:
         opts = {}
+        if os.path.lexists(PLAYER):
+            settings_error = "Cannot read %s." % PLAYER
+    except OSError:
+        opts = {}
+        settings_error = "Cannot read %s." % PLAYER
+    except ValueError:
+        opts = {}
+        settings_error = "Invalid player settings in %s." % PLAYER
     index = read_json(INDEX, {})
     if not isinstance(index, dict):
         index = {}
@@ -191,7 +206,10 @@ def cmd_list(_args):
             write_json(INDEX, fresh)
         except Exception:
             pass
-    emit({"models": rows})
+    result = {"models": rows}
+    if settings_error:
+        result["settings_error"] = settings_error
+    emit(result)
 
 
 def cmd_register(args):
@@ -286,10 +304,11 @@ def backup_player(raw):
 
 
 def cmd_opts(args):
-    # opts <sha256> <size|-> <gain|->
+    # opts <sha256> <size|-|=> <gain|-|=>; = keeps, - removes.
     sha, size, gain = args[0], args[1], args[2]
     values = [(key, None if value == "-" else float(value))
-              for key, value in (("size", size), ("output_gain", gain))]
+              for key, value in (("size", size), ("output_gain", gain))
+              if value != "="]
     raw = None
     try:
         with open(PLAYER, "rb") as f:

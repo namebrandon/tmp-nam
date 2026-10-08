@@ -20,7 +20,10 @@ use std::sync::{Arc, Mutex, TryLockError};
 use serde::{Deserialize, Serialize};
 use tauri::{Emitter, Manager, State};
 
-use unit::{AddOutcome, ModelInfo, NewModel, PlayerOptions, SendStep, Unit, UnitInfo, UnitModel};
+use unit::{
+    AddOutcome, ModelInfo, ModelList, NewModel, OptionChange, PlayerOptionsPatch, SendStep, Unit,
+    UnitInfo, UnitModel,
+};
 
 #[derive(Default, Clone)]
 struct AppState {
@@ -271,18 +274,22 @@ struct Capture {
 async fn unit_list(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
-) -> Result<Vec<Capture>, String> {
+) -> Result<ModelList<Capture>, String> {
     let state = state.inner().clone();
     blocking(move || {
         let models = with_unit(&state, |u| u.list())?;
         let record = installs::load(&app);
-        Ok(models
-            .into_iter()
-            .map(|model| Capture {
-                source: model.sha256.as_ref().and_then(|h| record.get(h).cloned()),
-                model,
-            })
-            .collect())
+        Ok(ModelList {
+            settings_error: models.settings_error,
+            models: models
+                .models
+                .into_iter()
+                .map(|model| Capture {
+                    source: model.sha256.as_ref().and_then(|h| record.get(h).cloned()),
+                    model,
+                })
+                .collect(),
+        })
     })
     .await
 }
@@ -435,14 +442,14 @@ async fn unit_reload(state: State<'_, AppState>) -> Result<(), String> {
 async fn unit_set_options(
     state: State<'_, AppState>,
     sha256: String,
-    options: PlayerOptions,
+    options: PlayerOptionsPatch,
 ) -> Result<Option<String>, String> {
-    if let Some(s) = options.size {
+    if let OptionChange::Set(s) = options.size {
         if !(0.0..=1.0).contains(&s) {
             return Err("size must be between 0 and 1".into());
         }
     }
-    if let Some(g) = options.output_gain {
+    if let OptionChange::Set(g) = options.output_gain {
         if !(0.0..=8.0).contains(&g) {
             return Err("output gain must be between 0 and 8".into());
         }
@@ -870,7 +877,7 @@ mod tests {
                 sha256: Some("ab".into()),
                 info: None,
                 error: None,
-                options: PlayerOptions::default(),
+                options: unit::PlayerOptions::default(),
             },
             source: Some(installs::Install {
                 tone_id: 7.into(),

@@ -29,6 +29,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [focusTone, setFocusTone] = useState<string | null>(null);
   const conn = useUnitConnection();
   const { poll } = conn;
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const [captures, setCaptures] = useState<Capture[] | null>(null);
   const [marks, setMarks] = useState<Record<string, Mark>>({});
   const [failed, setFailed] = useState<Record<string, Source>>({});
@@ -49,7 +50,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshCaptures = useCallback(async () => {
     try {
-      setCaptures(await api.unitList());
+      const listed = await api.unitList();
+      setCaptures(listed.models);
+      setSettingsError(listed.settings_error ?? null);
     } catch {
       // The unit went away; the next poll reports it.
     }
@@ -61,6 +64,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ? refreshCaptures
         : () => {
             setCaptures(null);
+            setSettingsError(null);
           },
     );
   }, [connected, refreshCaptures]);
@@ -199,6 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unitInfo: conn.info,
       connected,
       captures,
+      settingsError,
       refreshCaptures,
       marks,
       mark: (name, patch) => {
@@ -234,6 +239,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       conn.info,
       connected,
       captures,
+      settingsError,
       refreshCaptures,
       marks,
       failed,

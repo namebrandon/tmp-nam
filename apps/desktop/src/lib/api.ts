@@ -37,6 +37,17 @@ export interface PlayerOptions {
   output_gain?: number;
 }
 
+/** Omitted fields keep the stored value; null removes an override. */
+export interface PlayerOptionsPatch {
+  size?: number | null;
+  output_gain?: number | null;
+}
+
+export interface CaptureList {
+  models: Capture[];
+  settings_error?: string | null;
+}
+
 export interface UnitModel {
   name: string;
   file: string;
@@ -261,7 +272,7 @@ export function listen<K extends keyof Events>(
 
 export const api = {
   unitConnect: () => call<UnitInfo>("unit_connect"),
-  unitList: () => call<Capture[]>("unit_list"),
+  unitList: () => call<CaptureList>("unit_list"),
   namInspect: (paths: string[]) => call<Inspected[]>("nam_inspect", { paths }),
   unitAddFiles: (files: { path: string; name?: string }[]) =>
     call<AddOutcome>("unit_add_files", { files }),
@@ -269,7 +280,7 @@ export const api = {
   unitRemove: (names: string[]) => call<boolean>("unit_remove", { names }),
   unitRegister: (names: string[]) => call<boolean>("unit_register", { names }),
   unitReload: () => call<null>("unit_reload"),
-  unitSetOptions: (sha256: string, options: PlayerOptions) =>
+  unitSetOptions: (sha256: string, options: PlayerOptionsPatch) =>
     call<string | null>("unit_set_options", { sha256, options }),
 
   settingsGet: () => call<Settings>("settings_get"),

@@ -117,7 +117,11 @@ A2 sizes and output gain go in
 Option writes initialize a missing file and refuse unreadable settings. Malformed
 JSON/structure is backed up to a unique `player.json.invalid.*` file before recovery;
 the Inspector displays the returned warning. An invalid selected entry is reset
-without changing other entries. See `docs/nam-player.md` for recovery details.
+without changing other entries. Option patches omit fields to keep them, use null
+to remove overrides, and numbers to set them (`opts` helper: `=`, `-`, number).
+The Inspector patches only size, never a cached gain. Lists return models plus an
+optional `settings_error`, shown on Captures without repairing the file.
+See `docs/nam-player.md` for recovery details.
 
 Sends and installs never fail as a whole: `Unit::add` returns an `AddOutcome` (added, not
 loaded, interrupted, not sent, stop reason, `needs_restart` when the fallback ran) and streams

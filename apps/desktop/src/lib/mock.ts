@@ -22,6 +22,7 @@
 import { ApiError } from "./api";
 import type {
   AddOutcome,
+  PlayerOptionsPatch,
   Capture,
   Disk,
   Inspected,
@@ -394,7 +395,7 @@ export async function mockInvoke(
     }
     case "unit_list":
       await sleep(300);
-      return models;
+      return { models };
     case "nam_inspect": {
       await sleep(300);
       return (args.paths as string[]).map((path): Inspected => {
@@ -446,11 +447,16 @@ export async function mockInvoke(
     case "unit_set_options": {
       const sha = args.sha256 as string;
       await sleep(150);
-      models = models.map((m) =>
-        m.sha256 === sha
-          ? { ...m, options: args.options as Capture["options"] }
-          : m,
-      );
+      const patch = args.options as PlayerOptionsPatch;
+      models = models.map((m) => {
+        if (m.sha256 !== sha) return m;
+        const options = { ...m.options };
+        for (const key of ["size", "output_gain"] as const) {
+          const value = patch[key];
+          if (value !== undefined) options[key] = value ?? undefined;
+        }
+        return { ...m, options };
+      });
       return null;
     }
     case "settings_get":

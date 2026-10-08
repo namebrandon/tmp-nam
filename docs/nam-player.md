@@ -80,7 +80,15 @@ JSON, and restore the desired entries to `/data/nam/player.json`. Do not copy an
 unrepaired backup over the active file. Reapply sizes in the desktop; gain and
 `sample_rate_hz` overrides require editing the file. Captures needing an explicit
 sample-rate override may remain unloadable until that override is restored.
+Changing size in the desktop only changes `size`; it preserves the gain currently
+stored on the unit, including edits made over SSH since the last refresh. Selecting
+Full removes the size override without removing gain or other fields.
+
 Listing captures does not repair settings; recovery happens on an option write.
+If existing settings cannot be read or parsed, or have an invalid object structure,
+the Captures page warns that listed options are unreliable and leaves the size
+picker without a selected value. A missing settings file uses defaults without a
+warning. Refresh after correcting the file to show the current options.
 
 For a `SlimmableContainer`, upstream uses exclusive `max_value` thresholds;
 size is a selector rather than a percentage. Missing rate metadata requires an

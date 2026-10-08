@@ -129,6 +129,56 @@ pub struct PlayerOptions {
     pub output_gain: Option<f64>,
 }
 
+/// An omitted patch field keeps the current value; null removes the override.
+#[derive(Deserialize, Debug, Default)]
+pub struct PlayerOptionsPatch {
+    #[serde(default)]
+    pub size: OptionChange,
+    #[serde(default)]
+    pub output_gain: OptionChange,
+}
+
+#[derive(Debug, Default, PartialEq)]
+pub enum OptionChange {
+    #[default]
+    Keep,
+    Remove,
+    Set(f64),
+}
+
+impl<'de> Deserialize<'de> for OptionChange {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Ok(match Option::<f64>::deserialize(deserializer)? {
+            Some(value) => Self::Set(value),
+            None => Self::Remove,
+        })
+    }
+}
+
+impl OptionChange {
+    fn helper_arg(&self) -> String {
+        match self {
+            Self::Keep => "=".into(),
+            Self::Remove => "-".into(),
+            Self::Set(value) => value.to_string(),
+        }
+    }
+
+    fn apply(&self, value: &mut Option<f64>) {
+        match self {
+            Self::Keep => {}
+            Self::Remove => *value = None,
+            Self::Set(next) => *value = Some(*next),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ModelList<T> {
+    pub models: Vec<T>,
+    pub settings_error: Option<String>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UnitModel {
     /// Registry name (`<file minus .wav>`, e.g. `Foo.nam`) — what the IR picker shows.
@@ -224,7 +274,7 @@ impl AddOutcome {
 
 pub trait Unit: Send {
     fn info(&self) -> UnitInfo;
-    fn list(&mut self) -> Result<Vec<UnitModel>, String>;
+    fn list(&mut self) -> Result<ModelList<UnitModel>, String>;
     fn add(&mut self, models: Vec<NewModel>, progress: Progress) -> AddOutcome;
     /// Unregister and delete. `Ok(true)` when it took an engine restart.
     fn remove(&mut self, names: &[String]) -> Result<bool, String>;
@@ -237,8 +287,11 @@ pub trait Unit: Send {
     /// or the add's placeholder), and the partial upload.
     fn discard_unsent(&mut self, names: &[String]) -> Result<(), String>;
     /// Save options, returning a user-visible warning if invalid settings were recovered.
-    fn set_options(&mut self, sha256: &str, opts: &PlayerOptions)
-        -> Result<Option<String>, String>;
+    fn set_options(
+        &mut self,
+        sha256: &str,
+        opts: &PlayerOptionsPatch,
+    ) -> Result<Option<String>, String>;
     /// Cheap liveness check; false means the transport is gone.
     fn alive(&mut self) -> bool;
 }
@@ -546,7 +599,7 @@ impl ConsoleUnit {
             self.console.check("sync", Duration::from_secs(30))?;
             self.reload_engine()?;
         }
-        self.list()
+        self.list().map(|listed| listed.models)
     }
 
     /// The engine's library over HID, opening the channel on first use; `None` means
@@ -774,10 +827,9 @@ impl Unit for ConsoleUnit {
         self.info.clone()
     }
 
-    fn list(&mut self) -> Result<Vec<UnitModel>, String> {
+    fn list(&mut self) -> Result<ModelList<UnitModel>, String> {
         let v = self.helper("list", &[], 300)?;
-        serde_json::from_value(v.get("models").cloned().unwrap_or(Value::Array(vec![])))
-            .map_err(|e| format!("bad model list: {e}"))
+        serde_json::from_value(v).map_err(|e| format!("bad model list: {e}"))
     }
 
     fn add(&mut self, models: Vec<NewModel>, progress: Progress) -> AddOutcome {
@@ -816,7 +868,7 @@ impl Unit for ConsoleUnit {
         let listed = self.list()?;
         let mut orphans = vec![];
         let mut in_picker = false;
-        for m in listed.iter().filter(|m| names.contains(&m.name)) {
+        for m in listed.models.iter().filter(|m| names.contains(&m.name)) {
             // A placeholder means the engine added the name but the real bytes never
             // landed: it is in the picker and only the engine (or a restart) drops it.
             let holds_placeholder = m.sha256 == placeholder;
@@ -842,12 +894,15 @@ impl Unit for ConsoleUnit {
     fn set_options(
         &mut self,
         sha256: &str,
-        opts: &PlayerOptions,
+        opts: &PlayerOptionsPatch,
     ) -> Result<Option<String>, String> {
-        let fmt = |v: Option<f64>| v.map(|x| x.to_string()).unwrap_or_else(|| "-".into());
         let result = self.helper(
             "opts",
-            &[sha256.to_string(), fmt(opts.size), fmt(opts.output_gain)],
+            &[
+                sha256.to_string(),
+                opts.size.helper_arg(),
+                opts.output_gain.helper_arg(),
+            ],
             30,
         )?;
         Ok(result
@@ -1015,22 +1070,25 @@ impl Unit for SimUnit {
         }
     }
 
-    fn list(&mut self) -> Result<Vec<UnitModel>, String> {
+    fn list(&mut self) -> Result<ModelList<UnitModel>, String> {
         std::thread::sleep(Duration::from_millis(400));
-        Ok(Self::with(|s| {
-            s.models
-                .values()
-                .cloned()
-                .map(|mut m| {
-                    m.options = m
-                        .sha256
-                        .as_ref()
-                        .and_then(|h| s.options.get(h).cloned())
-                        .unwrap_or_default();
-                    m
-                })
-                .collect()
-        }))
+        Ok(ModelList {
+            settings_error: None,
+            models: Self::with(|s| {
+                s.models
+                    .values()
+                    .cloned()
+                    .map(|mut m| {
+                        m.options = m
+                            .sha256
+                            .as_ref()
+                            .and_then(|h| s.options.get(h).cloned())
+                            .unwrap_or_default();
+                        m
+                    })
+                    .collect()
+            }),
+        })
     }
 
     fn add(&mut self, models: Vec<NewModel>, progress: Progress) -> AddOutcome {
@@ -1112,7 +1170,7 @@ impl Unit for SimUnit {
             _ => {}
         }
         if let Ok(listed) = self.list() {
-            out.check_loaded(&listed);
+            out.check_loaded(&listed.models);
         }
         out
     }
@@ -1160,13 +1218,14 @@ impl Unit for SimUnit {
     fn set_options(
         &mut self,
         sha256: &str,
-        opts: &PlayerOptions,
+        opts: &PlayerOptionsPatch,
     ) -> Result<Option<String>, String> {
         Self::with(|s| {
-            if opts.size.is_none() && opts.output_gain.is_none() {
+            let current = s.options.entry(sha256.to_string()).or_default();
+            opts.size.apply(&mut current.size);
+            opts.output_gain.apply(&mut current.output_gain);
+            if current.size.is_none() && current.output_gain.is_none() {
                 s.options.remove(sha256);
-            } else {
-                s.options.insert(sha256.to_string(), opts.clone());
             }
         });
         Ok(None)
@@ -1180,6 +1239,39 @@ impl Unit for SimUnit {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn option_patch_distinguishes_keep_remove_and_set() {
+        let patch: PlayerOptionsPatch = serde_json::from_str(r#"{"size":0.0}"#).unwrap();
+        assert_eq!(patch.size.helper_arg(), "0");
+        assert_eq!(patch.output_gain.helper_arg(), "=");
+        let full: PlayerOptionsPatch = serde_json::from_str(r#"{"size":null}"#).unwrap();
+        assert_eq!(full.size.helper_arg(), "-");
+        assert_eq!(full.output_gain, OptionChange::Keep);
+        let gain: PlayerOptionsPatch = serde_json::from_str(r#"{"output_gain":null}"#).unwrap();
+        assert_eq!(gain.size, OptionChange::Keep);
+        assert_eq!(gain.output_gain.helper_arg(), "-");
+        assert!(serde_json::from_str::<PlayerOptionsPatch>(r#"{"size":"0"}"#).is_err());
+    }
+
+    #[test]
+    fn simulator_preserves_gain_during_size_changes() {
+        let mut sim = SimUnit::connect().unwrap();
+        let sha = "sim-test-option-patch";
+        for (json, size, gain) in [
+            (r#"{"output_gain":4.0}"#, None, Some(4.0)),
+            (r#"{"size":0.0}"#, Some(0.0), Some(4.0)),
+            (r#"{"size":null}"#, None, Some(4.0)),
+            (r#"{}"#, None, Some(4.0)),
+            (r#"{"output_gain":null}"#, None, None),
+        ] {
+            let patch = serde_json::from_str(json).unwrap();
+            sim.set_options(sha, &patch).unwrap();
+            let actual = SimUnit::with(|s| s.options.get(sha).cloned().unwrap_or_default());
+            assert_eq!(actual.size, size);
+            assert_eq!(actual.output_gain, gain);
+        }
+    }
 
     #[test]
     fn registry_name_normalizes() {
@@ -1310,7 +1402,7 @@ mod tests {
         });
         sim.discard_unsent(&names(&["SimTest-Orphan.nam", "SimTest-Sent.nam"]))
             .unwrap();
-        let listed = sim.list().unwrap();
+        let listed = sim.list().unwrap().models;
         assert!(listed.iter().all(|m| m.name != "SimTest-Orphan.nam"));
         assert!(listed.iter().any(|m| m.name == "SimTest-Sent.nam"));
         assert!(!sim.remove(&names(&["SimTest-Sent.nam"])).unwrap());
@@ -1349,7 +1441,7 @@ mod device_tests {
         println!("open+helper push: {:?}", t0.elapsed());
         println!("info: {:?}", unit.info());
         let t1 = std::time::Instant::now();
-        let models = unit.list().expect("list");
+        let models = unit.list().expect("list").models;
         println!("list: {:?} ({} models)", t1.elapsed(), models.len());
         print_models(&models);
         assert!(unit.alive());
@@ -1386,6 +1478,7 @@ mod device_tests {
         let m = unit
             .list()
             .expect("list")
+            .models
             .into_iter()
             .find(|m| m.name == name)
             .expect("installed");
@@ -1398,21 +1491,28 @@ mod device_tests {
 
         unit.set_options(
             &sha,
-            &PlayerOptions {
-                size: None,
-                output_gain: Some(2.0),
+            &PlayerOptionsPatch {
+                size: OptionChange::Keep,
+                output_gain: OptionChange::Set(2.0),
             },
         )
         .expect("opts");
         let m = unit
             .list()
             .expect("list")
+            .models
             .into_iter()
             .find(|m| m.name == name)
             .unwrap();
         assert_eq!(m.options.output_gain, Some(2.0));
-        unit.set_options(&sha, &PlayerOptions::default())
-            .expect("clear opts");
+        unit.set_options(
+            &sha,
+            &PlayerOptionsPatch {
+                size: OptionChange::Remove,
+                output_gain: OptionChange::Remove,
+            },
+        )
+        .expect("clear opts");
 
         if std::env::var_os("TMPNAM_PROBE_SELECT").is_some() {
             println!(">>> select {name} in a user-IR block on the unit now (90 s)");
@@ -1438,7 +1538,12 @@ mod device_tests {
         assert!(!restarted, "remove fell back to a restart");
         println!("remove: {:?}", t.elapsed());
         assert_eq!(engine, engine_identity(&mut unit), "the engine restarted");
-        assert!(unit.list().expect("list").iter().all(|m| m.name != name));
+        assert!(unit
+            .list()
+            .expect("list")
+            .models
+            .iter()
+            .all(|m| m.name != name));
         let (_, out) = unit
             .console
             .run(
@@ -1474,6 +1579,7 @@ mod device_tests {
     fn find(unit: &mut ConsoleUnit, name: &str) -> Option<UnitModel> {
         unit.list()
             .expect("list")
+            .models
             .into_iter()
             .find(|m| m.name == name)
     }

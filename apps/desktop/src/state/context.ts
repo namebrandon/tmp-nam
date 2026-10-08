@@ -48,6 +48,7 @@ export interface AppStore {
   connected: boolean;
 
   captures: Capture[] | null;
+  settingsError: string | null;
   refreshCaptures: () => Promise<void>;
   marks: Readonly<Record<string, Mark>>;
   mark: (name: string, patch: Mark) => void;

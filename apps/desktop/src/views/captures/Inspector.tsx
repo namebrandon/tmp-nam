@@ -43,7 +43,7 @@ export function Inspector({
   const sha = c?.sha256 ?? null;
   const options = c?.options ?? {};
 
-  const save = async (next: { size?: number; output_gain?: number }) => {
+  const save = async (next: { size: number | null }) => {
     if (!sha) return;
     try {
       const warning = await api.unitSetOptions(sha, next);
@@ -61,7 +61,7 @@ export function Inspector({
     const step = steps.find((s) => s.label === label);
     if (!step) return;
     // Keep any output gain already on the unit; the app doesn't set it.
-    void save({ size: step.size, output_gain: options.output_gain });
+    void save({ size: step.size ?? null });
   };
 
   const fam = c ? family(c) : "unknown";
@@ -181,7 +181,11 @@ export function Inspector({
               <>
                 <SizePicker
                   sizes={steps.map((s) => ({ label: s.label }))}
-                  value={steps[currentStep(steps, options.size)]?.label}
+                  value={
+                    app.settingsError
+                      ? ""
+                      : steps[currentStep(steps, options.size)]?.label
+                  }
                   disabled={disabled}
                   onChange={setSize}
                 />
